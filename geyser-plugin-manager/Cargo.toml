@@ -23,7 +23,7 @@ solana-rpc = { path = "../rpc", version = "=1.10.12" }
 solana-runtime = { path = "../runtime", version = "=1.10.12" }
 solana-sdk = { path = "../sdk", version = "=1.10.12" }
 solana-transaction-status = { path = "../transaction-status", version = "=1.10.12" }
-thiserror = "1.0.30"
+thiserror = "1.0.31"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

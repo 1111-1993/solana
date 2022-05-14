@@ -33,7 +33,7 @@ export function SupplyCard() {
         <tr>
           <td className="w-100">Total Supply (GTH)</td>
           <td className="text-lg-end">
-            <GthBalance lamports={supply.total} maximumFractionDigits={0} />
+            <GthBalance weis={supply.total} maximumFractionDigits={0} />
           </td>
         </tr>
 
@@ -41,7 +41,7 @@ export function SupplyCard() {
           <td className="w-100">Circulating Supply (GTH)</td>
           <td className="text-lg-end">
             <GthBalance
-              lamports={supply.circulating}
+              weis={supply.circulating}
               maximumFractionDigits={0}
             />
           </td>
@@ -51,7 +51,7 @@ export function SupplyCard() {
           <td className="w-100">Non-Circulating Supply (GTH)</td>
           <td className="text-lg-end">
             <GthBalance
-              lamports={supply.nonCirculating}
+              weis={supply.nonCirculating}
               maximumFractionDigits={0}
             />
           </td>

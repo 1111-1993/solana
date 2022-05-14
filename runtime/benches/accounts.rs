@@ -18,7 +18,7 @@ use {
         account::{AccountSharedData, ReadableAccount},
         genesis_config::{create_genesis_config, ClusterType},
         hash::Hash,
-        lamports::LamportsError,
+        weis::WeisError,
         pubkey::Pubkey,
     },
     std::{
@@ -30,7 +30,7 @@ use {
     test::Bencher,
 };
 
-fn deposit_many(bank: &Bank, pubkeys: &mut Vec<Pubkey>, num: usize) -> Result<(), LamportsError> {
+fn deposit_many(bank: &Bank, pubkeys: &mut Vec<Pubkey>, num: usize) -> Result<(), WeisError> {
     for t in 0..num {
         let pubkey = solana_sdk::pubkey::new_rand();
         let account =
@@ -107,13 +107,13 @@ fn test_accounts_hash_bank_hash(bencher: &mut Bencher) {
     let slot = 0;
     create_test_accounts(&accounts, &mut pubkeys, num_accounts, slot);
     let ancestors = Ancestors::from(vec![0]);
-    let (_, total_lamports) = accounts.accounts_db.update_accounts_hash(0, &ancestors);
+    let (_, total_weis) = accounts.accounts_db.update_accounts_hash(0, &ancestors);
     let test_hash_calculation = false;
     bencher.iter(|| {
-        assert!(accounts.verify_bank_hash_and_lamports(
+        assert!(accounts.verify_bank_hash_and_weis(
             0,
             &ancestors,
-            total_lamports,
+            total_weis,
             test_hash_calculation
         ))
     });
@@ -392,9 +392,9 @@ fn bench_load_largest_accounts(b: &mut Bencher) {
     );
     let mut rng = rand::thread_rng();
     for _ in 0..10_000 {
-        let lamports = rng.gen();
+        let weis = rng.gen();
         let pubkey = Pubkey::new_unique();
-        let account = AccountSharedData::new(lamports, 0, &Pubkey::default());
+        let account = AccountSharedData::new(weis, 0, &Pubkey::default());
         accounts.store_slow_uncached(0, &pubkey, &account);
     }
     let ancestors = Ancestors::from(vec![0]);

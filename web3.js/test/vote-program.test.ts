@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 
 import {
   Keypair,
-  LAMPORTS_PER_GTH,
+  WEIS_PER_GTH,
   VoteAuthorizationLayout,
   VoteInit,
   VoteInstruction,
@@ -30,19 +30,19 @@ describe('VoteProgram', () => {
       authorizedPubkey,
       commission,
     );
-    const lamports = 123;
+    const weis = 123;
     const transaction = VoteProgram.createAccount({
       fromPubkey,
       votePubkey: newAccountPubkey,
       voteInit,
-      lamports,
+      weis,
     });
     expect(transaction.instructions).to.have.length(2);
     const [systemInstruction, voteInstruction] = transaction.instructions;
     const systemParams = {
       fromPubkey,
       newAccountPubkey,
-      lamports,
+      weis,
       space: VoteProgram.space,
       programId: VoteProgram.programId,
     };
@@ -103,7 +103,7 @@ describe('VoteProgram', () => {
     const params = {
       votePubkey,
       authorizedWithdrawerPubkey,
-      lamports: 123,
+      weis: 123,
       toPubkey,
     };
     const transaction = VoteProgram.withdraw(params);
@@ -123,20 +123,20 @@ describe('VoteProgram', () => {
       await helpers.airdrop({
         connection,
         address: payer.publicKey,
-        amount: 12 * LAMPORTS_PER_GTH,
+        amount: 12 * WEIS_PER_GTH,
       });
       expect(await connection.getBalance(payer.publicKey)).to.eq(
-        12 * LAMPORTS_PER_GTH,
+        12 * WEIS_PER_GTH,
       );
 
       const authorized = Keypair.generate();
       await helpers.airdrop({
         connection,
         address: authorized.publicKey,
-        amount: 12 * LAMPORTS_PER_GTH,
+        amount: 12 * WEIS_PER_GTH,
       });
       expect(await connection.getBalance(authorized.publicKey)).to.eq(
-        12 * LAMPORTS_PER_GTH,
+        12 * WEIS_PER_GTH,
       );
 
       const minimumAmount = await connection.getMinimumBalanceForRentExemption(
@@ -153,7 +153,7 @@ describe('VoteProgram', () => {
           authorized.publicKey,
           5,
         ),
-        lamports: minimumAmount + 10 * LAMPORTS_PER_GTH,
+        weis: minimumAmount + 10 * WEIS_PER_GTH,
       });
       await sendAndConfirmTransaction(
         connection,
@@ -162,7 +162,7 @@ describe('VoteProgram', () => {
         {preflightCommitment: 'confirmed'},
       );
       expect(await connection.getBalance(newVoteAccount.publicKey)).to.eq(
-        minimumAmount + 10 * LAMPORTS_PER_GTH,
+        minimumAmount + 10 * WEIS_PER_GTH,
       );
 
       // Withdraw from Vote account
@@ -170,25 +170,25 @@ describe('VoteProgram', () => {
       let withdraw = VoteProgram.withdraw({
         votePubkey: newVoteAccount.publicKey,
         authorizedWithdrawerPubkey: authorized.publicKey,
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         toPubkey: recipient.publicKey,
       });
       await sendAndConfirmTransaction(connection, withdraw, [authorized], {
         preflightCommitment: 'confirmed',
       });
       expect(await connection.getBalance(recipient.publicKey)).to.eq(
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
 
       const newAuthorizedWithdrawer = Keypair.generate();
       await helpers.airdrop({
         connection,
         address: newAuthorizedWithdrawer.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
       expect(
         await connection.getBalance(newAuthorizedWithdrawer.publicKey),
-      ).to.eq(LAMPORTS_PER_GTH);
+      ).to.eq(WEIS_PER_GTH);
 
       // Authorize a new Withdrawer.
       let authorize = VoteProgram.authorize({
@@ -205,7 +205,7 @@ describe('VoteProgram', () => {
       withdraw = VoteProgram.withdraw({
         votePubkey: newVoteAccount.publicKey,
         authorizedWithdrawerPubkey: authorized.publicKey,
-        lamports: minimumAmount,
+        weis: minimumAmount,
         toPubkey: recipient.publicKey,
       });
       await expect(
@@ -219,7 +219,7 @@ describe('VoteProgram', () => {
       withdraw = VoteProgram.withdraw({
         votePubkey: newVoteAccount.publicKey,
         authorizedWithdrawerPubkey: newAuthorizedWithdrawer.publicKey,
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         toPubkey: recipient.publicKey,
       });
       await sendAndConfirmTransaction(
@@ -231,17 +231,17 @@ describe('VoteProgram', () => {
         },
       );
       expect(await connection.getBalance(recipient.publicKey)).to.eq(
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
 
       const newAuthorizedVoter = Keypair.generate();
       await helpers.airdrop({
         connection,
         address: newAuthorizedVoter.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
       expect(await connection.getBalance(newAuthorizedVoter.publicKey)).to.eq(
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
 
       // The authorized Withdrawer may sign to authorize a new Voter, see

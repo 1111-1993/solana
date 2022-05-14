@@ -1,21 +1,21 @@
-use crate::native_token::gth_to_lamports;
+use crate::native_token::gth_to_weis;
 
 /// A fee and its associated compute unit limit
 #[derive(Debug, Default, Clone)]
 pub struct FeeBin {
     /// maximum compute units for which this fee will be charged
     pub limit: u64,
-    /// fee in lamports
+    /// fee in weis
     pub fee: u64,
 }
 
 /// Information used to calculate fees
 #[derive(Debug, Clone)]
 pub struct FeeStructure {
-    /// lamports per signature
-    pub lamports_per_signature: u64,
-    /// lamports_per_write_lock
-    pub lamports_per_write_lock: u64,
+    /// weis per signature
+    pub weis_per_signature: u64,
+    /// weis_per_write_lock
+    pub weis_per_write_lock: u64,
     /// Compute unit fee bins
     pub compute_fee_bins: Vec<FeeBin>,
 }
@@ -30,20 +30,20 @@ impl FeeStructure {
             .iter()
             .map(|(limit, gth)| FeeBin {
                 limit: *limit,
-                fee: gth_to_lamports(*gth),
+                fee: gth_to_weis(*gth),
             })
             .collect::<Vec<_>>();
         FeeStructure {
-            lamports_per_signature: gth_to_lamports(gth_per_signature),
-            lamports_per_write_lock: gth_to_lamports(gth_per_write_lock),
+            weis_per_signature: gth_to_weis(gth_per_signature),
+            weis_per_write_lock: gth_to_weis(gth_per_write_lock),
             compute_fee_bins,
         }
     }
 
     pub fn get_max_fee(&self, num_signatures: u64, num_write_locks: u64) -> u64 {
         num_signatures
-            .saturating_mul(self.lamports_per_signature)
-            .saturating_add(num_write_locks.saturating_mul(self.lamports_per_write_lock))
+            .saturating_mul(self.weis_per_signature)
+            .saturating_add(num_write_locks.saturating_mul(self.weis_per_write_lock))
             .saturating_add(
                 self.compute_fee_bins
                     .last()

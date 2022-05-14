@@ -59,7 +59,7 @@ fn create_accounts() -> (
         VoteState::serialize(&versioned, &mut vote_account_data).unwrap();
 
         Account {
-            lamports: 1,
+            weis: 1,
             data: vote_account_data,
             owner: solana_vote_program::id(),
             executable: false,

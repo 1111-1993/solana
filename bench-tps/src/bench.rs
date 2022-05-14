@@ -112,7 +112,7 @@ fn generate_chunked_transfers(
     // generate and send transactions for the specified duration
     let start = Instant::now();
     let keypair_chunks = source_keypair_chunks.len();
-    let mut reclaim_lamports_back_to_source_account = false;
+    let mut reclaim_weis_back_to_source_account = false;
     let mut chunk_index = 0;
     while start.elapsed() < duration {
         generate_txs(
@@ -121,7 +121,7 @@ fn generate_chunked_transfers(
             &source_keypair_chunks[chunk_index],
             &dest_keypair_chunks[chunk_index],
             threads,
-            reclaim_lamports_back_to_source_account,
+            reclaim_weis_back_to_source_account,
         );
 
         // In sustained mode, overlap the transfers with generation. This has higher average
@@ -148,7 +148,7 @@ fn generate_chunked_transfers(
 
         // Switch directions after transfering for each "chunk"
         if chunk_index == 0 {
-            reclaim_lamports_back_to_source_account = !reclaim_lamports_back_to_source_account;
+            reclaim_weis_back_to_source_account = !reclaim_weis_back_to_source_account;
         }
     }
 }
@@ -297,7 +297,7 @@ where
     }
 
     let balance = client.get_balance(&id.pubkey()).unwrap_or(0);
-    metrics_submit_lamport_balance(balance);
+    metrics_submit_wei_balance(balance);
 
     compute_and_report_stats(
         &maxes,
@@ -310,11 +310,11 @@ where
     r_maxes.first().unwrap().1.txs
 }
 
-fn metrics_submit_lamport_balance(lamport_balance: u64) {
-    info!("Token balance: {}", lamport_balance);
+fn metrics_submit_wei_balance(wei_balance: u64) {
+    info!("Token balance: {}", wei_balance);
     datapoint_info!(
-        "bench-tps-lamport_balance",
-        ("balance", lamport_balance, i64)
+        "bench-tps-wei_balance",
+        ("balance", wei_balance, i64)
     );
 }
 
@@ -432,7 +432,7 @@ fn poll_blockhash<T: BenchTpsClient>(
 
         if blockhash_updated {
             let balance = client.get_balance(id).unwrap_or(0);
-            metrics_submit_lamport_balance(balance);
+            metrics_submit_wei_balance(balance);
         }
 
         if exit_signal.load(Ordering::Relaxed) {
@@ -523,7 +523,7 @@ trait FundingTransactions<'a> {
         &mut self,
         client: &Arc<T>,
         to_fund: &[(&'a Keypair, Vec<(Pubkey, u64)>)],
-        to_lamports: u64,
+        to_weis: u64,
     );
     fn make(&mut self, to_fund: &[(&'a Keypair, Vec<(Pubkey, u64)>)]);
     fn sign(&mut self, blockhash: Hash);
@@ -531,7 +531,7 @@ trait FundingTransactions<'a> {
     fn verify<T: 'static + BenchTpsClient + Send + Sync>(
         &mut self,
         client: &Arc<T>,
-        to_lamports: u64,
+        to_weis: u64,
     );
 }
 
@@ -540,7 +540,7 @@ impl<'a> FundingTransactions<'a> for Vec<(&'a Keypair, Transaction)> {
         &mut self,
         client: &Arc<T>,
         to_fund: &[(&'a Keypair, Vec<(Pubkey, u64)>)],
-        to_lamports: u64,
+        to_weis: u64,
     ) {
         self.make(to_fund);
 
@@ -553,7 +553,7 @@ impl<'a> FundingTransactions<'a> for Vec<(&'a Keypair, Transaction)> {
                 } else {
                     " retrying"
                 },
-                to_lamports,
+                to_weis,
                 self.len() * MAX_SPENDS_PER_TX as usize,
                 self.len(),
             );
@@ -567,7 +567,7 @@ impl<'a> FundingTransactions<'a> for Vec<(&'a Keypair, Transaction)> {
             // Sleep a few slots to allow transactions to process
             sleep(Duration::from_secs(1));
 
-            self.verify(client, to_lamports);
+            self.verify(client, to_weis);
 
             // retry anything that seems to have dropped through cracks
             //  again since these txs are all or nothing, they're fine to
@@ -617,7 +617,7 @@ impl<'a> FundingTransactions<'a> for Vec<(&'a Keypair, Transaction)> {
     fn verify<T: 'static + BenchTpsClient + Send + Sync>(
         &mut self,
         client: &Arc<T>,
-        to_lamports: u64,
+        to_weis: u64,
     ) {
         let starting_txs = self.len();
         let verified_txs = Arc::new(AtomicUsize::new(0));
@@ -639,7 +639,7 @@ impl<'a> FundingTransactions<'a> for Vec<(&'a Keypair, Transaction)> {
                         return None;
                     }
 
-                    let verified = if verify_funding_transfer(&client, tx, to_lamports) {
+                    let verified = if verify_funding_transfer(&client, tx, to_weis) {
                         verified_txs.fetch_add(1, Ordering::Relaxed);
                         Some(k.pubkey())
                     } else {
@@ -699,7 +699,7 @@ pub fn fund_keys<T: 'static + BenchTpsClient + Send + Sync>(
     dests: &[Keypair],
     total: u64,
     max_fee: u64,
-    lamports_per_account: u64,
+    weis_per_account: u64,
 ) {
     let mut funded: Vec<&Keypair> = vec![source];
     let mut funded_funds = total;
@@ -708,11 +708,11 @@ pub fn fund_keys<T: 'static + BenchTpsClient + Send + Sync>(
         // Build to fund list and prepare funding sources for next iteration
         let mut new_funded: Vec<&Keypair> = vec![];
         let mut to_fund: Vec<(&Keypair, Vec<(Pubkey, u64)>)> = vec![];
-        let to_lamports = (funded_funds - lamports_per_account - max_fee) / MAX_SPENDS_PER_TX;
+        let to_weis = (funded_funds - weis_per_account - max_fee) / MAX_SPENDS_PER_TX;
         for f in funded {
             let start = not_funded.len() - MAX_SPENDS_PER_TX as usize;
             let dests: Vec<_> = not_funded.drain(start..).collect();
-            let spends: Vec<_> = dests.iter().map(|k| (k.pubkey(), to_lamports)).collect();
+            let spends: Vec<_> = dests.iter().map(|k| (k.pubkey(), to_weis)).collect();
             to_fund.push((f, spends));
             new_funded.extend(dests.into_iter());
         }
@@ -725,13 +725,13 @@ pub fn fund_keys<T: 'static + BenchTpsClient + Send + Sync>(
             Vec::<(&Keypair, Transaction)>::with_capacity(chunk.len()).fund(
                 &client,
                 chunk,
-                to_lamports,
+                to_weis,
             );
         });
 
         info!("funded: {} left: {}", new_funded.len(), not_funded.len());
         funded = new_funded;
-        funded_funds = to_lamports;
+        funded_funds = to_weis;
     }
 }
 
@@ -822,14 +822,14 @@ pub fn generate_and_fund_keypairs<T: 'static + BenchTpsClient + Send + Sync>(
     client: Arc<T>,
     funding_key: &Keypair,
     keypair_count: usize,
-    lamports_per_account: u64,
+    weis_per_account: u64,
 ) -> Result<Vec<Keypair>> {
     let rent = client.get_minimum_balance_for_rent_exemption(0)?;
-    let lamports_per_account = lamports_per_account + rent;
+    let weis_per_account = weis_per_account + rent;
 
     info!("Creating {} keypairs...", keypair_count);
     let (mut keypairs, extra) = generate_keypairs(funding_key, keypair_count as u64);
-    fund_keypairs(client, funding_key, &keypairs, extra, lamports_per_account)?;
+    fund_keypairs(client, funding_key, &keypairs, extra, weis_per_account)?;
 
     // 'generate_keypairs' generates extra keys to be able to have size-aligned funding batches for fund_keys.
     keypairs.truncate(keypair_count);
@@ -842,12 +842,12 @@ pub fn fund_keypairs<T: 'static + BenchTpsClient + Send + Sync>(
     funding_key: &Keypair,
     keypairs: &[Keypair],
     extra: u64,
-    lamports_per_account: u64,
+    weis_per_account: u64,
 ) -> Result<()> {
     let rent = client.get_minimum_balance_for_rent_exemption(0)?;
-    info!("Get lamports...");
+    info!("Get weis...");
 
-    // Sample the first keypair, to prevent lamport loss on repeated solana-bench-tps executions
+    // Sample the first keypair, to prevent wei loss on repeated solana-bench-tps executions
     let first_key = keypairs[0].pubkey();
     let first_keypair_balance = client.get_balance(&first_key).unwrap_or(0);
 
@@ -859,8 +859,8 @@ pub fn fund_keypairs<T: 'static + BenchTpsClient + Send + Sync>(
     //   start another bench-tps run without re-funding all of the keypairs, check if the
     //   keypairs still have at least 80% of the expected funds. That should be enough to
     //   pay for the transaction fees in a new run.
-    let enough_lamports = 8 * lamports_per_account / 10;
-    if first_keypair_balance < enough_lamports || last_keypair_balance < enough_lamports {
+    let enough_weis = 8 * weis_per_account / 10;
+    if first_keypair_balance < enough_weis || last_keypair_balance < enough_weis {
         let single_sig_message = Message::new_with_blockhash(
             &[Instruction::new_with_bytes(
                 Pubkey::new_unique(),
@@ -873,12 +873,12 @@ pub fn fund_keypairs<T: 'static + BenchTpsClient + Send + Sync>(
         let max_fee = client.get_fee_for_message(&single_sig_message).unwrap();
         let extra_fees = extra * max_fee;
         let total_keypairs = keypairs.len() as u64 + 1; // Add one for funding keypair
-        let total = lamports_per_account * total_keypairs + extra_fees;
+        let total = weis_per_account * total_keypairs + extra_fees;
 
         let funding_key_balance = client.get_balance(&funding_key.pubkey()).unwrap_or(0);
         info!(
-            "Funding keypair balance: {} max_fee: {} lamports_per_account: {} extra: {} total: {}",
-            funding_key_balance, max_fee, lamports_per_account, extra, total
+            "Funding keypair balance: {} max_fee: {} weis_per_account: {} extra: {} total: {}",
+            funding_key_balance, max_fee, weis_per_account, extra, total
         );
 
         if funding_key_balance < total + rent {
@@ -906,7 +906,7 @@ pub fn fund_keypairs<T: 'static + BenchTpsClient + Send + Sync>(
             keypairs,
             total,
             max_fee,
-            lamports_per_account,
+            weis_per_account,
         );
     }
     Ok(())
@@ -919,13 +919,13 @@ mod tests {
         solana_runtime::{bank::Bank, bank_client::BankClient},
         solana_sdk::{
             fee_calculator::FeeRateGovernor, genesis_config::create_genesis_config,
-            native_token::gth_to_lamports,
+            native_token::gth_to_weis,
         },
     };
 
     #[test]
     fn test_bench_tps_bank_client() {
-        let (genesis_config, id) = create_genesis_config(gth_to_lamports(10_000.0));
+        let (genesis_config, id) = create_genesis_config(gth_to_weis(10_000.0));
         let bank = Bank::new_for_tests(&genesis_config);
         let client = Arc::new(BankClient::new(bank));
 
@@ -945,42 +945,42 @@ mod tests {
 
     #[test]
     fn test_bench_tps_fund_keys() {
-        let (genesis_config, id) = create_genesis_config(gth_to_lamports(10_000.0));
+        let (genesis_config, id) = create_genesis_config(gth_to_weis(10_000.0));
         let bank = Bank::new_for_tests(&genesis_config);
         let client = Arc::new(BankClient::new(bank));
         let keypair_count = 20;
-        let lamports = 20;
+        let weis = 20;
         let rent = client.get_minimum_balance_for_rent_exemption(0).unwrap();
 
         let keypairs =
-            generate_and_fund_keypairs(client.clone(), &id, keypair_count, lamports).unwrap();
+            generate_and_fund_keypairs(client.clone(), &id, keypair_count, weis).unwrap();
 
         for kp in &keypairs {
             assert_eq!(
                 client
                     .get_balance_with_commitment(&kp.pubkey(), CommitmentConfig::processed())
                     .unwrap(),
-                lamports + rent
+                weis + rent
             );
         }
     }
 
     #[test]
     fn test_bench_tps_fund_keys_with_fees() {
-        let (mut genesis_config, id) = create_genesis_config(gth_to_lamports(10_000.0));
+        let (mut genesis_config, id) = create_genesis_config(gth_to_weis(10_000.0));
         let fee_rate_governor = FeeRateGovernor::new(11, 0);
         genesis_config.fee_rate_governor = fee_rate_governor;
         let bank = Bank::new_for_tests(&genesis_config);
         let client = Arc::new(BankClient::new(bank));
         let keypair_count = 20;
-        let lamports = 20;
+        let weis = 20;
         let rent = client.get_minimum_balance_for_rent_exemption(0).unwrap();
 
         let keypairs =
-            generate_and_fund_keypairs(client.clone(), &id, keypair_count, lamports).unwrap();
+            generate_and_fund_keypairs(client.clone(), &id, keypair_count, weis).unwrap();
 
         for kp in &keypairs {
-            assert_eq!(client.get_balance(&kp.pubkey()).unwrap(), lamports + rent);
+            assert_eq!(client.get_balance(&kp.pubkey()).unwrap(), weis + rent);
         }
     }
 }

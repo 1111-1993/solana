@@ -46,7 +46,7 @@ extern uint64_t entrypoint(const uint8_t *input) {
     }
     gth_assert(params.ka_num == 4);
 
-    gth_assert(*accounts[ARGUMENT_INDEX].lamports == 42);
+    gth_assert(*accounts[ARGUMENT_INDEX].weis == 42);
     gth_assert(accounts[ARGUMENT_INDEX].data_len == 100);
     gth_assert(accounts[ARGUMENT_INDEX].is_signer);
     gth_assert(accounts[ARGUMENT_INDEX].is_writable);
@@ -58,7 +58,7 @@ extern uint64_t entrypoint(const uint8_t *input) {
 
     gth_assert(GthPubkey_same(accounts[INVOKED_ARGUMENT_INDEX].owner,
                               accounts[INVOKED_PROGRAM_INDEX].key));
-    gth_assert(*accounts[INVOKED_ARGUMENT_INDEX].lamports == 10);
+    gth_assert(*accounts[INVOKED_ARGUMENT_INDEX].weis == 10);
     gth_assert(accounts[INVOKED_ARGUMENT_INDEX].data_len == 10);
     gth_assert(accounts[INVOKED_ARGUMENT_INDEX].is_signer);
     gth_assert(accounts[INVOKED_ARGUMENT_INDEX].is_writable);
@@ -78,8 +78,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
                               accounts[INVOKED_PROGRAM_DUP_INDEX].key));
     gth_assert(GthPubkey_same(accounts[INVOKED_PROGRAM_INDEX].owner,
                               accounts[INVOKED_PROGRAM_DUP_INDEX].owner));
-    gth_assert(*accounts[INVOKED_PROGRAM_INDEX].lamports ==
-               *accounts[INVOKED_PROGRAM_DUP_INDEX].lamports);
+    gth_assert(*accounts[INVOKED_PROGRAM_INDEX].weis ==
+               *accounts[INVOKED_PROGRAM_DUP_INDEX].weis);
     gth_assert(accounts[INVOKED_PROGRAM_INDEX].is_signer ==
                accounts[INVOKED_PROGRAM_DUP_INDEX].is_signer);
     gth_assert(accounts[INVOKED_PROGRAM_INDEX].is_writable ==
@@ -234,8 +234,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
     gth_assert(accounts[INVOKED_ARGUMENT_INDEX].is_signer);
     gth_assert(accounts[ARGUMENT_INDEX].is_signer);
 
-    *accounts[INVOKED_ARGUMENT_INDEX].lamports -= 1;
-    *accounts[ARGUMENT_INDEX].lamports += 1;
+    *accounts[INVOKED_ARGUMENT_INDEX].weis -= 1;
+    *accounts[ARGUMENT_INDEX].weis += 1;
 
     uint8_t remaining_invokes = params.data[1];
     if (remaining_invokes > 1) {

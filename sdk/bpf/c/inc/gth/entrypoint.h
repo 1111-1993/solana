@@ -15,7 +15,7 @@ extern "C" {
  */
 typedef struct {
   GthPubkey *key;      /** Public key of the account */
-  uint64_t *lamports;  /** Number of lamports owned by this account */
+  uint64_t *weis;  /** Number of weis owned by this account */
   uint64_t data_len;   /** Length of data in bytes */
   uint8_t *data;       /** On-chain data within this account */
   GthPubkey *owner;    /** Program that owns this account */

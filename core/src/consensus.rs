@@ -1401,10 +1401,10 @@ pub mod test {
     fn gen_stakes(stake_votes: &[(u64, &[u64])]) -> HashMap<Pubkey, (u64, VoteAccount)> {
         stake_votes
             .iter()
-            .map(|(lamports, votes)| {
+            .map(|(weis, votes)| {
                 let mut account = AccountSharedData::from(Account {
                     data: vec![0; VoteState::size_of()],
-                    lamports: *lamports,
+                    weis: *weis,
                     ..Account::default()
                 });
                 let mut vote_state = VoteState::default();
@@ -1418,7 +1418,7 @@ pub mod test {
                 .expect("serialize state");
                 (
                     solana_sdk::pubkey::new_rand(),
-                    (*lamports, VoteAccount::from(account)),
+                    (*weis, VoteAccount::from(account)),
                 )
             })
             .collect()
@@ -2355,12 +2355,12 @@ pub mod test {
     fn test_stake_is_updated_for_entire_branch() {
         let mut voted_stakes = HashMap::new();
         let account = AccountSharedData::from(Account {
-            lamports: 1,
+            weis: 1,
             ..Account::default()
         });
         let set: HashSet<u64> = vec![0u64, 1u64].into_iter().collect();
         let ancestors: HashMap<u64, HashSet<u64>> = [(2u64, set)].iter().cloned().collect();
-        Tower::update_ancestor_voted_stakes(&mut voted_stakes, 2, account.lamports(), &ancestors);
+        Tower::update_ancestor_voted_stakes(&mut voted_stakes, 2, account.weis(), &ancestors);
         assert_eq!(voted_stakes[&0], 1);
         assert_eq!(voted_stakes[&1], 1);
         assert_eq!(voted_stakes[&2], 1);

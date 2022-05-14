@@ -20,7 +20,7 @@ fn create_inputs() -> TransactionContext {
         (
             program_id,
             AccountSharedData::from(Account {
-                lamports: 0,
+                weis: 0,
                 data: vec![],
                 owner: bpf_loader::id(),
                 executable: true,
@@ -30,7 +30,7 @@ fn create_inputs() -> TransactionContext {
         (
             solana_sdk::pubkey::new_rand(),
             AccountSharedData::from(Account {
-                lamports: 1,
+                weis: 1,
                 data: vec![1u8; 100000],
                 owner: bpf_loader::id(),
                 executable: false,
@@ -40,7 +40,7 @@ fn create_inputs() -> TransactionContext {
         (
             solana_sdk::pubkey::new_rand(),
             AccountSharedData::from(Account {
-                lamports: 2,
+                weis: 2,
                 data: vec![11u8; 100000],
                 owner: bpf_loader::id(),
                 executable: true,
@@ -50,7 +50,7 @@ fn create_inputs() -> TransactionContext {
         (
             solana_sdk::pubkey::new_rand(),
             AccountSharedData::from(Account {
-                lamports: 3,
+                weis: 3,
                 data: vec![],
                 owner: bpf_loader::id(),
                 executable: false,
@@ -60,7 +60,7 @@ fn create_inputs() -> TransactionContext {
         (
             solana_sdk::pubkey::new_rand(),
             AccountSharedData::from(Account {
-                lamports: 4,
+                weis: 4,
                 data: vec![1u8; 100000],
                 owner: bpf_loader::id(),
                 executable: false,
@@ -70,7 +70,7 @@ fn create_inputs() -> TransactionContext {
         (
             solana_sdk::pubkey::new_rand(),
             AccountSharedData::from(Account {
-                lamports: 5,
+                weis: 5,
                 data: vec![11u8; 10000],
                 owner: bpf_loader::id(),
                 executable: true,
@@ -80,7 +80,7 @@ fn create_inputs() -> TransactionContext {
         (
             solana_sdk::pubkey::new_rand(),
             AccountSharedData::from(Account {
-                lamports: 6,
+                weis: 6,
                 data: vec![],
                 owner: bpf_loader::id(),
                 executable: false,

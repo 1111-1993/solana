@@ -311,7 +311,7 @@ export type VoteAccountInfo = {
   votePubkey: string;
   /** Identity public key of the node voting with this account */
   nodePubkey: string;
-  /** The stake, in lamports, delegated to this vote account and activated */
+  /** The stake, in weis, delegated to this vote account and activated */
   activatedStake: number;
   /** Whether the vote account is staked for this epoch */
   epochVoteAccount: boolean;
@@ -361,9 +361,9 @@ export type InflationReward = {
   epoch: number;
   /** the slot in which the rewards are effective */
   effectiveSlot: number;
-  /** reward amount in lamports */
+  /** reward amount in weis */
   amount: number;
-  /** post balance of the account in lamports */
+  /** post balance of the account in weis */
   postBalance: number;
 };
 
@@ -458,8 +458,8 @@ export type SimulatedTransactionAccountInfo = {
   executable: boolean;
   /** Identifier of the program that owns the account */
   owner: string;
-  /** Number of lamports assigned to the account */
-  lamports: number;
+  /** Number of weis assigned to the account */
+  weis: number;
   /** Optional data assigned to the account */
   data: string[];
   /** Optional rent epoch info for account */
@@ -484,7 +484,7 @@ const SimulatedTransactionResponseStruct = jsonRpcResultAndContext(
             pick({
               executable: boolean(),
               owner: string(),
-              lamports: number(),
+              weis: number(),
               data: array(string()),
               rentEpoch: optional(number()),
             }),
@@ -702,8 +702,8 @@ export type BlockResponse = {
   rewards?: Array<{
     /** Public key of reward recipient */
     pubkey: string;
-    /** Reward value in lamports */
-    lamports: number;
+    /** Reward value in weis */
+    weis: number;
     /** Account balance after reward is applied */
     postBalance: number | null;
     /** Type of reward received */
@@ -731,7 +731,7 @@ export type ConfirmedBlock = {
   /** Vector of block rewards */
   rewards?: Array<{
     pubkey: string;
-    lamports: number;
+    weis: number;
     postBalance: number | null;
     rewardType: string | null;
   }>;
@@ -924,11 +924,11 @@ const SlotRpcResult = jsonRpcResult(number());
  * Supply
  */
 export type Supply = {
-  /** Total supply in lamports */
+  /** Total supply in weis */
   total: number;
-  /** Circulating supply in lamports */
+  /** Circulating supply in weis */
   circulating: number;
-  /** Non-circulating supply in lamports */
+  /** Non-circulating supply in weis */
   nonCirculating: number;
   /** List of non-circulating account addresses */
   nonCirculatingAccounts: Array<PublicKey>;
@@ -1012,7 +1012,7 @@ const GetTokenAccountsByOwner = jsonRpcResultAndContext(
       account: pick({
         executable: boolean(),
         owner: PublicKeyFromString,
-        lamports: number(),
+        weis: number(),
         data: BufferFromRawAccountData,
         rentEpoch: number(),
       }),
@@ -1036,7 +1036,7 @@ const GetParsedTokenAccountsByOwner = jsonRpcResultAndContext(
       account: pick({
         executable: boolean(),
         owner: PublicKeyFromString,
-        lamports: number(),
+        weis: number(),
         data: ParsedAccountDataResult,
         rentEpoch: number(),
       }),
@@ -1049,7 +1049,7 @@ const GetParsedTokenAccountsByOwner = jsonRpcResultAndContext(
  */
 export type AccountBalancePair = {
   address: PublicKey;
-  lamports: number;
+  weis: number;
 };
 
 /**
@@ -1058,7 +1058,7 @@ export type AccountBalancePair = {
 const GetLargestAccountsRpcResult = jsonRpcResultAndContext(
   array(
     pick({
-      lamports: number(),
+      weis: number(),
       address: PublicKeyFromString,
     }),
   ),
@@ -1070,7 +1070,7 @@ const GetLargestAccountsRpcResult = jsonRpcResultAndContext(
 const AccountInfoResult = pick({
   executable: boolean(),
   owner: PublicKeyFromString,
-  lamports: number(),
+  weis: number(),
   data: BufferFromRawAccountData,
   rentEpoch: number(),
 });
@@ -1101,7 +1101,7 @@ const ParsedOrRawAccountData = coerce(
 const ParsedAccountInfoResult = pick({
   executable: boolean(),
   owner: PublicKeyFromString,
-  lamports: number(),
+  weis: number(),
   data: ParsedOrRawAccountData,
   rentEpoch: number(),
 });
@@ -1533,7 +1533,7 @@ const GetBlockRpcResult = jsonRpcResult(
         array(
           pick({
             pubkey: string(),
-            lamports: number(),
+            weis: number(),
             postBalance: nullable(number()),
             rewardType: nullable(string()),
           }),
@@ -1566,7 +1566,7 @@ const GetConfirmedBlockRpcResult = jsonRpcResult(
         array(
           pick({
             pubkey: string(),
-            lamports: number(),
+            weis: number(),
             postBalance: nullable(number()),
             rewardType: nullable(string()),
           }),
@@ -1629,7 +1629,7 @@ const GetRecentBlockhashAndContextRpcResult = jsonRpcResultAndContext(
   pick({
     blockhash: string(),
     feeCalculator: pick({
-      lamportsPerSignature: number(),
+      weisPerSignature: number(),
     }),
   }),
 );
@@ -1665,7 +1665,7 @@ const GetFeeCalculatorRpcResult = jsonRpcResultAndContext(
   nullable(
     pick({
       feeCalculator: pick({
-        lamportsPerSignature: number(),
+        weisPerSignature: number(),
       }),
     }),
   ),
@@ -1796,8 +1796,8 @@ export type AccountInfo<T> = {
   executable: boolean;
   /** Identifier of the program that owns the account */
   owner: PublicKey;
-  /** Number of lamports assigned to the account */
-  lamports: number;
+  /** Number of weis assigned to the account */
+  weis: number;
   /** Optional data assigned to the account */
   data: T;
   /** Optional rent epoch info for account */
@@ -2908,7 +2908,7 @@ export class Connection {
   }
 
   /**
-   * Fetch the current total currency supply of the cluster in lamports
+   * Fetch the current total currency supply of the cluster in weis
    *
    * @deprecated Deprecated since v1.2.8. Please use {@link getSupply} instead.
    */
@@ -3694,26 +3694,26 @@ export class Connection {
   }
 
   /**
-   * Request an allocation of lamports to the specified address
+   * Request an allocation of weis to the specified address
    *
    * ```typescript
-   * import { Connection, PublicKey, LAMPORTS_PER_GTH } from "@solana/web3.js";
+   * import { Connection, PublicKey, WEIS_PER_GTH } from "@solana/web3.js";
    *
    * (async () => {
    *   const connection = new Connection("https://api.testnet.solana.com", "confirmed");
    *   const myAddress = new PublicKey("2nr1bHFT86W9tGnyvmYW4vcHKsQB3sVQfnddasz4kExM");
-   *   const signature = await connection.requestAirdrop(myAddress, LAMPORTS_PER_GTH);
+   *   const signature = await connection.requestAirdrop(myAddress, WEIS_PER_GTH);
    *   await connection.confirmTransaction(signature);
    * })();
    * ```
    */
   async requestAirdrop(
     to: PublicKey,
-    lamports: number,
+    weis: number,
   ): Promise<TransactionSignature> {
     const unsafeRes = await this._rpcRequest('requestAirdrop', [
       to.toBase58(),
-      lamports,
+      weis,
     ]);
     const res = create(unsafeRes, RequestAirdropRpcResult);
     if ('error' in res) {

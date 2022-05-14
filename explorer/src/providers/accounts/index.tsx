@@ -94,7 +94,7 @@ export interface Details {
 
 export interface Account {
   pubkey: PublicKey;
-  lamports: number;
+  weis: number;
   details?: Details;
 }
 
@@ -148,11 +148,11 @@ async function fetchAccountInfo(
     const connection = new Connection(url, "confirmed");
     const result = (await connection.getParsedAccountInfo(pubkey)).value;
 
-    let lamports, details;
+    let weis, details;
     if (result === null) {
-      lamports = 0;
+      weis = 0;
     } else {
-      lamports = result.lamports;
+      weis = result.weis;
 
       // Only save data in memory if we can decode it
       let space: number;
@@ -291,7 +291,7 @@ async function fetchAccountInfo(
         data,
       };
     }
-    data = { pubkey, lamports, details };
+    data = { pubkey, weis, details };
     fetchStatus = FetchStatus.Fetched;
   } catch (error) {
     if (cluster !== Cluster.Custom) {

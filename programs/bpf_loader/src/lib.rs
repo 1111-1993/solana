@@ -523,7 +523,7 @@ fn process_loader_upgradeable_instruction(
                 ic_logger_msg!(log_collector, "Program account too small");
                 return Err(InstructionError::AccountDataTooSmall);
             }
-            if program.lamports()? < rent.minimum_balance(program.data_len()?) {
+            if program.weis()? < rent.minimum_balance(program.data_len()?) {
                 ic_logger_msg!(log_collector, "Program account not rent-exempt");
                 return Err(InstructionError::ExecutableAccountNotRentExempt);
             }
@@ -585,8 +585,8 @@ fn process_loader_upgradeable_instruction(
                 // Drain the Buffer account to payer before paying for programdata account
                 payer
                     .try_account_ref_mut()?
-                    .checked_add_lamports(buffer.lamports()?)?;
-                buffer.try_account_ref_mut()?.set_lamports(0);
+                    .checked_add_weis(buffer.weis()?)?;
+                buffer.try_account_ref_mut()?.set_weis(0);
             }
 
             let mut instruction = system_instruction::create_account(
@@ -667,8 +667,8 @@ fn process_loader_upgradeable_instruction(
                 // Drain the Buffer account back to the payer
                 payer
                     .try_account_ref_mut()?
-                    .checked_add_lamports(buffer.lamports()?)?;
-                buffer.try_account_ref_mut()?.set_lamports(0);
+                    .checked_add_weis(buffer.weis()?)?;
+                buffer.try_account_ref_mut()?.set_weis(0);
             }
 
             ic_logger_msg!(log_collector, "Deployed program {:?}", new_program_id);
@@ -765,7 +765,7 @@ fn process_loader_upgradeable_instruction(
                 ic_logger_msg!(log_collector, "ProgramData account not large enough");
                 return Err(InstructionError::AccountDataTooSmall);
             }
-            if programdata.lamports()?.saturating_add(buffer.lamports()?)
+            if programdata.weis()?.saturating_add(buffer.weis()?)
                 < programdata_balance_required
             {
                 ic_logger_msg!(
@@ -851,16 +851,16 @@ fn process_loader_upgradeable_instruction(
 
             // Fund ProgramData to rent-exemption, spill the rest
 
-            spill.try_account_ref_mut()?.checked_add_lamports(
+            spill.try_account_ref_mut()?.checked_add_weis(
                 programdata
-                    .lamports()?
-                    .saturating_add(buffer.lamports()?)
+                    .weis()?
+                    .saturating_add(buffer.weis()?)
                     .saturating_sub(programdata_balance_required),
             )?;
-            buffer.try_account_ref_mut()?.set_lamports(0);
+            buffer.try_account_ref_mut()?.set_weis(0);
             programdata
                 .try_account_ref_mut()?
-                .set_lamports(programdata_balance_required);
+                .set_weis(programdata_balance_required);
 
             ic_logger_msg!(log_collector, "Upgraded program {:?}", new_program_id);
         }
@@ -944,8 +944,8 @@ fn process_loader_upgradeable_instruction(
                 UpgradeableLoaderState::Uninitialized => {
                     recipient_account
                         .try_account_ref_mut()?
-                        .checked_add_lamports(close_account.lamports()?)?;
-                    close_account.try_account_ref_mut()?.set_lamports(0);
+                        .checked_add_weis(close_account.weis()?)?;
+                    close_account.try_account_ref_mut()?.set_weis(0);
 
                     ic_logger_msg!(
                         log_collector,
@@ -1060,8 +1060,8 @@ fn common_close_account(
 
     recipient_account
         .try_account_ref_mut()?
-        .checked_add_lamports(close_account.lamports()?)?;
-    close_account.try_account_ref_mut()?.set_lamports(0);
+        .checked_add_weis(close_account.weis()?)?;
+    close_account.try_account_ref_mut()?.set_weis(0);
     close_account.set_state(&UpgradeableLoaderState::Uninitialized)?;
     Ok(())
 }
@@ -1303,7 +1303,7 @@ mod tests {
             genesis_config::create_genesis_config,
             instruction::{AccountMeta, Instruction, InstructionError},
             message::Message,
-            native_token::LAMPORTS_PER_GTH,
+            native_token::WEIS_PER_GTH,
             pubkey::Pubkey,
             rent::Rent,
             signature::{Keypair, Signer},
@@ -2089,10 +2089,10 @@ mod tests {
         );
 
         // Test successful deploy
-        let payer_base_balance = LAMPORTS_PER_GTH;
+        let payer_base_balance = WEIS_PER_GTH;
         let deploy_fees = {
             let fee_calculator = genesis_config.fee_rate_governor.create_fee_calculator();
-            3 * fee_calculator.lamports_per_signature
+            3 * fee_calculator.weis_per_signature
         };
         let min_payer_balance = min_program_balance
             .saturating_add(min_programdata_balance)
@@ -2133,7 +2133,7 @@ mod tests {
         assert_eq!(bank.get_balance(&buffer_address), 0);
         assert_eq!(None, bank.get_account(&buffer_address));
         let post_program_account = bank.get_account(&program_keypair.pubkey()).unwrap();
-        assert_eq!(post_program_account.lamports(), min_program_balance);
+        assert_eq!(post_program_account.weis(), min_program_balance);
         assert_eq!(post_program_account.owner(), &bpf_loader_upgradeable::id());
         assert_eq!(
             post_program_account.data().len(),
@@ -2147,7 +2147,7 @@ mod tests {
             }
         );
         let post_programdata_account = bank.get_account(&programdata_address).unwrap();
-        assert_eq!(post_programdata_account.lamports(), min_programdata_balance);
+        assert_eq!(post_programdata_account.weis(), min_programdata_balance);
         assert_eq!(
             post_programdata_account.owner(),
             &bpf_loader_upgradeable::id()
@@ -2426,7 +2426,7 @@ mod tests {
         );
 
         // Test Insufficient payer funds (need more funds to cover the
-        // difference between buffer lamports and programdata lamports)
+        // difference between buffer weis and programdata weis)
         bank.clear_signatures();
         bank.store_account(
             &mint_keypair.pubkey(),
@@ -2501,7 +2501,7 @@ mod tests {
             &AccountSharedData::new(u64::MAX / 2, 0, &system_program::id()),
         );
         let mut modified_buffer_account = buffer_account.clone();
-        modified_buffer_account.set_lamports(u64::MAX / 2);
+        modified_buffer_account.set_weis(u64::MAX / 2);
         bank.store_account(&buffer_address, &modified_buffer_account);
         bank.store_account(&program_keypair.pubkey(), &AccountSharedData::default());
         bank.store_account(&programdata_address, &AccountSharedData::default());
@@ -2880,10 +2880,10 @@ mod tests {
         );
         assert_eq!(
             min_programdata_balance,
-            accounts.first().unwrap().lamports()
+            accounts.first().unwrap().weis()
         );
-        assert_eq!(0, accounts.get(2).unwrap().lamports());
-        assert_eq!(1, accounts.get(3).unwrap().lamports());
+        assert_eq!(0, accounts.get(2).unwrap().weis());
+        assert_eq!(1, accounts.get(3).unwrap().weis());
         let state: UpgradeableLoaderState = accounts.first().unwrap().state().unwrap();
         assert_eq!(
             state,
@@ -3630,8 +3630,8 @@ mod tests {
             ],
             Ok(()),
         );
-        assert_eq!(0, accounts.first().unwrap().lamports());
-        assert_eq!(2, accounts.get(1).unwrap().lamports());
+        assert_eq!(0, accounts.first().unwrap().weis());
+        assert_eq!(2, accounts.get(1).unwrap().weis());
         let state: UpgradeableLoaderState = accounts.first().unwrap().state().unwrap();
         assert_eq!(state, UpgradeableLoaderState::Uninitialized);
 
@@ -3678,8 +3678,8 @@ mod tests {
             ],
             Ok(()),
         );
-        assert_eq!(0, accounts.first().unwrap().lamports());
-        assert_eq!(2, accounts.get(1).unwrap().lamports());
+        assert_eq!(0, accounts.first().unwrap().weis());
+        assert_eq!(2, accounts.get(1).unwrap().weis());
         let state: UpgradeableLoaderState = accounts.first().unwrap().state().unwrap();
         assert_eq!(state, UpgradeableLoaderState::Uninitialized);
 
@@ -3710,8 +3710,8 @@ mod tests {
             ],
             Ok(()),
         );
-        assert_eq!(0, accounts.first().unwrap().lamports());
-        assert_eq!(2, accounts.get(1).unwrap().lamports());
+        assert_eq!(0, accounts.first().unwrap().weis());
+        assert_eq!(2, accounts.get(1).unwrap().weis());
         let state: UpgradeableLoaderState = accounts.first().unwrap().state().unwrap();
         assert_eq!(state, UpgradeableLoaderState::Uninitialized);
 

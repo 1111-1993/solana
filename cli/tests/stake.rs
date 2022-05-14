@@ -1143,7 +1143,7 @@ fn test_stake_split() {
         memo: None,
         split_stake_account: 1,
         seed: None,
-        lamports: 2 * minimum_stake_balance,
+        weis: 2 * minimum_stake_balance,
         fee_payer: 0,
     };
     config_offline.output_format = OutputFormat::JsonCompact;
@@ -1166,7 +1166,7 @@ fn test_stake_split() {
         memo: None,
         split_stake_account: 1,
         seed: None,
-        lamports: 2 * minimum_stake_balance,
+        weis: 2 * minimum_stake_balance,
         fee_payer: 0,
     };
     process_command(&config).unwrap();

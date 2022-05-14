@@ -266,7 +266,7 @@ pub fn run_cluster_partition<C>(
         .flat_map(|p| p.iter().map(|stake_weight| 100 * *stake_weight as u64))
         .collect();
     assert_eq!(node_stakes.len(), num_nodes);
-    let cluster_lamports = node_stakes.iter().sum::<u64>() * 2;
+    let cluster_weis = node_stakes.iter().sum::<u64>() * 2;
     let enable_partition = Arc::new(AtomicBool::new(true));
     let mut validator_config = ValidatorConfig {
         enable_partition: Some(enable_partition.clone()),
@@ -302,7 +302,7 @@ pub fn run_cluster_partition<C>(
 
     let slots_per_epoch = 2048;
     let mut config = ClusterConfig {
-        cluster_lamports,
+        cluster_weis,
         node_stakes,
         validator_configs: make_identical_validator_configs(&validator_config, num_nodes),
         validator_keys: Some(
@@ -403,7 +403,7 @@ pub fn test_faulty_node(
     assert_eq!(validator_keys.len(), num_nodes);
 
     let mut cluster_config = ClusterConfig {
-        cluster_lamports: 10_000,
+        cluster_weis: 10_000,
         node_stakes,
         validator_configs,
         validator_keys: Some(validator_keys.clone()),

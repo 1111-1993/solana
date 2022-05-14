@@ -21,19 +21,19 @@ pub fn from<T: ReadableAccount>(account: &T) -> Option<Config> {
         .and_then(|data| deserialize(data).ok())
 }
 
-pub fn create_account(lamports: u64, config: &Config) -> AccountSharedData {
-    create_config_account(vec![], config, lamports)
+pub fn create_account(weis: u64, config: &Config) -> AccountSharedData {
+    create_config_account(vec![], config, weis)
 }
 
 pub fn add_genesis_account(genesis_config: &mut GenesisConfig) -> u64 {
     let mut account = create_config_account(vec![], &Config::default(), 0);
-    let lamports = genesis_config.rent.minimum_balance(account.data().len());
+    let weis = genesis_config.rent.minimum_balance(account.data().len());
 
-    account.set_lamports(lamports.max(1));
+    account.set_weis(weis.max(1));
 
     genesis_config.add_account(config::id(), account);
 
-    lamports
+    weis
 }
 
 #[cfg(test)]

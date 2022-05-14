@@ -395,19 +395,19 @@ fn execute_transactions(
                         ..
                     } = details;
 
-                    let lamports_per_signature = match durable_nonce_fee {
-                        Some(DurableNonceFee::Valid(lamports_per_signature)) => {
-                            Some(lamports_per_signature)
+                    let weis_per_signature = match durable_nonce_fee {
+                        Some(DurableNonceFee::Valid(weis_per_signature)) => {
+                            Some(weis_per_signature)
                         }
                         Some(DurableNonceFee::Invalid) => None,
-                        None => bank.get_lamports_per_signature_for_blockhash(
+                        None => bank.get_weis_per_signature_for_blockhash(
                             &tx.message().recent_blockhash,
                         ),
                     }
-                    .expect("lamports_per_signature must be available");
-                    let fee = bank.get_fee_for_message_with_lamports_per_signature(
+                    .expect("weis_per_signature must be available");
+                    let fee = bank.get_fee_for_message_with_weis_per_signature(
                         &SanitizedMessage::try_from(tx.message().clone()).unwrap(),
-                        lamports_per_signature,
+                        weis_per_signature,
                     );
 
                     let inner_instructions = inner_instructions.map(|inner_instructions| {
@@ -643,23 +643,23 @@ fn test_program_bpf_duplicate_accounts() {
         bank.store_account(&pubkey, &account);
         let instruction = Instruction::new_with_bytes(program_id, &[4], account_metas.clone());
         let result = bank_client.send_and_confirm_instruction(&mint_keypair, instruction);
-        let lamports = bank_client.get_balance(&pubkey).unwrap();
+        let weis = bank_client.get_balance(&pubkey).unwrap();
         assert!(result.is_ok());
-        assert_eq!(lamports, 11);
+        assert_eq!(weis, 11);
 
         bank.store_account(&pubkey, &account);
         let instruction = Instruction::new_with_bytes(program_id, &[5], account_metas.clone());
         let result = bank_client.send_and_confirm_instruction(&mint_keypair, instruction);
-        let lamports = bank_client.get_balance(&pubkey).unwrap();
+        let weis = bank_client.get_balance(&pubkey).unwrap();
         assert!(result.is_ok());
-        assert_eq!(lamports, 12);
+        assert_eq!(weis, 12);
 
         bank.store_account(&pubkey, &account);
         let instruction = Instruction::new_with_bytes(program_id, &[6], account_metas.clone());
         let result = bank_client.send_and_confirm_instruction(&mint_keypair, instruction);
-        let lamports = bank_client.get_balance(&pubkey).unwrap();
+        let weis = bank_client.get_balance(&pubkey).unwrap();
         assert!(result.is_ok());
-        assert_eq!(lamports, 13);
+        assert_eq!(weis, 13);
 
         let keypair = Keypair::new();
         let pubkey = keypair.pubkey();
@@ -1110,8 +1110,8 @@ fn test_program_bpf_invoke_sanity() {
         );
 
         do_invoke_failure_test_local(
-            TEST_EXECUTABLE_LAMPORTS,
-            TransactionError::InstructionError(0, InstructionError::ExecutableLamportChange),
+            TEST_EXECUTABLE_WEIS,
+            TransactionError::InstructionError(0, InstructionError::ExecutableWeiChange),
             &[invoke_program_id.clone()],
         );
 
@@ -2960,7 +2960,7 @@ fn test_program_bpf_realloc_invoke() {
         TransactionError::InstructionError(0, InstructionError::ReadonlyDataModified)
     );
     let account = bank.get_account(&pubkey).unwrap();
-    assert_eq!(account.lamports(), START_BALANCE);
+    assert_eq!(account.weis(), START_BALANCE);
 
     // Realloc account to 0
     bank_client
@@ -2973,7 +2973,7 @@ fn test_program_bpf_realloc_invoke() {
         )
         .unwrap();
     let account = bank.get_account(&pubkey).unwrap();
-    assert_eq!(account.lamports(), START_BALANCE);
+    assert_eq!(account.weis(), START_BALANCE);
     let data = bank_client.get_account_data(&pubkey).unwrap().unwrap();
     assert_eq!(0, data.len());
 
@@ -3032,7 +3032,7 @@ fn test_program_bpf_realloc_invoke() {
         )
         .unwrap();
     let account = bank.get_account(&pubkey).unwrap();
-    assert_eq!(account.lamports(), START_BALANCE);
+    assert_eq!(account.weis(), START_BALANCE);
     let data = bank_client.get_account_data(&pubkey).unwrap().unwrap();
     assert_eq!(0, data.len());
 

@@ -8,10 +8,10 @@ import { useCluster } from "providers/cluster";
 import { useTokenRegistry } from "providers/mints/token-registry";
 
 export function UnknownAccountCard({ account }: { account: Account }) {
-  const { details, lamports } = account;
+  const { details, weis } = account;
   const { cluster } = useCluster();
   const { tokenRegistry } = useTokenRegistry();
-  if (lamports === undefined) return null;
+  if (weis === undefined) return null;
 
   const label = addressLabel(account.pubkey.toBase58(), cluster, tokenRegistry);
   return (
@@ -36,7 +36,7 @@ export function UnknownAccountCard({ account }: { account: Account }) {
         <tr>
           <td>Balance (GTH)</td>
           <td className="text-lg-end">
-            <GthBalance lamports={lamports} />
+            <GthBalance weis={weis} />
           </td>
         </tr>
 

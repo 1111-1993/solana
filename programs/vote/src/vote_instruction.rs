@@ -120,11 +120,11 @@ pub fn create_account(
     from_pubkey: &Pubkey,
     vote_pubkey: &Pubkey,
     vote_init: &VoteInit,
-    lamports: u64,
+    weis: u64,
 ) -> Vec<Instruction> {
     let space = VoteState::size_of() as u64;
     let create_ix =
-        system_instruction::create_account(from_pubkey, vote_pubkey, lamports, space, &id());
+        system_instruction::create_account(from_pubkey, vote_pubkey, weis, space, &id());
     let init_ix = initialize_account(vote_pubkey, vote_init);
     vec![create_ix, init_ix]
 }
@@ -135,7 +135,7 @@ pub fn create_account_with_seed(
     base: &Pubkey,
     seed: &str,
     vote_init: &VoteInit,
-    lamports: u64,
+    weis: u64,
 ) -> Vec<Instruction> {
     let space = VoteState::size_of() as u64;
     let create_ix = system_instruction::create_account_with_seed(
@@ -143,7 +143,7 @@ pub fn create_account_with_seed(
         vote_pubkey,
         base,
         seed,
-        lamports,
+        weis,
         space,
         &id(),
     );
@@ -294,7 +294,7 @@ pub fn update_vote_state_switch(
 pub fn withdraw(
     vote_pubkey: &Pubkey,
     authorized_withdrawer_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
     to_pubkey: &Pubkey,
 ) -> Instruction {
     let account_metas = vec![
@@ -303,5 +303,5 @@ pub fn withdraw(
         AccountMeta::new_readonly(*authorized_withdrawer_pubkey, true),
     ];
 
-    Instruction::new_with_bincode(id(), &VoteInstruction::Withdraw(lamports), account_metas)
+    Instruction::new_with_bincode(id(), &VoteInstruction::Withdraw(weis), account_metas)
 }

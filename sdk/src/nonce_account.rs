@@ -8,10 +8,10 @@ use {
     std::cell::RefCell,
 };
 
-pub fn create_account(lamports: u64) -> RefCell<AccountSharedData> {
+pub fn create_account(weis: u64) -> RefCell<AccountSharedData> {
     RefCell::new(
         AccountSharedData::new_data_with_space(
-            lamports,
+            weis,
             &Versions::new_current(State::Uninitialized),
             State::size(),
             &crate::system_program::id(),
@@ -30,12 +30,12 @@ pub fn verify_nonce_account(acc: &AccountSharedData, hash: &Hash) -> bool {
     }
 }
 
-pub fn lamports_per_signature_of(account: &AccountSharedData) -> Option<u64> {
+pub fn weis_per_signature_of(account: &AccountSharedData) -> Option<u64> {
     let state = StateMut::<Versions>::state(account)
         .ok()?
         .convert_to_current();
     match state {
-        State::Initialized(data) => Some(data.fee_calculator.lamports_per_signature),
+        State::Initialized(data) => Some(data.fee_calculator.weis_per_signature),
         _ => None,
     }
 }

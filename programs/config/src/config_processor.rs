@@ -204,7 +204,7 @@ mod tests {
         let system_instruction = limited_deserialize(&instructions[0].data).unwrap();
         let space = match system_instruction {
             SystemInstruction::CreateAccount {
-                lamports: _,
+                weis: _,
                 space,
                 owner: _,
             } => space,

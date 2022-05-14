@@ -11,7 +11,7 @@ import {
   EpochSchedule,
   SystemProgram,
   Transaction,
-  LAMPORTS_PER_GTH,
+  WEIS_PER_GTH,
   Lockup,
   PublicKey,
   StakeProgram,
@@ -193,27 +193,27 @@ describe('Connection', () => {
       await helpers.airdrop({
         connection,
         address: account1.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
 
       await helpers.airdrop({
         connection,
         address: account2.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
     }
 
     const value = [
       {
         owner: '11111111111111111111111111111111',
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         data: ['', 'base64'],
         executable: false,
         rentEpoch: 0,
       },
       {
         owner: '11111111111111111111111111111111',
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         data: ['', 'base64'],
         executable: false,
         rentEpoch: 0,
@@ -238,14 +238,14 @@ describe('Connection', () => {
     const expectedValue = [
       {
         owner: new PublicKey('11111111111111111111111111111111'),
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         data: Buffer.from([]),
         executable: false,
         rentEpoch: 0,
       },
       {
         owner: new PublicKey('11111111111111111111111111111111'),
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         data: Buffer.from([]),
         executable: false,
         rentEpoch: 0,
@@ -264,7 +264,7 @@ describe('Connection', () => {
       await helpers.airdrop({
         connection,
         address: account0.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
 
       const transaction = new Transaction().add(
@@ -286,7 +286,7 @@ describe('Connection', () => {
       await helpers.airdrop({
         connection,
         address: account1.publicKey,
-        amount: 0.5 * LAMPORTS_PER_GTH,
+        amount: 0.5 * WEIS_PER_GTH,
       });
 
       const transaction = new Transaction().add(
@@ -319,7 +319,7 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports: LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis: WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -329,8 +329,8 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports:
-                0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis:
+                0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -348,13 +348,13 @@ describe('Connection', () => {
       expect(programAccounts).to.have.length(2);
       programAccounts.forEach(function (keyedAccount) {
         if (keyedAccount.pubkey.equals(account0.publicKey)) {
-          expect(keyedAccount.account.lamports).to.eq(
-            LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+          expect(keyedAccount.account.weis).to.eq(
+            WEIS_PER_GTH - feeCalculator.weisPerSignature,
           );
         } else {
           expect(keyedAccount.pubkey).to.eql(account1.publicKey);
-          expect(keyedAccount.account.lamports).to.eq(
-            0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+          expect(keyedAccount.account.weis).to.eq(
+            0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
           );
         }
       });
@@ -372,7 +372,7 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports: LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis: WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -382,8 +382,8 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports:
-                0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis:
+                0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -399,13 +399,13 @@ describe('Connection', () => {
       expect(programAccounts).to.have.length(2);
       programAccounts.forEach(function (keyedAccount) {
         if (keyedAccount.pubkey.equals(account0.publicKey)) {
-          expect(keyedAccount.account.lamports).to.eq(
-            LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+          expect(keyedAccount.account.weis).to.eq(
+            WEIS_PER_GTH - feeCalculator.weisPerSignature,
           );
         } else {
           expect(keyedAccount.pubkey).to.eql(account1.publicKey);
-          expect(keyedAccount.account.lamports).to.eq(
-            0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+          expect(keyedAccount.account.weis).to.eq(
+            0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
           );
         }
       });
@@ -431,7 +431,7 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports: LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis: WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -441,8 +441,8 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports:
-                0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis:
+                0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -510,7 +510,7 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports: LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis: WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -520,8 +520,8 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports:
-                0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis:
+                0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -540,13 +540,13 @@ describe('Connection', () => {
 
       programAccounts.forEach(function (element) {
         if (element.pubkey.equals(account0.publicKey)) {
-          expect(element.account.lamports).to.eq(
-            LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+          expect(element.account.weis).to.eq(
+            WEIS_PER_GTH - feeCalculator.weisPerSignature,
           );
         } else {
           expect(element.pubkey).to.eql(account1.publicKey);
-          expect(element.account.lamports).to.eq(
-            0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+          expect(element.account.weis).to.eq(
+            0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
           );
         }
       });
@@ -601,7 +601,7 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports: LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis: WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -611,8 +611,8 @@ describe('Connection', () => {
             account: {
               data: ['', 'base64'],
               executable: false,
-              lamports:
-                0.5 * LAMPORTS_PER_GTH - feeCalculator.lamportsPerSignature,
+              weis:
+                0.5 * WEIS_PER_GTH - feeCalculator.weisPerSignature,
               owner: programId.publicKey.toBase58(),
               rentEpoch: 20,
             },
@@ -2277,7 +2277,7 @@ describe('Connection', () => {
         commitment,
       });
       expect(bs58.decode(blockhash)).to.have.length(32);
-      expect(feeCalculator.lamportsPerSignature).to.be.at.least(0);
+      expect(feeCalculator.weisPerSignature).to.be.at.least(0);
     }
   });
 
@@ -2300,7 +2300,7 @@ describe('Connection', () => {
       params: [blockhash, {commitment: 'confirmed'}],
       value: {
         feeCalculator: {
-          lamportsPerSignature: 5000,
+          weisPerSignature: 5000,
         },
       },
       withContext: true,
@@ -2313,7 +2313,7 @@ describe('Connection', () => {
       expect(feeCalculator).not.to.be.null;
       return;
     }
-    expect(feeCalculator.lamportsPerSignature).to.eq(5000);
+    expect(feeCalculator.weisPerSignature).to.eq(5000);
   });
 
   it('get fee for message', async () => {
@@ -2329,7 +2329,7 @@ describe('Connection', () => {
       SystemProgram.transfer({
         fromPubkey: accountFrom.publicKey,
         toPubkey: accountTo.publicKey,
-        lamports: 10,
+        weis: 10,
       }),
     );
     const message = transaction.compileMessage();
@@ -2691,14 +2691,14 @@ describe('Connection', () => {
       const recipient = Keypair.generate();
       let signature = await connection.requestAirdrop(
         sender.publicKey,
-        2 * LAMPORTS_PER_GTH,
+        2 * WEIS_PER_GTH,
       );
       await connection.confirmTransaction(signature, 'singleGossip');
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: sender.publicKey,
           toPubkey: recipient.publicKey,
-          lamports: LAMPORTS_PER_GTH,
+          weis: WEIS_PER_GTH,
         }),
       );
       await sendAndConfirmTransaction(connection, transaction, [sender]);
@@ -2711,7 +2711,7 @@ describe('Connection', () => {
       params: [],
       value: new Array(20).fill(0).map(() => ({
         address: Keypair.generate().publicKey.toBase58(),
-        lamports: 1000,
+        weis: 1000,
       })),
       withContext: true,
     });
@@ -2742,7 +2742,7 @@ describe('Connection', () => {
       const authorized = Keypair.generate();
       let signature = await connection.requestAirdrop(
         authorized.publicKey,
-        2 * LAMPORTS_PER_GTH,
+        2 * WEIS_PER_GTH,
       );
       await connection.confirmTransaction(signature, 'confirmed');
 
@@ -2756,7 +2756,7 @@ describe('Connection', () => {
         stakePubkey: newStakeAccount.publicKey,
         authorized: new Authorized(authorized.publicKey, authorized.publicKey),
         lockup: new Lockup(0, 0, new PublicKey(0)),
-        lamports: minimumAmount + 42,
+        weis: minimumAmount + 42,
       });
 
       await sendAndConfirmTransaction(
@@ -2858,18 +2858,18 @@ describe('Connection', () => {
     await helpers.airdrop({
       connection,
       address: account.publicKey,
-      amount: LAMPORTS_PER_GTH,
+      amount: WEIS_PER_GTH,
     });
 
     await mockRpcResponse({
       method: 'getBalance',
       params: [account.publicKey.toBase58(), {commitment: 'confirmed'}],
-      value: LAMPORTS_PER_GTH,
+      value: WEIS_PER_GTH,
       withContext: true,
     });
 
     const balance = await connection.getBalance(account.publicKey, 'confirmed');
-    expect(balance).to.eq(LAMPORTS_PER_GTH);
+    expect(balance).to.eq(WEIS_PER_GTH);
 
     await mockRpcResponse({
       method: 'getAccountInfo',
@@ -2879,7 +2879,7 @@ describe('Connection', () => {
       ],
       value: {
         owner: '11111111111111111111111111111111',
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         data: ['', 'base64'],
         executable: false,
         rentEpoch: 20,
@@ -2895,7 +2895,7 @@ describe('Connection', () => {
       expect(accountInfo).not.to.be.null;
       return;
     }
-    expect(accountInfo.lamports).to.eq(LAMPORTS_PER_GTH);
+    expect(accountInfo.weis).to.eq(WEIS_PER_GTH);
     expect(accountInfo.data).to.have.length(0);
     expect(accountInfo.owner).to.eql(SystemProgram.programId);
 
@@ -2907,7 +2907,7 @@ describe('Connection', () => {
       ],
       value: {
         owner: '11111111111111111111111111111111',
-        lamports: LAMPORTS_PER_GTH,
+        weis: WEIS_PER_GTH,
         data: ['', 'base64'],
         executable: false,
         rentEpoch: 20,
@@ -2925,7 +2925,7 @@ describe('Connection', () => {
       expect(parsedAccountInfo.data.parsed).not.to.be.ok;
       return;
     }
-    expect(parsedAccountInfo.lamports).to.eq(LAMPORTS_PER_GTH);
+    expect(parsedAccountInfo.weis).to.eq(WEIS_PER_GTH);
     expect(parsedAccountInfo.data).to.have.length(0);
     expect(parsedAccountInfo.owner).to.eql(SystemProgram.programId);
   });
@@ -2936,7 +2936,7 @@ describe('Connection', () => {
     await helpers.airdrop({
       connection,
       address: payer.publicKey,
-      amount: LAMPORTS_PER_GTH,
+      amount: WEIS_PER_GTH,
     });
 
     const newAccount = Keypair.generate();
@@ -2944,7 +2944,7 @@ describe('Connection', () => {
       SystemProgram.createAccount({
         fromPubkey: payer.publicKey,
         newAccountPubkey: newAccount.publicKey,
-        lamports: LAMPORTS_PER_GTH / 2,
+        weis: WEIS_PER_GTH / 2,
         space: 0,
         programId: SystemProgram.programId,
       }),
@@ -3000,13 +3000,13 @@ describe('Connection', () => {
       await helpers.airdrop({
         connection,
         address: account1.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
 
       await helpers.airdrop({
         connection,
         address: account2.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
 
       const recentBlockhash = await (
@@ -3080,7 +3080,7 @@ describe('Connection', () => {
         SystemProgram.transfer({
           fromPubkey: accountFrom.publicKey,
           toPubkey: accountTo.publicKey,
-          lamports: 10,
+          weis: 10,
         }),
       );
 
@@ -3097,7 +3097,7 @@ describe('Connection', () => {
         SystemProgram.transfer({
           fromPubkey: accountFrom.publicKey,
           toPubkey: accountTo.publicKey,
-          lamports: 10,
+          weis: 10,
         }),
       );
 
@@ -3118,7 +3118,7 @@ describe('Connection', () => {
         SystemProgram.transfer({
           fromPubkey: accountFrom.publicKey,
           toPubkey: accountTo.publicKey,
-          lamports: 9,
+          weis: 9,
         }),
       );
       await sendAndConfirmTransaction(connection, transaction3, [accountFrom], {
@@ -3138,7 +3138,7 @@ describe('Connection', () => {
         SystemProgram.transfer({
           fromPubkey: accountFrom.publicKey,
           toPubkey: accountTo.publicKey,
-          lamports: 13,
+          weis: 13,
         }),
       );
 
@@ -3167,11 +3167,11 @@ describe('Connection', () => {
 
       let signature = await connection.requestAirdrop(
         accountFrom.publicKey,
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
       await connection.confirmTransaction(signature);
       expect(await connection.getBalance(accountFrom.publicKey)).to.eq(
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
 
       const minimumAmount = await connection.getMinimumBalanceForRentExemption(
@@ -3194,14 +3194,14 @@ describe('Connection', () => {
           SystemProgram.transfer({
             fromPubkey: accountFrom.publicKey,
             toPubkey: accountTo.publicKey,
-            lamports: 100,
+            weis: 100,
           }),
         )
         .add(
           SystemProgram.transfer({
             fromPubkey: accountTo.publicKey,
             toPubkey: accountFrom.publicKey,
-            lamports: 100,
+            weis: 100,
           }),
         );
       signature = await connection.sendTransaction(
@@ -3220,12 +3220,12 @@ describe('Connection', () => {
         expect(response).not.to.be.null;
       }
 
-      // accountFrom may have less than LAMPORTS_PER_GTH due to transaction fees
+      // accountFrom may have less than WEIS_PER_GTH due to transaction fees
       expect(
         await connection.getBalance(accountFrom.publicKey),
       ).to.be.greaterThan(0);
       expect(await connection.getBalance(accountFrom.publicKey)).to.be.at.most(
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
 
       expect(await connection.getBalance(accountTo.publicKey)).to.eq(
@@ -3258,7 +3258,7 @@ describe('Connection', () => {
 
     //   let signature = await connection.requestAirdrop(
     //     owner.publicKey,
-    //     LAMPORTS_PER_GTH,
+    //     WEIS_PER_GTH,
     //   );
     //   await connection.confirmTransaction(signature);
     //   try {
@@ -3266,7 +3266,7 @@ describe('Connection', () => {
     //       SystemProgram.transfer({
     //         fromPubkey: owner.publicKey,
     //         toPubkey: programAccount.publicKey,
-    //         lamports: balanceNeeded,
+    //         weis: balanceNeeded,
     //       }),
     //     );
     //     await sendAndConfirmTransaction(connection, transaction, [owner], {
@@ -3294,7 +3294,7 @@ describe('Connection', () => {
 
     //   await connection.removeAccountChangeListener(subscriptionId);
 
-    //   expect(mockCallback.mock.calls[0][0].lamports).to.eq(balanceNeeded);
+    //   expect(mockCallback.mock.calls[0][0].weis).to.eq(balanceNeeded);
     //   expect(mockCallback.mock.calls[0][0].owner).to.eq(SystemProgram.programId);
     // });
 
@@ -3312,7 +3312,7 @@ describe('Connection', () => {
         SystemProgram.programId,
         (keyedAccountInfo: KeyedAccountInfo) => {
           if (keyedAccountInfo.accountId.equals(programAccount.publicKey)) {
-            expect(keyedAccountInfo.accountInfo.lamports).to.eq(balanceNeeded);
+            expect(keyedAccountInfo.accountInfo.weis).to.eq(balanceNeeded);
             expect(
               keyedAccountInfo.accountInfo.owner.equals(
                 SystemProgram.programId,
@@ -3326,7 +3326,7 @@ describe('Connection', () => {
       await helpers.airdrop({
         connection,
         address: owner.publicKey,
-        amount: LAMPORTS_PER_GTH,
+        amount: WEIS_PER_GTH,
       });
 
       try {
@@ -3334,7 +3334,7 @@ describe('Connection', () => {
           SystemProgram.transfer({
             fromPubkey: owner.publicKey,
             toPubkey: programAccount.publicKey,
-            lamports: balanceNeeded,
+            weis: balanceNeeded,
           }),
         );
         await sendAndConfirmTransaction(connection, transaction, [owner], {
@@ -3427,7 +3427,7 @@ describe('Connection', () => {
         (async () => {
           while (!received) {
             // Execute a transaction so that we can pickup its logs.
-            await connection.requestAirdrop(owner.publicKey, 1  * LAMPORTS_PER_GTH);
+            await connection.requestAirdrop(owner.publicKey, 1  * WEIS_PER_GTH);
             await sleep(1000);
           }
         })();

@@ -102,7 +102,7 @@ instruction:
 pub fn create_account(
     from_pubkey: &Pubkey,
     to_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
     space: u64,
     owner: &Pubkey,
 ) -> Instruction {
@@ -113,7 +113,7 @@ pub fn create_account(
     Instruction::new_with_bincode(
         system_program::id(),
         &SystemInstruction::CreateAccount {
-            lamports,
+            weis,
             space,
             owner: *owner,
         },
@@ -178,14 +178,14 @@ program has not been protected against. Programs should be hardened to properly
 and safely handle any possible instruction sequence.
 
 One not so obvious example is account deinitialization. Some programs may
-attempt to deinitialize an account by setting its lamports to zero, with the
+attempt to deinitialize an account by setting its weis to zero, with the
 assumption that the runtime will delete the account. This assumption may be
 valid between transactions, but it is not between instructions or cross-program
 invocations. To harden against this, the program should also explicitly zero out the
 account's data.
 
 An example of where this could be a problem is if a token program, upon
-transferring the token out of an account, sets the account's lamports to zero,
+transferring the token out of an account, sets the account's weis to zero,
 assuming it will be deleted by the runtime. If the program does not zero out the
 account's data, a malicious user could trail this instruction with another that
 transfers the tokens a second time.

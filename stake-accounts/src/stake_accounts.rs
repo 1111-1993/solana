@@ -31,7 +31,7 @@ pub(crate) fn new_stake_account(
     fee_payer_pubkey: &Pubkey,
     funding_pubkey: &Pubkey,
     base_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
     stake_authority_pubkey: &Pubkey,
     withdraw_authority_pubkey: &Pubkey,
     custodian_pubkey: &Pubkey,
@@ -53,7 +53,7 @@ pub(crate) fn new_stake_account(
         &index.to_string(),
         &authorized,
         &lockup,
-        lamports,
+        weis,
     );
     Message::new(&instructions, Some(fee_payer_pubkey))
 }
@@ -88,16 +88,16 @@ fn rebase_stake_account(
     i: usize,
     fee_payer_pubkey: &Pubkey,
     stake_authority_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
 ) -> Option<Message> {
-    if lamports == 0 {
+    if weis == 0 {
         return None;
     }
     let new_stake_account_address = derive_stake_account_address(new_base_pubkey, i);
     let instructions = stake_instruction::split_with_seed(
         stake_account_address,
         stake_authority_pubkey,
-        lamports,
+        weis,
         &new_stake_account_address,
         new_base_pubkey,
         &i.to_string(),
@@ -115,16 +115,16 @@ fn move_stake_account(
     withdraw_authority_pubkey: &Pubkey,
     new_stake_authority_pubkey: &Pubkey,
     new_withdraw_authority_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
 ) -> Option<Message> {
-    if lamports == 0 {
+    if weis == 0 {
         return None;
     }
     let new_stake_account_address = derive_stake_account_address(new_base_pubkey, i);
     let mut instructions = stake_instruction::split_with_seed(
         stake_account_address,
         stake_authority_pubkey,
-        lamports,
+        weis,
         &new_stake_account_address,
         new_base_pubkey,
         &i.to_string(),
@@ -238,14 +238,14 @@ pub(crate) fn rebase_stake_accounts(
     balances
         .iter()
         .enumerate()
-        .filter_map(|(i, (stake_account_address, lamports))| {
+        .filter_map(|(i, (stake_account_address, weis))| {
             rebase_stake_account(
                 stake_account_address,
                 new_base_pubkey,
                 i,
                 fee_payer_pubkey,
                 stake_authority_pubkey,
-                *lamports,
+                *weis,
             )
         })
         .collect()
@@ -263,7 +263,7 @@ pub(crate) fn move_stake_accounts(
     balances
         .iter()
         .enumerate()
-        .filter_map(|(i, (stake_account_address, lamports))| {
+        .filter_map(|(i, (stake_account_address, weis))| {
             move_stake_account(
                 stake_account_address,
                 new_base_pubkey,
@@ -273,7 +273,7 @@ pub(crate) fn move_stake_accounts(
                 withdraw_authority_pubkey,
                 new_stake_authority_pubkey,
                 new_withdraw_authority_pubkey,
-                *lamports,
+                *weis,
             )
         })
         .collect()
@@ -294,8 +294,8 @@ mod tests {
         solana_stake_program::stake_state,
     };
 
-    fn create_bank(lamports: u64) -> (Bank, Keypair, u64) {
-        let (genesis_config, mint_keypair) = create_genesis_config(lamports);
+    fn create_bank(weis: u64) -> (Bank, Keypair, u64) {
+        let (genesis_config, mint_keypair) = create_genesis_config(weis);
         let bank = Bank::new_for_tests(&genesis_config);
         let rent = bank.get_minimum_balance_for_rent_exemption(std::mem::size_of::<StakeState>());
         (bank, mint_keypair, rent)
@@ -304,11 +304,11 @@ mod tests {
     fn create_account<C: SyncClient>(
         client: &C,
         funding_keypair: &Keypair,
-        lamports: u64,
+        weis: u64,
     ) -> Keypair {
         let fee_payer_keypair = Keypair::new();
         client
-            .transfer_and_confirm(lamports, funding_keypair, &fee_payer_keypair.pubkey())
+            .transfer_and_confirm(weis, funding_keypair, &fee_payer_keypair.pubkey())
             .unwrap();
         fee_payer_keypair
     }
@@ -360,7 +360,7 @@ mod tests {
 
         let base_keypair = Keypair::new();
         let base_pubkey = base_keypair.pubkey();
-        let lamports = rent + 1;
+        let weis = rent + 1;
         let stake_authority_pubkey = solana_sdk::pubkey::new_rand();
         let withdraw_authority_pubkey = solana_sdk::pubkey::new_rand();
 
@@ -368,7 +368,7 @@ mod tests {
             &fee_payer_pubkey,
             &funding_pubkey,
             &base_pubkey,
-            lamports,
+            weis,
             &stake_authority_pubkey,
             &withdraw_authority_pubkey,
             &Pubkey::default(),
@@ -381,7 +381,7 @@ mod tests {
             .unwrap();
 
         let account = get_account_at(&bank_client, &base_pubkey, 0);
-        assert_eq!(account.lamports(), lamports);
+        assert_eq!(account.weis(), weis);
         let authorized = stake_state::authorized_from(&account).unwrap();
         assert_eq!(authorized.staker, stake_authority_pubkey);
         assert_eq!(authorized.withdrawer, withdraw_authority_pubkey);
@@ -397,7 +397,7 @@ mod tests {
 
         let base_keypair = Keypair::new();
         let base_pubkey = base_keypair.pubkey();
-        let lamports = rent + 1;
+        let weis = rent + 1;
 
         let stake_authority_keypair = Keypair::new();
         let stake_authority_pubkey = stake_authority_keypair.pubkey();
@@ -408,7 +408,7 @@ mod tests {
             &fee_payer_pubkey,
             &funding_pubkey,
             &base_pubkey,
-            lamports,
+            weis,
             &stake_authority_pubkey,
             &withdraw_authority_pubkey,
             &Pubkey::default(),
@@ -459,7 +459,7 @@ mod tests {
 
         let base_keypair = Keypair::new();
         let base_pubkey = base_keypair.pubkey();
-        let lamports = rent + 1;
+        let weis = rent + 1;
 
         let custodian_keypair = Keypair::new();
         let custodian_pubkey = custodian_keypair.pubkey();
@@ -471,7 +471,7 @@ mod tests {
             &fee_payer_pubkey,
             &funding_pubkey,
             &base_pubkey,
-            lamports,
+            weis,
             &Pubkey::default(),
             &withdrawer_pubkey,
             &custodian_pubkey,
@@ -550,7 +550,7 @@ mod tests {
 
         let base_keypair = Keypair::new();
         let base_pubkey = base_keypair.pubkey();
-        let lamports = rent + 1;
+        let weis = rent + 1;
 
         let stake_authority_keypair = Keypair::new();
         let stake_authority_pubkey = stake_authority_keypair.pubkey();
@@ -562,7 +562,7 @@ mod tests {
             &fee_payer_pubkey,
             &funding_pubkey,
             &base_pubkey,
-            lamports,
+            weis,
             &stake_authority_pubkey,
             &withdraw_authority_pubkey,
             &Pubkey::default(),
@@ -613,7 +613,7 @@ mod tests {
 
         let base_keypair = Keypair::new();
         let base_pubkey = base_keypair.pubkey();
-        let lamports = rent + 1;
+        let weis = rent + 1;
 
         let stake_authority_keypair = Keypair::new();
         let stake_authority_pubkey = stake_authority_keypair.pubkey();
@@ -625,7 +625,7 @@ mod tests {
             &fee_payer_pubkey,
             &funding_pubkey,
             &base_pubkey,
-            lamports,
+            weis,
             &stake_authority_pubkey,
             &withdraw_authority_pubkey,
             &Pubkey::default(),

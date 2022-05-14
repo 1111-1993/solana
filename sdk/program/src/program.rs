@@ -36,10 +36,10 @@ pub fn invoke_signed(
         for account_info in account_infos.iter() {
             if account_meta.pubkey == *account_info.key {
                 if account_meta.is_writable {
-                    let _ = account_info.try_borrow_mut_lamports()?;
+                    let _ = account_info.try_borrow_mut_weis()?;
                     let _ = account_info.try_borrow_mut_data()?;
                 } else {
-                    let _ = account_info.try_borrow_lamports()?;
+                    let _ = account_info.try_borrow_weis()?;
                     let _ = account_info.try_borrow_data()?;
                 }
                 break;

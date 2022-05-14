@@ -30,7 +30,7 @@ use {
         genesis_config::{ClusterType, GenesisConfig},
         hash::Hash,
         instruction::{Instruction, InstructionError},
-        native_token::gth_to_lamports,
+        native_token::gth_to_weis,
         poh_config::PohConfig,
         program_error::{ProgramError, ACCOUNT_BORROW_FAILED, UNSUPPORTED_SYSVAR},
         pubkey::Pubkey,
@@ -124,7 +124,7 @@ pub fn builtin_process_instruction(
             Ok((
                 *borrowed_account.get_key(),
                 *borrowed_account.get_owner(),
-                borrowed_account.get_lamports(),
+                borrowed_account.get_weis(),
                 borrowed_account.get_data().to_vec(),
             ))
         })
@@ -133,11 +133,11 @@ pub fn builtin_process_instruction(
     // Create shared references to account_copies
     let account_refs: Vec<_> = account_copies
         .iter_mut()
-        .map(|(key, owner, lamports, data)| {
+        .map(|(key, owner, weis, data)| {
             (
                 key,
                 owner,
-                Rc::new(RefCell::new(lamports)),
+                Rc::new(RefCell::new(weis)),
                 Rc::new(RefCell::new(data.as_mut())),
             )
         })
@@ -150,14 +150,14 @@ pub fn builtin_process_instruction(
                 .iter()
                 .position(|index| *index == index_in_instruction)
                 .unwrap();
-            let (key, owner, lamports, data) = &account_refs[account_copy_index];
+            let (key, owner, weis, data) = &account_refs[account_copy_index];
             let borrowed_account = instruction_context
                 .try_borrow_account(transaction_context, index_in_instruction)?;
             Ok(AccountInfo {
                 key,
                 is_signer: borrowed_account.is_signer(),
                 is_writable: borrowed_account.is_writable(),
-                lamports: lamports.clone(),
+                weis: weis.clone(),
                 data: data.clone(),
                 owner,
                 executable: borrowed_account.is_executable(),
@@ -175,14 +175,14 @@ pub fn builtin_process_instruction(
     stable_log::program_success(&log_collector, program_id);
 
     // Commit AccountInfo changes back into KeyedAccounts
-    for (index_in_instruction, (_key, _owner, lamports, data)) in deduplicated_indices
+    for (index_in_instruction, (_key, _owner, weis, data)) in deduplicated_indices
         .into_iter()
         .zip(account_copies.into_iter())
     {
         let mut borrowed_account =
             instruction_context.try_borrow_account(transaction_context, index_in_instruction)?;
         if borrowed_account.is_writable() {
-            borrowed_account.set_lamports(lamports);
+            borrowed_account.set_weis(weis);
             borrowed_account.set_data(&data);
         }
     }
@@ -292,7 +292,7 @@ impl solana_sdk::program_stubs::SyscallStubs for SyscallStubs {
                 .borrow_mut();
             account.copy_into_owner_from_slice(account_info.owner.as_ref());
             account.set_data_from_slice(&account_info.try_borrow_data().unwrap());
-            account.set_lamports(account_info.lamports());
+            account.set_weis(account_info.weis());
             account.set_executable(account_info.executable);
             account.set_rent_epoch(account_info.rent_epoch);
             if instruction_account.is_writable {
@@ -320,7 +320,7 @@ impl solana_sdk::program_stubs::SyscallStubs for SyscallStubs {
                 .unwrap()
                 .borrow_mut();
             let account_info = &account_infos[account_info_index];
-            **account_info.try_borrow_mut_lamports().unwrap() = account.lamports();
+            **account_info.try_borrow_mut_weis().unwrap() = account.weis();
             let mut data = account_info.try_borrow_mut_data()?;
             let new_data = account.data();
             if account_info.owner != account.owner() {
@@ -452,8 +452,8 @@ fn setup_fees(bank: Bank) -> Bank {
     }
 
     // Make sure a fee is now required
-    let lamports_per_signature = bank.get_lamports_per_signature();
-    assert_ne!(lamports_per_signature, 0);
+    let weis_per_signature = bank.get_weis_per_signature();
+    assert_ne!(weis_per_signature, 0);
 
     bank
 }
@@ -550,14 +550,14 @@ impl ProgramTest {
     pub fn add_account_with_file_data(
         &mut self,
         address: Pubkey,
-        lamports: u64,
+        weis: u64,
         owner: Pubkey,
         filename: &str,
     ) {
         self.add_account(
             address,
             Account {
-                lamports,
+                weis,
                 data: read_file(find_file(filename).unwrap_or_else(|| {
                     panic!("Unable to locate {}", filename);
                 })),
@@ -573,14 +573,14 @@ impl ProgramTest {
     pub fn add_account_with_base64_data(
         &mut self,
         address: Pubkey,
-        lamports: u64,
+        weis: u64,
         owner: Pubkey,
         data_base64: &str,
     ) {
         self.add_account(
             address,
             Account {
-                lamports,
+                weis,
                 data: base64::decode(data_base64)
                     .unwrap_or_else(|err| panic!("Failed to base64 decode: {}", err)),
                 owner,
@@ -630,7 +630,7 @@ impl ProgramTest {
             this.add_account(
                 program_id,
                 Account {
-                    lamports: Rent::default().minimum_balance(data.len()).min(1),
+                    weis: Rent::default().minimum_balance(data.len()).min(1),
                     data,
                     owner: solana_sdk::bpf_loader::id(),
                     executable: true,
@@ -752,19 +752,19 @@ impl ProgramTest {
         let rent = Rent::default();
         let fee_rate_governor = FeeRateGovernor::default();
         let bootstrap_validator_pubkey = Pubkey::new_unique();
-        let bootstrap_validator_stake_lamports =
-            rent.minimum_balance(VoteState::size_of()) + gth_to_lamports(1_000_000.0);
+        let bootstrap_validator_stake_weis =
+            rent.minimum_balance(VoteState::size_of()) + gth_to_weis(1_000_000.0);
 
         let mint_keypair = Keypair::new();
         let voting_keypair = Keypair::new();
 
         let mut genesis_config = create_genesis_config_with_leader_ex(
-            gth_to_lamports(1_000_000.0),
+            gth_to_weis(1_000_000.0),
             &mint_keypair.pubkey(),
             &bootstrap_validator_pubkey,
             &voting_keypair.pubkey(),
             &Pubkey::new_unique(),
-            bootstrap_validator_stake_lamports,
+            bootstrap_validator_stake_weis,
             42,
             fee_rate_governor,
             rent,

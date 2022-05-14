@@ -48,7 +48,7 @@ async fn test_create_lookup_table() {
         assert_eq!(lookup_table_account.owner, crate::id());
         assert_eq!(lookup_table_account.data.len(), LOOKUP_TABLE_META_SIZE);
         assert_eq!(
-            lookup_table_account.lamports,
+            lookup_table_account.weis,
             Rent::default().minimum_balance(LOOKUP_TABLE_META_SIZE)
         );
         let lookup_table = AddressLookupTable::deserialize(&lookup_table_account.data).unwrap();

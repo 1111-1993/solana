@@ -25,9 +25,9 @@ static const uint8_t TEST_PRIVILEGE_DEESCALATION_ESCALATION_SIGNER = 12;
 static const uint8_t TEST_PRIVILEGE_DEESCALATION_ESCALATION_WRITABLE = 13;
 static const uint8_t TEST_WRITABLE_DEESCALATION_WRITABLE = 14;
 static const uint8_t TEST_NESTED_INVOKE_TOO_DEEP = 15;
-static const uint8_t TEST_EXECUTABLE_LAMPORTS = 16;
+static const uint8_t TEST_EXECUTABLE_WEIS = 16;
 static const uint8_t TEST_CALL_PRECOMPILE = 17;
-static const uint8_t ADD_LAMPORTS = 18;
+static const uint8_t ADD_WEIS = 18;
 static const uint8_t TEST_RETURN_DATA_TOO_LARGE = 19;
 static const uint8_t TEST_DUPLICATE_PRIVILEGE_ESCALATION_SIGNER = 20;
 static const uint8_t TEST_DUPLICATE_PRIVILEGE_ESCALATION_WRITABLE = 21;
@@ -50,8 +50,8 @@ uint64_t do_nested_invokes(uint64_t num_nested_invokes,
                            GthAccountInfo *accounts, uint64_t num_accounts) {
   gth_assert(accounts[ARGUMENT_INDEX].is_signer);
 
-  *accounts[ARGUMENT_INDEX].lamports -= 5;
-  *accounts[INVOKED_ARGUMENT_INDEX].lamports += 5;
+  *accounts[ARGUMENT_INDEX].weis -= 5;
+  *accounts[INVOKED_ARGUMENT_INDEX].weis += 5;
 
   GthAccountMeta arguments[] = {
       {accounts[INVOKED_ARGUMENT_INDEX].key, true, true},
@@ -67,9 +67,9 @@ uint64_t do_nested_invokes(uint64_t num_nested_invokes,
   gth_log("2nd invoke from first program");
   gth_assert(SUCCESS == gth_invoke(&instruction, accounts, num_accounts));
 
-  gth_assert(*accounts[ARGUMENT_INDEX].lamports ==
+  gth_assert(*accounts[ARGUMENT_INDEX].weis ==
              42 - 5 + (2 * num_nested_invokes));
-  gth_assert(*accounts[INVOKED_ARGUMENT_INDEX].lamports ==
+  gth_assert(*accounts[INVOKED_ARGUMENT_INDEX].weis ==
              10 + 5 - (2 * num_nested_invokes));
 
   return SUCCESS;
@@ -93,8 +93,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
   case TEST_SUCCESS: {
     gth_log("Call system program create account");
     {
-      uint64_t from_lamports = *accounts[FROM_INDEX].lamports;
-      uint64_t to_lamports = *accounts[DERIVED_KEY1_INDEX].lamports;
+      uint64_t from_weis = *accounts[FROM_INDEX].weis;
+      uint64_t to_weis = *accounts[DERIVED_KEY1_INDEX].weis;
       GthAccountMeta arguments[] = {
           {accounts[FROM_INDEX].key, true, true},
           {accounts[DERIVED_KEY1_INDEX].key, true, true}};
@@ -114,8 +114,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
                                               GTH_ARRAY_SIZE(accounts),
                                               signers_seeds,
                                               GTH_ARRAY_SIZE(signers_seeds)));
-      gth_assert(*accounts[FROM_INDEX].lamports == from_lamports - 42);
-      gth_assert(*accounts[DERIVED_KEY1_INDEX].lamports == to_lamports + 42);
+      gth_assert(*accounts[FROM_INDEX].weis == from_weis - 42);
+      gth_assert(*accounts[DERIVED_KEY1_INDEX].weis == to_weis + 42);
       gth_assert(GthPubkey_same(accounts[DERIVED_KEY1_INDEX].owner,
                                 params.program_id));
       gth_assert(accounts[DERIVED_KEY1_INDEX].data_len ==
@@ -134,8 +134,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
 
     gth_log("Call system program transfer");
     {
-      uint64_t from_lamports = *accounts[FROM_INDEX].lamports;
-      uint64_t to_lamports = *accounts[DERIVED_KEY1_INDEX].lamports;
+      uint64_t from_weis = *accounts[FROM_INDEX].weis;
+      uint64_t to_weis = *accounts[DERIVED_KEY1_INDEX].weis;
       GthAccountMeta arguments[] = {
           {accounts[FROM_INDEX].key, true, true},
           {accounts[DERIVED_KEY1_INDEX].key, true, false}};
@@ -145,8 +145,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
                                           data, GTH_ARRAY_SIZE(data)};
       gth_assert(SUCCESS ==
                  gth_invoke(&instruction, accounts, GTH_ARRAY_SIZE(accounts)));
-      gth_assert(*accounts[FROM_INDEX].lamports == from_lamports - 1);
-      gth_assert(*accounts[DERIVED_KEY1_INDEX].lamports == to_lamports + 1);
+      gth_assert(*accounts[FROM_INDEX].weis == from_weis - 1);
+      gth_assert(*accounts[DERIVED_KEY1_INDEX].weis == to_weis + 1);
     }
 
     gth_log("Test data translation");
@@ -461,7 +461,7 @@ extern uint64_t entrypoint(const uint8_t *input) {
 
     GthAccountInfo derived_account = {
         .key = accounts[DERIVED_KEY1_INDEX].key,
-        .lamports = accounts[DERIVED_KEY1_INDEX].lamports,
+        .weis = accounts[DERIVED_KEY1_INDEX].weis,
         .data_len = accounts[DERIVED_KEY1_INDEX].data_len,
         // Point to top edge of heap, attempt to allocate into unprivileged
         // memory
@@ -574,23 +574,23 @@ extern uint64_t entrypoint(const uint8_t *input) {
     do_nested_invokes(5, accounts, params.ka_num);
     break;
   }
-  case TEST_EXECUTABLE_LAMPORTS: {
-    gth_log("Test executable lamports");
+  case TEST_EXECUTABLE_WEIS: {
+    gth_log("Test executable weis");
     accounts[ARGUMENT_INDEX].executable = true;
-    *accounts[ARGUMENT_INDEX].lamports -= 1;
-    *accounts[DERIVED_KEY1_INDEX].lamports +=1;
+    *accounts[ARGUMENT_INDEX].weis -= 1;
+    *accounts[DERIVED_KEY1_INDEX].weis +=1;
     GthAccountMeta arguments[] = {
       {accounts[ARGUMENT_INDEX].key, true, false},
       {accounts[DERIVED_KEY1_INDEX].key, true, false},
     };
-    uint8_t data[] = {ADD_LAMPORTS, 0, 0, 0};
+    uint8_t data[] = {ADD_WEIS, 0, 0, 0};
     GthPubkey program_id;
     gth_memcpy(&program_id, params.program_id, sizeof(GthPubkey));
     const GthInstruction instruction = {&program_id,
 					arguments, GTH_ARRAY_SIZE(arguments),
 					data, GTH_ARRAY_SIZE(data)};
     gth_invoke(&instruction, accounts, GTH_ARRAY_SIZE(accounts));
-    *accounts[ARGUMENT_INDEX].lamports += 1;
+    *accounts[ARGUMENT_INDEX].weis += 1;
     break;
   }
   case TEST_CALL_PRECOMPILE: {
@@ -603,8 +603,8 @@ extern uint64_t entrypoint(const uint8_t *input) {
     gth_invoke(&instruction, accounts, GTH_ARRAY_SIZE(accounts));
     break;
   }
-  case ADD_LAMPORTS: {
-    *accounts[0].lamports += 1;
+  case ADD_WEIS: {
+    *accounts[0].weis += 1;
      break;
   }
   case TEST_RETURN_DATA_TOO_LARGE: {

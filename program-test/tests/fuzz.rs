@@ -118,7 +118,7 @@ async fn run_fuzz_instructions(
             .await
             .expect("account exists")
             .unwrap();
-        assert!(account.lamports > 0);
+        assert!(account.weis > 0);
         assert!(!account.data.is_empty());
     }
 }

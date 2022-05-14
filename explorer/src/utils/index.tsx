@@ -6,7 +6,7 @@ import {
 import { PublicKey } from "@solana/web3.js";
 
 // Switch to web3 constant when web3 updates superstruct
-export const LAMPORTS_PER_GTH = 1000000000;
+export const WEIS_PER_GTH = 1000000000;
 
 export const NUM_TICKS_PER_SECOND = 160;
 export const DEFAULT_TICKS_PER_SLOT = 64;
@@ -28,46 +28,46 @@ export function normalizeTokenAmount(
   return rawTokens / Math.pow(10, decimals);
 }
 
-export function lamportsToGth(lamports: number | BN): number {
-  if (typeof lamports === "number") {
-    return Math.abs(lamports) / LAMPORTS_PER_GTH;
+export function weisToGth(weis: number | BN): number {
+  if (typeof weis === "number") {
+    return Math.abs(weis) / WEIS_PER_GTH;
   }
 
   let signMultiplier = 1;
-  if (lamports.isNeg()) {
+  if (weis.isNeg()) {
     signMultiplier = -1;
   }
 
-  const absLamports = lamports.abs();
-  const lamportsString = absLamports.toString(10).padStart(10, "0");
-  const splitIndex = lamportsString.length - 9;
+  const absWeis = weis.abs();
+  const weisString = absWeis.toString(10).padStart(10, "0");
+  const splitIndex = weisString.length - 9;
   const solString =
-    lamportsString.slice(0, splitIndex) +
+    weisString.slice(0, splitIndex) +
     "." +
-    lamportsString.slice(splitIndex);
+    weisString.slice(splitIndex);
   return signMultiplier * parseFloat(solString);
 }
 
-export function lamportsToGthString(
-  lamports: number | BN,
+export function weisToGthString(
+  weis: number | BN,
   maximumFractionDigits: number = 9
 ): string {
-  const gth = lamportsToGth(lamports);
+  const gth = weisToGth(weis);
   return new Intl.NumberFormat("en-US", { maximumFractionDigits }).format(gth);
 }
 
 export function GthBalance({
-  lamports,
+  weis,
   maximumFractionDigits = 9,
 }: {
-  lamports: number | BN;
+  weis: number | BN;
   maximumFractionDigits?: number;
 }) {
   return (
     <span>
       ◎
       <span className="font-monospace">
-        {lamportsToGthString(lamports, maximumFractionDigits)}
+        {weisToGthString(weis, maximumFractionDigits)}
       </span>
     </span>
   );

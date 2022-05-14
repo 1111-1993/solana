@@ -106,7 +106,7 @@ pub fn process_instruction(
                 Err(InstructionError::InvalidInstructionData)
             }
         }
-        VoteInstruction::Withdraw(lamports) => {
+        VoteInstruction::Withdraw(weis) => {
             let to = keyed_account_at_index(keyed_accounts, first_instruction_account + 1)?;
             let rent_sysvar = if invoke_context
                 .feature_set
@@ -128,7 +128,7 @@ pub fn process_instruction(
 
             vote_state::withdraw(
                 me,
-                lamports,
+                weis,
                 to,
                 &signers,
                 rent_sysvar.as_deref(),
@@ -167,7 +167,7 @@ fn verify_rent_exemption(
     keyed_account: &KeyedAccount,
     rent: &Rent,
 ) -> Result<(), InstructionError> {
-    if !rent.is_exempt(keyed_account.lamports()?, keyed_account.data_len()?) {
+    if !rent.is_exempt(keyed_account.weis()?, keyed_account.data_len()?) {
         Err(InstructionError::InsufficientFunds)
     } else {
         Ok(())
@@ -358,9 +358,9 @@ mod tests {
             previous_epoch_credits = current_epoch_credits;
         }
 
-        let lamports = vote_account.lamports();
+        let weis = vote_account.weis();
         let mut vote_account_with_epoch_credits =
-            AccountSharedData::new(lamports, vote_account_space, &id());
+            AccountSharedData::new(weis, vote_account_space, &id());
         let versioned = VoteStateVersions::new_current(vote_state);
         VoteState::to(&versioned, &mut vote_account_with_epoch_credits);
 
@@ -914,7 +914,7 @@ mod tests {
     #[test]
     fn test_vote_withdraw() {
         let (vote_pubkey, vote_account) = create_test_account();
-        let lamports = vote_account.lamports();
+        let weis = vote_account.weis();
         let authorized_withdrawer_pubkey = solana_sdk::pubkey::new_rand();
         let mut transaction_accounts = vec![
             (vote_pubkey, vote_account.clone()),
@@ -954,13 +954,13 @@ mod tests {
         };
         transaction_accounts[0] = (vote_pubkey, accounts[0].clone());
         let accounts = process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
         );
-        assert_eq!(accounts[0].lamports(), 0);
-        assert_eq!(accounts[3].lamports(), lamports);
+        assert_eq!(accounts[0].weis(), 0);
+        assert_eq!(accounts[3].weis(), weis);
         let post_state: VoteStateVersions = accounts[0].state().unwrap();
         // State has been deinitialized since balance is zero
         assert!(post_state.is_uninitialized());
@@ -968,7 +968,7 @@ mod tests {
         // should fail, unsigned
         transaction_accounts[0] = (vote_pubkey, vote_account);
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::MissingRequiredSignature),
@@ -977,7 +977,7 @@ mod tests {
 
         // should pass
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -985,22 +985,22 @@ mod tests {
 
         // should fail, insufficient funds
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports + 1)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis + 1)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::InsufficientFunds),
         );
 
         // should pass, partial withdraw
-        let withdraw_lamports = 42;
+        let withdraw_weis = 42;
         let accounts = process_instruction(
-            &serialize(&VoteInstruction::Withdraw(withdraw_lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(withdraw_weis)).unwrap(),
             transaction_accounts,
             instruction_accounts,
             Ok(()),
         );
-        assert_eq!(accounts[0].lamports(), lamports - withdraw_lamports);
-        assert_eq!(accounts[3].lamports(), withdraw_lamports);
+        assert_eq!(accounts[0].weis(), weis - withdraw_weis);
+        assert_eq!(accounts[3].weis(), withdraw_weis);
     }
 
     #[test]
@@ -1019,7 +1019,7 @@ mod tests {
         let minimum_balance = rent_sysvar
             .minimum_balance(vote_account_with_epoch_credits_1.data().len())
             .max(1);
-        let lamports = vote_account_with_epoch_credits_1.lamports();
+        let weis = vote_account_with_epoch_credits_1.weis();
         let transaction_accounts = vec![
             (vote_pubkey_1, vote_account_with_epoch_credits_1),
             (vote_pubkey_2, vote_account_with_epoch_credits_2),
@@ -1046,7 +1046,7 @@ mod tests {
         // non rent exempt withdraw, with 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_1;
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports - minimum_balance + 1)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis - minimum_balance + 1)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::InsufficientFunds),
@@ -1055,7 +1055,7 @@ mod tests {
         // non rent exempt withdraw, without 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_2;
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports - minimum_balance + 1)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis - minimum_balance + 1)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::InsufficientFunds),
@@ -1064,7 +1064,7 @@ mod tests {
         // full withdraw, with 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_1;
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -1073,7 +1073,7 @@ mod tests {
         // full withdraw, without 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_2;
         process_instruction(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::ActiveVoteAccountClose),
@@ -1086,7 +1086,7 @@ mod tests {
         // non rent exempt withdraw, with 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_1;
         process_instruction_disabled_features(
-            &serialize(&VoteInstruction::Withdraw(lamports - minimum_balance + 1)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis - minimum_balance + 1)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -1095,7 +1095,7 @@ mod tests {
         // non rent exempt withdraw, without 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_2;
         process_instruction_disabled_features(
-            &serialize(&VoteInstruction::Withdraw(lamports - minimum_balance + 1)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis - minimum_balance + 1)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -1104,7 +1104,7 @@ mod tests {
         // full withdraw, with 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_1;
         process_instruction_disabled_features(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -1113,7 +1113,7 @@ mod tests {
         // full withdraw, without 0 credit epoch
         instruction_accounts[0].pubkey = vote_pubkey_2;
         process_instruction_disabled_features(
-            &serialize(&VoteInstruction::Withdraw(lamports)).unwrap(),
+            &serialize(&VoteInstruction::Withdraw(weis)).unwrap(),
             transaction_accounts,
             instruction_accounts,
             Ok(()),

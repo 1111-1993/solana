@@ -122,9 +122,9 @@ use {
 /// # let rpc_client = RpcClient::new_mock("succeeds".to_string());
 /// # let key = Keypair::new();
 /// # let to = solana_sdk::pubkey::new_rand();
-/// # let lamports = 50;
+/// # let weis = 50;
 /// # let latest_blockhash = Hash::default();
-/// # let tx = system_transaction::transfer(&key, &to, lamports, latest_blockhash);
+/// # let tx = system_transaction::transfer(&key, &to, weis, latest_blockhash);
 /// let signature = rpc_client.send_transaction(&tx)?;
 /// let statuses = rpc_client.get_signature_statuses(&[signature])?.value;
 /// # Ok::<(), ClientError>(())
@@ -634,9 +634,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_and_confirm_transaction(&tx).await?;
     /// #     Ok::<(), ClientError>(())
     /// # })?;
@@ -803,12 +803,12 @@ impl RpcClient {
     /// # };
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
-    /// // Transfer lamports from Alice to Bob
+    /// // Transfer weis from Alice to Bob
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_transaction(&tx).await?;
     /// #     Ok::<(), ClientError>(())
     /// # })?;
@@ -892,12 +892,12 @@ impl RpcClient {
     /// # };
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
-    /// // Transfer lamports from Alice to Bob
+    /// // Transfer weis from Alice to Bob
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let config = RpcSendTransactionConfig {
     ///     skip_preflight: true,
     ///     .. RpcSendTransactionConfig::default()
@@ -1017,12 +1017,12 @@ impl RpcClient {
     /// # };
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
-    /// // Transfer lamports from Alice to Bob and wait for confirmation
+    /// // Transfer weis from Alice to Bob and wait for confirmation
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_transaction(&tx).await?;
     ///
     /// loop {
@@ -1080,12 +1080,12 @@ impl RpcClient {
     /// # use std::time::Duration;
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
-    /// // Transfer lamports from Alice to Bob and wait for confirmation
+    /// // Transfer weis from Alice to Bob and wait for confirmation
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_transaction(&tx).await?;
     ///
     /// loop {
@@ -1264,12 +1264,12 @@ impl RpcClient {
     /// # };
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
-    /// // Transfer lamports from Alice to Bob
+    /// // Transfer weis from Alice to Bob
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let result = rpc_client.simulate_transaction(&tx).await?;
     /// assert!(result.value.err.is_none());
     /// #     Ok::<(), ClientError>(())
@@ -1344,12 +1344,12 @@ impl RpcClient {
     /// # };
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
-    /// // Transfer lamports from Alice to Bob
+    /// // Transfer weis from Alice to Bob
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let config = RpcSimulateTransactionConfig {
     ///     sig_verify: true,
     ///     .. RpcSimulateTransactionConfig::default()
@@ -1485,9 +1485,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_transaction(&tx).await?;
     /// let status = rpc_client.get_signature_status(&signature).await?;
     /// #     Ok::<(), ClientError>(())
@@ -1556,11 +1556,11 @@ impl RpcClient {
     /// # futures::executor::block_on(async {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
-    /// // Send lamports from Alice to Bob and wait for the transaction to be processed
+    /// // Send weis from Alice to Bob and wait for the transaction to be processed
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_transaction(&tx).await?;
     ///
     /// let status = loop {
@@ -1711,9 +1711,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_and_confirm_transaction(&tx).await?;
     /// let commitment_config = CommitmentConfig::processed();
     /// let status = rpc_client.get_signature_status_with_commitment(
@@ -1785,9 +1785,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_transaction(&tx).await?;
     /// let commitment_config = CommitmentConfig::processed();
     /// let search_transaction_history = true;
@@ -2238,7 +2238,7 @@ impl RpcClient {
         .await
     }
 
-    /// Returns the 20 largest accounts, by lamport balance.
+    /// Returns the 20 largest accounts, by wei balance.
     ///
     /// # RPC Reference
     ///
@@ -3046,9 +3046,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// #     let signature = rpc_client.send_and_confirm_transaction(&tx).await?;
     /// let config = GetConfirmedSignaturesForAddress2Config {
     ///     before: None,
@@ -3164,9 +3164,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_and_confirm_transaction(&tx).await?;
     /// let transaction = rpc_client.get_transaction(
     ///     &signature,
@@ -3227,9 +3227,9 @@ impl RpcClient {
     /// #     let rpc_client = RpcClient::new_mock("succeeds".to_string());
     /// #     let alice = Keypair::new();
     /// #     let bob = Keypair::new();
-    /// #     let lamports = 50;
+    /// #     let weis = 50;
     /// #     let latest_blockhash = rpc_client.get_latest_blockhash().await?;
-    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, latest_blockhash);
+    /// #     let tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, latest_blockhash);
     /// let signature = rpc_client.send_and_confirm_transaction(&tx).await?;
     /// let config = RpcTransactionConfig {
     ///     encoding: Some(UiTransactionEncoding::Json),
@@ -4958,10 +4958,10 @@ impl RpcClient {
         .await
     }
 
-    pub async fn request_airdrop(&self, pubkey: &Pubkey, lamports: u64) -> ClientResult<Signature> {
+    pub async fn request_airdrop(&self, pubkey: &Pubkey, weis: u64) -> ClientResult<Signature> {
         self.request_airdrop_with_config(
             pubkey,
-            lamports,
+            weis,
             RpcRequestAirdropConfig {
                 commitment: Some(self.commitment()),
                 ..RpcRequestAirdropConfig::default()
@@ -4973,12 +4973,12 @@ impl RpcClient {
     pub async fn request_airdrop_with_blockhash(
         &self,
         pubkey: &Pubkey,
-        lamports: u64,
+        weis: u64,
         recent_blockhash: &Hash,
     ) -> ClientResult<Signature> {
         self.request_airdrop_with_config(
             pubkey,
-            lamports,
+            weis,
             RpcRequestAirdropConfig {
                 commitment: Some(self.commitment()),
                 recent_blockhash: Some(recent_blockhash.to_string()),
@@ -4990,7 +4990,7 @@ impl RpcClient {
     pub async fn request_airdrop_with_config(
         &self,
         pubkey: &Pubkey,
-        lamports: u64,
+        weis: u64,
         config: RpcRequestAirdropConfig,
     ) -> ClientResult<Signature> {
         let commitment = config.commitment.unwrap_or_default();
@@ -5001,7 +5001,7 @@ impl RpcClient {
         };
         self.send(
             RpcRequest::RequestAirdrop,
-            json!([pubkey.to_string(), lamports, config]),
+            json!([pubkey.to_string(), weis, config]),
         )
         .await
         .and_then(|signature: String| {
@@ -5274,7 +5274,7 @@ impl RpcClient {
                 .await?
                 .ok_or_else(|| ClientErrorKind::Custom("Invalid blockhash".to_string()))?;
             Ok(fee_calculator
-                .lamports_per_signature
+                .weis_per_signature
                 .saturating_mul(message.header.num_required_signatures as u64))
         } else {
             let serialized_encoded =
@@ -5398,7 +5398,7 @@ pub fn create_rpc_client_mocks() -> crate::mock_sender::Mocks {
         value: {
             let pubkey = Pubkey::from_str("BgvYtJEfmZYdVKiptmMjxGzv8iQoo4MWjsP3QsTkhhxa").unwrap();
             let account = Account {
-                lamports: 1_000_000,
+                weis: 1_000_000,
                 data: vec![],
                 owner: pubkey,
                 executable: false,

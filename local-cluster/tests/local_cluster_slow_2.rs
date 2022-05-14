@@ -83,7 +83,7 @@ fn test_consistency_halt() {
     let validator_stake = 10_000;
     let mut config = ClusterConfig {
         node_stakes: vec![validator_stake],
-        cluster_lamports: 100_000,
+        cluster_weis: 100_000,
         validator_configs: vec![leader_snapshot_test_config.validator_config],
         ..ClusterConfig::default()
     };
@@ -178,7 +178,7 @@ fn test_leader_failure_4() {
     let num_nodes = 4;
     let validator_config = ValidatorConfig::default_for_test();
     let mut config = ClusterConfig {
-        cluster_lamports: 10_000,
+        cluster_weis: 10_000,
         node_stakes: vec![100; 4],
         validator_configs: make_identical_validator_configs(&validator_config, num_nodes),
         ..ClusterConfig::default()
@@ -211,7 +211,7 @@ fn test_ledger_cleanup_service() {
         ..ValidatorConfig::default_for_test()
     };
     let mut config = ClusterConfig {
-        cluster_lamports: 10_000,
+        cluster_weis: 10_000,
         poh_config: PohConfig::new_sleep(Duration::from_millis(50)),
         node_stakes: vec![100; num_nodes],
         validator_configs: make_identical_validator_configs(&validator_config, num_nodes),
@@ -300,7 +300,7 @@ fn test_slot_hash_expiry() {
     validator_configs[1].voting_disabled = true;
 
     let mut config = ClusterConfig {
-        cluster_lamports: 100_000,
+        cluster_weis: 100_000,
         node_stakes,
         validator_configs,
         validator_keys: Some(validator_keys),

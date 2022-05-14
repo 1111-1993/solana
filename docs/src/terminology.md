@@ -8,7 +8,7 @@ The following terms are used throughout the documentation.
 
 A record in the Solana ledger that either holds data or is an executable program.
 
-Like an account at a traditional bank, a Solana account may hold funds called [lamports](#lamport). Like a file in Linux, it is addressable by a key, often referred to as a [public key](#public-key-pubkey) or pubkey.
+Like an account at a traditional bank, a Solana account may hold funds called [weis](#wei). Like a file in Linux, it is addressable by a key, often referred to as a [public key](#public-key-pubkey) or pubkey.
 
 The key may be one of:
 
@@ -146,7 +146,7 @@ The smallest contiguous unit of execution logic in a [program](#program). An ins
 
 A [public key](#public-key-pubkey) and corresponding [private key](#private-key) for accessing an account.
 
-## lamport
+## wei
 
 A fractional [native token](#native-token) with the value of 0.000000001 [gth](#gth).
 
@@ -197,7 +197,7 @@ See [Proof of History](#proof-of-history-poh).
 
 ## point
 
-A weighted [credit](#credit) in a rewards regime. In the [validator](#validator) [rewards regime](cluster/stake-delegation-and-rewards.md), the number of points owed to a [stake](#stake) during redemption is the product of the [vote credits](#vote-credit) earned and the number of lamports staked.
+A weighted [credit](#credit) in a rewards regime. In the [validator](#validator) [rewards regime](cluster/stake-delegation-and-rewards.md), the number of points owed to a [stake](#stake) during redemption is the product of the [vote credits](#vote-credit) earned and the number of weis staked.
 
 ## private key
 

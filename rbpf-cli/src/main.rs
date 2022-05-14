@@ -40,7 +40,7 @@ struct Account {
     owner: Pubkey,
     is_signer: bool,
     is_writable: bool,
-    lamports: u64,
+    weis: u64,
     data: Vec<u8>,
 }
 #[derive(Serialize, Deserialize)]
@@ -85,7 +85,7 @@ and the following fields are required
             ],
             "is_signer": false,
             "is_writable": true,
-            "lamports": 1000,
+            "weis": 1000,
             "data": [0, 0, 0, 3]
         }
     ],
@@ -225,7 +225,7 @@ native machine code before execting it in the virtual machine.",
             let input = load_accounts(Path::new(matches.value_of("input").unwrap())).unwrap();
             for account_info in input.accounts {
                 let mut account = AccountSharedData::new(
-                    account_info.lamports,
+                    account_info.weis,
                     account_info.data.len(),
                     &account_info.owner,
                 );

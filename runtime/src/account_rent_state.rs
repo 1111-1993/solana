@@ -11,20 +11,20 @@ use {
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum RentState {
-    /// account.lamports == 0
+    /// account.weis == 0
     Uninitialized,
-    /// 0 < account.lamports < rent-exempt-minimum
+    /// 0 < account.weis < rent-exempt-minimum
     /// Parameter is the size of the account data
     RentPaying(usize),
-    /// account.lamports >= rent-exempt-minimum
+    /// account.weis >= rent-exempt-minimum
     RentExempt,
 }
 
 impl RentState {
     pub(crate) fn from_account(account: &AccountSharedData, rent: &Rent) -> Self {
-        if account.lamports() == 0 {
+        if account.weis() == 0 {
             Self::Uninitialized
-        } else if !rent.is_exempt(account.lamports(), account.data().len()) {
+        } else if !rent.is_exempt(account.weis(), account.data().len()) {
             Self::RentPaying(account.data().len())
         } else {
             Self::RentExempt
@@ -124,7 +124,7 @@ mod tests {
         let account_data_size = 100;
 
         let rent = Rent::free();
-        let rent_exempt_account = AccountSharedData::new(1, account_data_size, &program_id); // if rent is free, all accounts with non-zero lamports and non-empty data are rent-exempt
+        let rent_exempt_account = AccountSharedData::new(1, account_data_size, &program_id); // if rent is free, all accounts with non-zero weis and non-empty data are rent-exempt
 
         assert_eq!(
             RentState::from_account(&uninitialized_account, &rent),

@@ -41,9 +41,9 @@ fn main() {
         client_ids_and_stake_file,
         write_to_client_file,
         read_from_client_file,
-        target_lamports_per_signature,
+        target_weis_per_signature,
         multi_client,
-        num_lamports_per_account,
+        num_weis_per_account,
         target_node,
         external_client_type,
         use_quic,
@@ -56,16 +56,16 @@ fn main() {
         let (keypairs, _) = generate_keypairs(id, keypair_count as u64);
         let num_accounts = keypairs.len() as u64;
         let max_fee =
-            FeeRateGovernor::new(*target_lamports_per_signature, 0).max_lamports_per_signature;
-        let num_lamports_per_account = (num_accounts - 1 + NUM_SIGNATURES_FOR_TXS * max_fee)
+            FeeRateGovernor::new(*target_weis_per_signature, 0).max_weis_per_signature;
+        let num_weis_per_account = (num_accounts - 1 + NUM_SIGNATURES_FOR_TXS * max_fee)
             / num_accounts
-            + num_lamports_per_account;
+            + num_weis_per_account;
         let mut accounts = HashMap::new();
         keypairs.iter().for_each(|keypair| {
             accounts.insert(
                 serde_json::to_string(&keypair.to_bytes().to_vec()).unwrap(),
                 Base64Account {
-                    balance: num_lamports_per_account,
+                    balance: num_weis_per_account,
                     executable: false,
                     owner: system_program::id().to_string(),
                     data: String::new(),
@@ -93,7 +93,7 @@ fn main() {
                 client.clone(),
                 id,
                 keypair_count,
-                *num_lamports_per_account,
+                *num_weis_per_account,
                 client_ids_and_stake_file,
                 *read_from_client_file,
             );
@@ -139,7 +139,7 @@ fn main() {
                 client.clone(),
                 id,
                 keypair_count,
-                *num_lamports_per_account,
+                *num_weis_per_account,
                 client_ids_and_stake_file,
                 *read_from_client_file,
             );
@@ -164,7 +164,7 @@ fn main() {
                 client.clone(),
                 id,
                 keypair_count,
-                *num_lamports_per_account,
+                *num_weis_per_account,
                 client_ids_and_stake_file,
                 *read_from_client_file,
             );

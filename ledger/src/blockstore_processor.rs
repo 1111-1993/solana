@@ -2273,7 +2273,7 @@ pub mod tests {
             entries.push(entry);
 
             // Add a second Transaction that will produce a
-            // InstructionError<0, ResultWithNegativeLamports> error when processed
+            // InstructionError<0, ResultWithNegativeWeis> error when processed
             let keypair2 = Keypair::new();
             let tx =
                 system_transaction::transfer(&mint_keypair, &keypair2.pubkey(), 101, blockhash);
@@ -2622,7 +2622,7 @@ pub mod tests {
         )
         .is_err());
 
-        // First transaction in first entry succeeded, so keypair1 lost 1 lamport
+        // First transaction in first entry succeeded, so keypair1 lost 1 wei
         assert_eq!(bank.get_balance(&keypair1.pubkey()), 3);
         assert_eq!(bank.get_balance(&keypair2.pubkey()), 4);
 
@@ -2801,7 +2801,7 @@ pub mod tests {
 
         let keypairs: Vec<_> = (0..NUM_TRANSFERS * 2).map(|_| Keypair::new()).collect();
 
-        // give everybody one lamport
+        // give everybody one wei
         for keypair in &keypairs {
             bank.transfer(1, &mint_keypair, &keypair.pubkey())
                 .expect("funding failed");
@@ -2849,7 +2849,7 @@ pub mod tests {
         // entropy multiplier should be big enough to provide sufficient entropy
         // but small enough to not take too much time while executing the test.
         let entropy_multiplier: usize = 25;
-        let initial_lamports = 100;
+        let initial_weis = 100;
 
         // number of accounts need to be in multiple of 4 for correct
         // execution of the test.
@@ -2858,7 +2858,7 @@ pub mod tests {
             genesis_config,
             mint_keypair,
             ..
-        } = create_genesis_config((num_accounts + 1) as u64 * initial_lamports);
+        } = create_genesis_config((num_accounts + 1) as u64 * initial_weis);
 
         let bank = Arc::new(Bank::new_for_tests(&genesis_config));
 
@@ -2874,7 +2874,7 @@ pub mod tests {
             );
             assert_eq!(bank.process_transaction(&create_account_tx), Ok(()));
             assert_matches!(
-                bank.transfer(initial_lamports, &mint_keypair, &keypair.pubkey()),
+                bank.transfer(initial_weis, &mint_keypair, &keypair.pubkey()),
                 Ok(_)
             );
             keypairs.push(keypair);
@@ -2887,19 +2887,19 @@ pub mod tests {
                 system_transaction::transfer(
                     &keypairs[i + 1],
                     &keypairs[i].pubkey(),
-                    initial_lamports,
+                    initial_weis,
                     bank.last_blockhash(),
                 ),
                 system_transaction::transfer(
                     &keypairs[i + 3],
                     &keypairs[i + 2].pubkey(),
-                    initial_lamports,
+                    initial_weis,
                     bank.last_blockhash(),
                 ),
             ]);
         }
 
-        // Transfer lamports to each other
+        // Transfer weis to each other
         let entry = next_entry(&bank.last_blockhash(), 1, tx_vector);
         assert_eq!(
             process_entries_for_tests(&bank, vec![entry], true, None, None),
@@ -2907,13 +2907,13 @@ pub mod tests {
         );
         bank.squash();
 
-        // Even number keypair should have balance of 2 * initial_lamports and
+        // Even number keypair should have balance of 2 * initial_weis and
         // odd number keypair should have balance of 0, which proves
         // that even in case of random order of execution, overall state remains
         // consistent.
         for (i, keypair) in keypairs.iter().enumerate() {
             if i % 2 == 0 {
-                assert_eq!(bank.get_balance(&keypair.pubkey()), 2 * initial_lamports);
+                assert_eq!(bank.get_balance(&keypair.pubkey()), 2 * initial_weis);
             } else {
                 assert_eq!(bank.get_balance(&keypair.pubkey()), 0);
             }
@@ -3001,7 +3001,7 @@ pub mod tests {
             bank.transfer(10_001, &mint_keypair, &pubkey),
             Err(TransactionError::InstructionError(
                 0,
-                SystemError::ResultWithNegativeLamports.into(),
+                SystemError::ResultWithNegativeWeis.into(),
             ))
         );
         assert_eq!(
@@ -3332,7 +3332,7 @@ pub mod tests {
 
         let keypairs: Vec<_> = (0..NUM_TRANSFERS * 2).map(|_| Keypair::new()).collect();
 
-        // give everybody one lamport
+        // give everybody one wei
         for keypair in &keypairs {
             bank.transfer(1, &mint_keypair, &keypair.pubkey())
                 .expect("funding failed");

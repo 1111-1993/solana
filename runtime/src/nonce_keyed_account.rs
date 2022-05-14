@@ -22,7 +22,7 @@ pub trait NonceKeyedAccount {
     ) -> Result<(), InstructionError>;
     fn withdraw_nonce_account(
         &self,
-        lamports: u64,
+        weis: u64,
         to: &KeyedAccount,
         rent: &Rent,
         signers: &HashSet<Pubkey>,
@@ -91,7 +91,7 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
                 let new_data = nonce::state::Data::new(
                     data.authority,
                     recent_blockhash,
-                    invoke_context.lamports_per_signature,
+                    invoke_context.weis_per_signature,
                 );
                 self.set_state(&Versions::new_current(State::Initialized(new_data)))
             }
@@ -111,7 +111,7 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
 
     fn withdraw_nonce_account(
         &self,
-        lamports: u64,
+        weis: u64,
         to: &KeyedAccount,
         rent: &Rent,
         signers: &HashSet<Pubkey>,
@@ -136,19 +136,19 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
 
         let signer = match AccountUtilsState::<Versions>::state(self)?.convert_to_current() {
             State::Uninitialized => {
-                if lamports > self.lamports()? {
+                if weis > self.weis()? {
                     ic_msg!(
                         invoke_context,
-                        "Withdraw nonce account: insufficient lamports {}, need {}",
-                        self.lamports()?,
-                        lamports,
+                        "Withdraw nonce account: insufficient weis {}, need {}",
+                        self.weis()?,
+                        weis,
                     );
                     return Err(InstructionError::InsufficientFunds);
                 }
                 *self.unsigned_key()
             }
             State::Initialized(ref data) => {
-                if lamports == self.lamports()? {
+                if weis == self.weis()? {
                     if data.blockhash == invoke_context.blockhash {
                         ic_msg!(
                             invoke_context,
@@ -162,12 +162,12 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
                     self.set_state(&Versions::new_current(State::Uninitialized))?;
                 } else {
                     let min_balance = rent.minimum_balance(self.data_len()?);
-                    let amount = checked_add(lamports, min_balance)?;
-                    if amount > self.lamports()? {
+                    let amount = checked_add(weis, min_balance)?;
+                    if amount > self.weis()? {
                         ic_msg!(
                             invoke_context,
-                            "Withdraw nonce account: insufficient lamports {}, need {}",
-                            self.lamports()?,
+                            "Withdraw nonce account: insufficient weis {}, need {}",
+                            self.weis()?,
                             amount,
                         );
                         return Err(InstructionError::InsufficientFunds);
@@ -186,16 +186,16 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
             return Err(InstructionError::MissingRequiredSignature);
         }
 
-        let nonce_balance = self.try_account_ref_mut()?.lamports();
-        self.try_account_ref_mut()?.set_lamports(
+        let nonce_balance = self.try_account_ref_mut()?.weis();
+        self.try_account_ref_mut()?.set_weis(
             nonce_balance
-                .checked_sub(lamports)
+                .checked_sub(weis)
                 .ok_or(InstructionError::ArithmeticOverflow)?,
         );
-        let to_balance = to.try_account_ref_mut()?.lamports();
-        to.try_account_ref_mut()?.set_lamports(
+        let to_balance = to.try_account_ref_mut()?.weis();
+        to.try_account_ref_mut()?.set_weis(
             to_balance
-                .checked_add(lamports)
+                .checked_add(weis)
                 .ok_or(InstructionError::ArithmeticOverflow)?,
         );
 
@@ -228,11 +228,11 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
         match AccountUtilsState::<Versions>::state(self)?.convert_to_current() {
             State::Uninitialized => {
                 let min_balance = rent.minimum_balance(self.data_len()?);
-                if self.lamports()? < min_balance {
+                if self.weis()? < min_balance {
                     ic_msg!(
                         invoke_context,
-                        "Initialize nonce account: insufficient lamports {}, need {}",
-                        self.lamports()?,
+                        "Initialize nonce account: insufficient weis {}, need {}",
+                        self.weis()?,
                         min_balance
                     );
                     return Err(InstructionError::InsufficientFunds);
@@ -240,7 +240,7 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
                 let data = nonce::state::Data::new(
                     *nonce_authority,
                     invoke_context.blockhash,
-                    invoke_context.lamports_per_signature,
+                    invoke_context.weis_per_signature,
                 );
                 self.set_state(&Versions::new_current(State::Initialized(data)))
             }
@@ -294,7 +294,7 @@ impl<'a> NonceKeyedAccount for KeyedAccount<'a> {
                 let new_data = nonce::state::Data::new(
                     *nonce_authority,
                     data.blockhash,
-                    data.get_lamports_per_signature(),
+                    data.get_weis_per_signature(),
                 );
                 self.set_state(&Versions::new_current(State::Initialized(new_data)))
             }
@@ -347,14 +347,14 @@ mod test {
     macro_rules! prepare_mockup {
         ($invoke_context:ident, $instruction_accounts:ident, $rent:ident) => {
             let $rent = Rent {
-                lamports_per_byte_year: 42,
+                weis_per_byte_year: 42,
                 ..Rent::default()
             };
-            let from_lamports = $rent.minimum_balance(State::size()) + 42;
+            let from_weis = $rent.minimum_balance(State::size()) + 42;
             let accounts = vec![
                 (
                     Pubkey::new_unique(),
-                    create_account(from_lamports).into_inner(),
+                    create_account(from_weis).into_inner(),
                 ),
                 (Pubkey::new_unique(), create_account(42).into_inner()),
                 (system_program::id(), AccountSharedData::default()),
@@ -381,7 +381,7 @@ mod test {
     macro_rules! set_invoke_context_blockhash {
         ($invoke_context:expr, $seed:expr) => {
             $invoke_context.blockhash = hash(&bincode::serialize(&$seed).unwrap());
-            $invoke_context.lamports_per_signature = ($seed as u64).saturating_mul(100);
+            $invoke_context.weis_per_signature = ($seed as u64).saturating_mul(100);
         };
     }
 
@@ -430,7 +430,7 @@ mod test {
         let data = nonce::state::Data::new(
             data.authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         // First nonce instruction drives state from Uninitialized to Initialized
         assert_eq!(state, State::Initialized(data.clone()));
@@ -449,7 +449,7 @@ mod test {
         let data = nonce::state::Data::new(
             data.authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         // Second nonce instruction consumes and replaces stored nonce
         assert_eq!(state, State::Initialized(data.clone()));
@@ -468,7 +468,7 @@ mod test {
         let data = nonce::state::Data::new(
             data.authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         // Third nonce instruction for fun and profit
         assert_eq!(state, State::Initialized(data));
@@ -477,14 +477,14 @@ mod test {
         let to_account = instruction_context
             .try_borrow_instruction_account(transaction_context, WITHDRAW_TO_ACCOUNT_INDEX)
             .unwrap();
-        let withdraw_lamports = nonce_account.get_lamports();
-        let expect_nonce_lamports = nonce_account.get_lamports() - withdraw_lamports;
-        let expect_to_lamports = to_account.get_lamports() + withdraw_lamports;
+        let withdraw_weis = nonce_account.get_weis();
+        let expect_nonce_weis = nonce_account.get_weis() - withdraw_weis;
+        let expect_to_weis = to_account.get_weis() + withdraw_weis;
         drop(nonce_account);
         drop(to_account);
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -498,9 +498,9 @@ mod test {
             .try_borrow_instruction_account(transaction_context, WITHDRAW_TO_ACCOUNT_INDEX)
             .unwrap();
         // Empties Account balance
-        assert_eq!(nonce_account.get_lamports(), expect_nonce_lamports);
+        assert_eq!(nonce_account.get_weis(), expect_nonce_weis);
         // Account balance goes to `to`
-        assert_eq!(to_account.get_lamports(), expect_to_lamports);
+        assert_eq!(to_account.get_weis(), expect_to_weis);
         let state = nonce_account
             .get_state::<Versions>()
             .unwrap()
@@ -537,7 +537,7 @@ mod test {
         let data = nonce::state::Data::new(
             authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         assert_eq!(state, State::Initialized(data));
         drop(nonce_account);
@@ -679,14 +679,14 @@ mod test {
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
         set_invoke_context_blockhash!(invoke_context, 0);
-        let withdraw_lamports = nonce_account.get_lamports();
-        let expect_from_lamports = nonce_account.get_lamports() - withdraw_lamports;
-        let expect_to_lamports = to_account.get_lamports() + withdraw_lamports;
+        let withdraw_weis = nonce_account.get_weis();
+        let expect_from_weis = nonce_account.get_weis() - withdraw_weis;
+        let expect_to_weis = to_account.get_weis() + withdraw_weis;
         drop(nonce_account);
         drop(to_account);
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -704,8 +704,8 @@ mod test {
             .unwrap()
             .convert_to_current();
         assert_eq!(state, State::Uninitialized);
-        assert_eq!(nonce_account.get_lamports(), expect_from_lamports);
-        assert_eq!(to_account.get_lamports(), expect_to_lamports);
+        assert_eq!(nonce_account.get_weis(), expect_from_weis);
+        assert_eq!(to_account.get_weis(), expect_to_weis);
     }
 
     #[test]
@@ -730,12 +730,12 @@ mod test {
         assert_eq!(state, State::Uninitialized);
         let signers = HashSet::new();
         set_invoke_context_blockhash!(invoke_context, 0);
-        let withdraw_lamports = nonce_account.get_lamports();
+        let withdraw_weis = nonce_account.get_weis();
         drop(nonce_account);
         drop(to_account);
         let result = invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -764,11 +764,11 @@ mod test {
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
         set_invoke_context_blockhash!(invoke_context, 0);
-        let withdraw_lamports = nonce_account.get_lamports() + 1;
+        let withdraw_weis = nonce_account.get_weis() + 1;
         drop(nonce_account);
         let result = invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -795,14 +795,14 @@ mod test {
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
         set_invoke_context_blockhash!(invoke_context, 0);
-        let withdraw_lamports = nonce_account.get_lamports() / 2;
-        let from_expect_lamports = nonce_account.get_lamports() - withdraw_lamports;
-        let to_expect_lamports = to_account.get_lamports() + withdraw_lamports;
+        let withdraw_weis = nonce_account.get_weis() / 2;
+        let from_expect_weis = nonce_account.get_weis() - withdraw_weis;
+        let to_expect_weis = to_account.get_weis() + withdraw_weis;
         drop(nonce_account);
         drop(to_account);
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -820,16 +820,16 @@ mod test {
             .unwrap()
             .convert_to_current();
         assert_eq!(state, State::Uninitialized);
-        assert_eq!(nonce_account.get_lamports(), from_expect_lamports);
-        assert_eq!(to_account.get_lamports(), to_expect_lamports);
-        let withdraw_lamports = nonce_account.get_lamports();
-        let from_expect_lamports = nonce_account.get_lamports() - withdraw_lamports;
-        let to_expect_lamports = to_account.get_lamports() + withdraw_lamports;
+        assert_eq!(nonce_account.get_weis(), from_expect_weis);
+        assert_eq!(to_account.get_weis(), to_expect_weis);
+        let withdraw_weis = nonce_account.get_weis();
+        let from_expect_weis = nonce_account.get_weis() - withdraw_weis;
+        let to_expect_weis = to_account.get_weis() + withdraw_weis;
         drop(nonce_account);
         drop(to_account);
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -847,8 +847,8 @@ mod test {
             .unwrap()
             .convert_to_current();
         assert_eq!(state, State::Uninitialized);
-        assert_eq!(nonce_account.get_lamports(), from_expect_lamports);
-        assert_eq!(to_account.get_lamports(), to_expect_lamports);
+        assert_eq!(nonce_account.get_weis(), from_expect_weis);
+        assert_eq!(to_account.get_weis(), to_expect_weis);
     }
 
     #[test]
@@ -888,17 +888,17 @@ mod test {
         let data = nonce::state::Data::new(
             authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         assert_eq!(state, State::Initialized(data.clone()));
-        let withdraw_lamports = 42;
-        let from_expect_lamports = nonce_account.get_lamports() - withdraw_lamports;
-        let to_expect_lamports = to_account.get_lamports() + withdraw_lamports;
+        let withdraw_weis = 42;
+        let from_expect_weis = nonce_account.get_weis() - withdraw_weis;
+        let to_expect_weis = to_account.get_weis() + withdraw_weis;
         drop(nonce_account);
         drop(to_account);
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -918,20 +918,20 @@ mod test {
         let data = nonce::state::Data::new(
             data.authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         assert_eq!(state, State::Initialized(data));
-        assert_eq!(nonce_account.get_lamports(), from_expect_lamports);
-        assert_eq!(to_account.get_lamports(), to_expect_lamports);
+        assert_eq!(nonce_account.get_weis(), from_expect_weis);
+        assert_eq!(to_account.get_weis(), to_expect_weis);
         set_invoke_context_blockhash!(invoke_context, 0);
-        let withdraw_lamports = nonce_account.get_lamports();
-        let from_expect_lamports = nonce_account.get_lamports() - withdraw_lamports;
-        let to_expect_lamports = to_account.get_lamports() + withdraw_lamports;
+        let withdraw_weis = nonce_account.get_weis();
+        let from_expect_weis = nonce_account.get_weis() - withdraw_weis;
+        let to_expect_weis = to_account.get_weis() + withdraw_weis;
         drop(nonce_account);
         drop(to_account);
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -949,8 +949,8 @@ mod test {
             .unwrap()
             .convert_to_current();
         assert_eq!(state, State::Uninitialized);
-        assert_eq!(nonce_account.get_lamports(), from_expect_lamports);
-        assert_eq!(to_account.get_lamports(), to_expect_lamports);
+        assert_eq!(nonce_account.get_weis(), from_expect_weis);
+        assert_eq!(to_account.get_weis(), to_expect_weis);
     }
 
     #[test]
@@ -980,11 +980,11 @@ mod test {
             .unwrap();
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
-        let withdraw_lamports = nonce_account.get_lamports();
+        let withdraw_weis = nonce_account.get_weis();
         drop(nonce_account);
         let result = invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -1017,11 +1017,11 @@ mod test {
             .unwrap();
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
-        let withdraw_lamports = nonce_account.get_lamports() + 1;
+        let withdraw_weis = nonce_account.get_weis() + 1;
         drop(nonce_account);
         let result = invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -1054,11 +1054,11 @@ mod test {
         set_invoke_context_blockhash!(invoke_context, 63);
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
-        let withdraw_lamports = 42 + 1;
+        let withdraw_weis = 42 + 1;
         drop(nonce_account);
         let result = invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -1091,11 +1091,11 @@ mod test {
         set_invoke_context_blockhash!(invoke_context, 63);
         let mut signers = HashSet::new();
         signers.insert(*nonce_account.get_key());
-        let withdraw_lamports = u64::MAX - 54;
+        let withdraw_weis = u64::MAX - 54;
         drop(nonce_account);
         let result = invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .withdraw_nonce_account(
-                withdraw_lamports,
+                withdraw_weis,
                 &invoke_context.get_keyed_accounts().unwrap()[1 + WITHDRAW_TO_ACCOUNT_INDEX],
                 &rent,
                 &signers,
@@ -1134,7 +1134,7 @@ mod test {
         let data = nonce::state::Data::new(
             authorized,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         assert_eq!(result, Ok(()));
         let state = nonce_account
@@ -1180,7 +1180,7 @@ mod test {
         let mut nonce_account = instruction_context
             .try_borrow_instruction_account(transaction_context, NONCE_ACCOUNT_INDEX)
             .unwrap();
-        nonce_account.checked_sub_lamports(42 * 2).unwrap();
+        nonce_account.checked_sub_weis(42 * 2).unwrap();
         set_invoke_context_blockhash!(invoke_context, 63);
         let authorized = *nonce_account.get_key();
         drop(nonce_account);
@@ -1213,7 +1213,7 @@ mod test {
         let data = nonce::state::Data::new(
             authority,
             invoke_context.blockhash,
-            invoke_context.lamports_per_signature,
+            invoke_context.weis_per_signature,
         );
         invoke_context.get_keyed_accounts().unwrap()[1 + NONCE_ACCOUNT_INDEX]
             .authorize_nonce_account(&authority, &signers, &invoke_context)

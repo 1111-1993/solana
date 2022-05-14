@@ -212,21 +212,21 @@ pub mod tests {
         let mut accounts = AccountsDb::new_single_for_tests();
         // Account with key1 is updated twice in the store -- should only get notified once.
         let key1 = solana_sdk::pubkey::new_rand();
-        let mut account1_lamports: u64 = 1;
+        let mut account1_weis: u64 = 1;
         let account1 =
-            AccountSharedData::new(account1_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account1_weis, 1, AccountSharedData::default().owner());
         let slot0 = 0;
         accounts.store_uncached(slot0, &[(&key1, &account1)]);
 
-        account1_lamports = 2;
-        let account1 = AccountSharedData::new(account1_lamports, 1, account1.owner());
+        account1_weis = 2;
+        let account1 = AccountSharedData::new(account1_weis, 1, account1.owner());
         accounts.store_uncached(slot0, &[(&key1, &account1)]);
         let notifier = GeyserTestPlugin::default();
 
         let key2 = solana_sdk::pubkey::new_rand();
-        let account2_lamports: u64 = 100;
+        let account2_weis: u64 = 100;
         let account2 =
-            AccountSharedData::new(account2_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account2_weis, 1, AccountSharedData::default().owner());
 
         accounts.store_uncached(slot0, &[(&key2, &account2)]);
 
@@ -240,16 +240,16 @@ pub mod tests {
         assert_eq!(
             notifier.accounts_notified.get(&key1).unwrap()[0]
                 .1
-                .lamports(),
-            account1_lamports
+                .weis(),
+            account1_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key1).unwrap()[0].0, slot0);
         assert_eq!(notifier.accounts_notified.get(&key2).unwrap().len(), 1);
         assert_eq!(
             notifier.accounts_notified.get(&key2).unwrap()[0]
                 .1
-                .lamports(),
-            account2_lamports
+                .weis(),
+            account2_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key2).unwrap()[0].0, slot0);
 
@@ -263,28 +263,28 @@ pub mod tests {
         // Account with key2 is updated slot0, should get notified once
         // Account with key3 is updated in slot1, should get notified once
         let key1 = solana_sdk::pubkey::new_rand();
-        let mut account1_lamports: u64 = 1;
+        let mut account1_weis: u64 = 1;
         let account1 =
-            AccountSharedData::new(account1_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account1_weis, 1, AccountSharedData::default().owner());
         let slot0 = 0;
         accounts.store_uncached(slot0, &[(&key1, &account1)]);
 
         let key2 = solana_sdk::pubkey::new_rand();
-        let account2_lamports: u64 = 200;
+        let account2_weis: u64 = 200;
         let account2 =
-            AccountSharedData::new(account2_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account2_weis, 1, AccountSharedData::default().owner());
         accounts.store_uncached(slot0, &[(&key2, &account2)]);
 
-        account1_lamports = 2;
+        account1_weis = 2;
         let slot1 = 1;
-        let account1 = AccountSharedData::new(account1_lamports, 1, account1.owner());
+        let account1 = AccountSharedData::new(account1_weis, 1, account1.owner());
         accounts.store_uncached(slot1, &[(&key1, &account1)]);
         let notifier = GeyserTestPlugin::default();
 
         let key3 = solana_sdk::pubkey::new_rand();
-        let account3_lamports: u64 = 300;
+        let account3_weis: u64 = 300;
         let account3 =
-            AccountSharedData::new(account3_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account3_weis, 1, AccountSharedData::default().owner());
         accounts.store_uncached(slot1, &[(&key3, &account3)]);
 
         let notifier = Arc::new(RwLock::new(notifier));
@@ -297,24 +297,24 @@ pub mod tests {
         assert_eq!(
             notifier.accounts_notified.get(&key1).unwrap()[0]
                 .1
-                .lamports(),
-            account1_lamports
+                .weis(),
+            account1_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key1).unwrap()[0].0, slot1);
         assert_eq!(notifier.accounts_notified.get(&key2).unwrap().len(), 1);
         assert_eq!(
             notifier.accounts_notified.get(&key2).unwrap()[0]
                 .1
-                .lamports(),
-            account2_lamports
+                .weis(),
+            account2_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key2).unwrap()[0].0, slot0);
         assert_eq!(notifier.accounts_notified.get(&key3).unwrap().len(), 1);
         assert_eq!(
             notifier.accounts_notified.get(&key3).unwrap()[0]
                 .1
-                .lamports(),
-            account3_lamports
+                .weis(),
+            account3_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key3).unwrap()[0].0, slot1);
         assert!(notifier.is_startup_done.load(Ordering::Relaxed));
@@ -333,27 +333,27 @@ pub mod tests {
         // Account with key2 is updated slot0, should get notified once
         // Account with key3 is updated in slot1, should get notified once
         let key1 = solana_sdk::pubkey::new_rand();
-        let account1_lamports1: u64 = 1;
+        let account1_weis1: u64 = 1;
         let account1 =
-            AccountSharedData::new(account1_lamports1, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account1_weis1, 1, AccountSharedData::default().owner());
         let slot0 = 0;
         accounts.store_cached(slot0, &[(&key1, &account1)]);
 
         let key2 = solana_sdk::pubkey::new_rand();
-        let account2_lamports: u64 = 200;
+        let account2_weis: u64 = 200;
         let account2 =
-            AccountSharedData::new(account2_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account2_weis, 1, AccountSharedData::default().owner());
         accounts.store_cached(slot0, &[(&key2, &account2)]);
 
-        let account1_lamports2 = 2;
+        let account1_weis2 = 2;
         let slot1 = 1;
-        let account1 = AccountSharedData::new(account1_lamports2, 1, account1.owner());
+        let account1 = AccountSharedData::new(account1_weis2, 1, account1.owner());
         accounts.store_cached(slot1, &[(&key1, &account1)]);
 
         let key3 = solana_sdk::pubkey::new_rand();
-        let account3_lamports: u64 = 300;
+        let account3_weis: u64 = 300;
         let account3 =
-            AccountSharedData::new(account3_lamports, 1, AccountSharedData::default().owner());
+            AccountSharedData::new(account3_weis, 1, AccountSharedData::default().owner());
         accounts.store_cached(slot1, &[(&key3, &account3)]);
 
         let notifier = notifier.write().unwrap();
@@ -361,15 +361,15 @@ pub mod tests {
         assert_eq!(
             notifier.accounts_notified.get(&key1).unwrap()[0]
                 .1
-                .lamports(),
-            account1_lamports1
+                .weis(),
+            account1_weis1
         );
         assert_eq!(notifier.accounts_notified.get(&key1).unwrap()[0].0, slot0);
         assert_eq!(
             notifier.accounts_notified.get(&key1).unwrap()[1]
                 .1
-                .lamports(),
-            account1_lamports2
+                .weis(),
+            account1_weis2
         );
         assert_eq!(notifier.accounts_notified.get(&key1).unwrap()[1].0, slot1);
 
@@ -377,16 +377,16 @@ pub mod tests {
         assert_eq!(
             notifier.accounts_notified.get(&key2).unwrap()[0]
                 .1
-                .lamports(),
-            account2_lamports
+                .weis(),
+            account2_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key2).unwrap()[0].0, slot0);
         assert_eq!(notifier.accounts_notified.get(&key3).unwrap().len(), 1);
         assert_eq!(
             notifier.accounts_notified.get(&key3).unwrap()[0]
                 .1
-                .lamports(),
-            account3_lamports
+                .weis(),
+            account3_weis
         );
         assert_eq!(notifier.accounts_notified.get(&key3).unwrap()[0].0, slot1);
     }

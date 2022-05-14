@@ -20,7 +20,7 @@ extern uint64_t entrypoint(const uint8_t *input) {
 
   gth_assert(params.ka_num == 2);
   for (int i = 0; i < 2; i++) {
-    gth_assert(*params.ka[i].lamports == 42);
+    gth_assert(*params.ka[i].weis == 42);
     gth_assert(!gth_memcmp(params.ka[i].data, ka_data, 4));
     gth_assert(GthPubkey_same(params.ka[i].owner, &ka_owner));
     gth_assert(params.ka[i].is_signer == false);

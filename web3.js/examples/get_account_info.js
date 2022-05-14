@@ -11,7 +11,7 @@ import * as web3 from '@solana/web3.js';
   var wallet = web3.Keypair.generate();
   var airdropSignature = await connection.requestAirdrop(
     wallet.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
   );
 
   //wait for airdrop confirmation

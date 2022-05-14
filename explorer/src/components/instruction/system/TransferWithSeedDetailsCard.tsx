@@ -60,7 +60,7 @@ export function TransferWithSeedDetailsCard(props: {
       <tr>
         <td>Transfer Amount (GTH)</td>
         <td className="text-lg-end">
-          <GthBalance lamports={info.lamports} />
+          <GthBalance weis={info.weis} />
         </td>
       </tr>
 

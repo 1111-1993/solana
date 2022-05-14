@@ -8,7 +8,7 @@ import {
   Lockup,
   PublicKey,
   sendAndConfirmTransaction,
-  LAMPORTS_PER_GTH,
+  WEIS_PER_GTH,
   StakeAuthorizationLayout,
   StakeInstruction,
   StakeProgram,
@@ -32,7 +32,7 @@ describe('StakeProgram', () => {
     const authorizedPubkey = Keypair.generate().publicKey;
     const authorized = new Authorized(authorizedPubkey, authorizedPubkey);
     const lockup = new Lockup(0, 0, fromPubkey);
-    const lamports = 123;
+    const weis = 123;
     const transaction = StakeProgram.createAccountWithSeed({
       fromPubkey,
       stakePubkey: newAccountPubkey,
@@ -40,7 +40,7 @@ describe('StakeProgram', () => {
       seed,
       authorized,
       lockup,
-      lamports,
+      weis,
     });
     expect(transaction.instructions).to.have.length(2);
     const [systemInstruction, stakeInstruction] = transaction.instructions;
@@ -49,7 +49,7 @@ describe('StakeProgram', () => {
       newAccountPubkey,
       basePubkey: fromPubkey,
       seed,
-      lamports,
+      weis,
       space: StakeProgram.space,
       programId: StakeProgram.programId,
     };
@@ -68,20 +68,20 @@ describe('StakeProgram', () => {
     const authorizedPubkey = Keypair.generate().publicKey;
     const authorized = new Authorized(authorizedPubkey, authorizedPubkey);
     const lockup = new Lockup(0, 0, fromPubkey);
-    const lamports = 123;
+    const weis = 123;
     const transaction = StakeProgram.createAccount({
       fromPubkey,
       stakePubkey: newAccountPubkey,
       authorized,
       lockup,
-      lamports,
+      weis,
     });
     expect(transaction.instructions).to.have.length(2);
     const [systemInstruction, stakeInstruction] = transaction.instructions;
     const systemParams = {
       fromPubkey,
       newAccountPubkey,
-      lamports,
+      weis,
       space: StakeProgram.space,
       programId: StakeProgram.programId,
     };
@@ -202,7 +202,7 @@ describe('StakeProgram', () => {
       stakePubkey,
       authorizedPubkey,
       splitStakePubkey,
-      lamports: 123,
+      weis: 123,
     };
     const transaction = StakeProgram.split(params);
     expect(transaction.instructions).to.have.length(2);
@@ -210,7 +210,7 @@ describe('StakeProgram', () => {
     const systemParams = {
       fromPubkey: authorizedPubkey,
       newAccountPubkey: splitStakePubkey,
-      lamports: 0,
+      weis: 0,
       space: StakeProgram.space,
       programId: StakeProgram.programId,
     };
@@ -223,7 +223,7 @@ describe('StakeProgram', () => {
   it('splitWithSeed', async () => {
     const stakePubkey = Keypair.generate().publicKey;
     const authorizedPubkey = Keypair.generate().publicKey;
-    const lamports = 123;
+    const weis = 123;
     const seed = 'test string';
     const basePubkey = Keypair.generate().publicKey;
     const splitStakePubkey = await PublicKey.createWithSeed(
@@ -234,7 +234,7 @@ describe('StakeProgram', () => {
     const transaction = StakeProgram.splitWithSeed({
       stakePubkey,
       authorizedPubkey,
-      lamports,
+      weis,
       splitStakePubkey,
       basePubkey,
       seed,
@@ -255,7 +255,7 @@ describe('StakeProgram', () => {
       stakePubkey,
       authorizedPubkey,
       splitStakePubkey,
-      lamports,
+      weis,
     };
     expect(splitParams).to.eql(StakeInstruction.decodeSplit(stakeInstruction));
   });
@@ -283,7 +283,7 @@ describe('StakeProgram', () => {
       stakePubkey,
       authorizedPubkey,
       toPubkey,
-      lamports: 123,
+      weis: 123,
     };
     const transaction = StakeProgram.withdraw(params);
     expect(transaction.instructions).to.have.length(1);
@@ -300,7 +300,7 @@ describe('StakeProgram', () => {
       stakePubkey,
       authorizedPubkey,
       toPubkey,
-      lamports: 123,
+      weis: 123,
       custodianPubkey,
     };
     const transaction = StakeProgram.withdraw(params);
@@ -337,7 +337,7 @@ describe('StakeProgram', () => {
       seed,
       authorized: new Authorized(authorized.publicKey, authorized.publicKey),
       lockup: new Lockup(0, 0, from.publicKey),
-      lamports: amount,
+      weis: amount,
     });
     const createWithSeedTransaction = new Transaction({recentBlockhash}).add(
       createWithSeed,
@@ -391,14 +391,14 @@ describe('StakeProgram', () => {
       await helpers.airdrop({
         connection,
         address: payer.publicKey,
-        amount: 2 * LAMPORTS_PER_GTH,
+        amount: 2 * WEIS_PER_GTH,
       });
 
       const authorized = Keypair.generate();
       await helpers.airdrop({
         connection,
         address: authorized.publicKey,
-        amount: 2 * LAMPORTS_PER_GTH,
+        amount: 2 * WEIS_PER_GTH,
       });
 
       const minimumAmount = await connection.getMinimumBalanceForRentExemption(
@@ -406,10 +406,10 @@ describe('StakeProgram', () => {
       );
 
       expect(await connection.getBalance(payer.publicKey)).to.eq(
-        2 * LAMPORTS_PER_GTH,
+        2 * WEIS_PER_GTH,
       );
       expect(await connection.getBalance(authorized.publicKey)).to.eq(
-        2 * LAMPORTS_PER_GTH,
+        2 * WEIS_PER_GTH,
       );
 
       {
@@ -422,7 +422,7 @@ describe('StakeProgram', () => {
             authorized.publicKey,
             authorized.publicKey,
           ),
-          lamports: minimumAmount + 42,
+          weis: minimumAmount + 42,
         });
 
         await sendAndConfirmTransaction(
@@ -460,7 +460,7 @@ describe('StakeProgram', () => {
         seed,
         authorized: new Authorized(authorized.publicKey, authorized.publicKey),
         lockup: new Lockup(0, 0, new PublicKey(0)),
-        lamports: 4 * minimumAmount + 62,
+        weis: 4 * minimumAmount + 62,
       });
 
       await sendAndConfirmTransaction(
@@ -487,7 +487,7 @@ describe('StakeProgram', () => {
         stakePubkey: newAccountPubkey,
         authorizedPubkey: authorized.publicKey,
         toPubkey: recipient.publicKey,
-        lamports: 1000,
+        weis: 1000,
       });
       await expect(
         sendAndConfirmTransaction(connection, withdraw, [authorized], {
@@ -516,7 +516,7 @@ describe('StakeProgram', () => {
         stakePubkey: newAccountPubkey,
         authorizedPubkey: authorized.publicKey,
         toPubkey: recipient.publicKey,
-        lamports: minimumAmount + 20,
+        weis: minimumAmount + 20,
       });
 
       await sendAndConfirmTransaction(connection, withdraw, [authorized], {
@@ -531,7 +531,7 @@ describe('StakeProgram', () => {
         stakePubkey: newAccountPubkey,
         authorizedPubkey: authorized.publicKey,
         splitStakePubkey: newStake.publicKey,
-        lamports: minimumAmount + 20,
+        weis: minimumAmount + 20,
       });
       await sendAndConfirmTransaction(
         connection,
@@ -554,7 +554,7 @@ describe('StakeProgram', () => {
       let splitWithSeed = StakeProgram.splitWithSeed({
         stakePubkey: newAccountPubkey,
         authorizedPubkey: authorized.publicKey,
-        lamports: minimumAmount + 20,
+        weis: minimumAmount + 20,
         splitStakePubkey: newStake2,
         basePubkey: payer.publicKey,
         seed: seed2,
@@ -588,7 +588,7 @@ describe('StakeProgram', () => {
         stakePubkey: newAccountPubkey,
         authorizedPubkey: authorized.publicKey,
         splitStakePubkey: newStake.publicKey,
-        lamports: minimumAmount + 20,
+        weis: minimumAmount + 20,
       });
       await sendAndConfirmTransaction(
         connection,
@@ -603,7 +603,7 @@ describe('StakeProgram', () => {
       const newAuthorized = Keypair.generate();
       await connection.requestAirdrop(
         newAuthorized.publicKey,
-        LAMPORTS_PER_GTH,
+        WEIS_PER_GTH,
       );
 
       let authorize = StakeProgram.authorize({

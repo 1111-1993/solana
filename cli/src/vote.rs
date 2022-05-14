@@ -31,7 +31,7 @@ use {
     solana_remote_wallet::remote_wallet::RemoteWalletManager,
     solana_sdk::{
         account::Account, commitment_config::CommitmentConfig, message::Message,
-        native_token::lamports_to_gth, pubkey::Pubkey, system_instruction::SystemError,
+        native_token::weis_to_gth, pubkey::Pubkey, system_instruction::SystemError,
         transaction::Transaction,
     },
     solana_vote_program::{
@@ -314,10 +314,10 @@ impl VoteSubCommands for App<'_, '_> {
                         "Vote account pubkey. "),
                 )
                 .arg(
-                    Arg::with_name("lamports")
-                        .long("lamports")
+                    Arg::with_name("weis")
+                        .long("weis")
                         .takes_value(false)
-                        .help("Display balance in lamports instead of GTH"),
+                        .help("Display balance in weis instead of GTH"),
                 )
                 .arg(
                     Arg::with_name("with_rewards")
@@ -338,7 +338,7 @@ impl VoteSubCommands for App<'_, '_> {
         )
         .subcommand(
             SubCommand::with_name("withdraw-from-vote-account")
-                .about("Withdraw lamports from a vote account into a specified account")
+                .about("Withdraw weis from a vote account into a specified account")
                 .arg(
                     pubkey!(Arg::with_name("vote_account_pubkey")
                         .index(1)
@@ -629,7 +629,7 @@ pub fn parse_vote_get_account_command(
 ) -> Result<CliCommandInfo, CliError> {
     let vote_account_pubkey =
         pubkey_of_signer(matches, "vote_account_pubkey", wallet_manager)?.unwrap();
-    let use_lamports_unit = matches.is_present("lamports");
+    let use_weis_unit = matches.is_present("weis");
     let with_rewards = if matches.is_present("with_rewards") {
         Some(value_of(matches, "num_rewards_epochs").unwrap())
     } else {
@@ -638,7 +638,7 @@ pub fn parse_vote_get_account_command(
     Ok(CliCommandInfo {
         command: CliCommand::ShowVoteAccount {
             pubkey: vote_account_pubkey,
-            use_lamports_unit,
+            use_weis_unit,
             with_rewards,
         },
         signers: vec![],
@@ -777,7 +777,7 @@ pub fn process_create_vote_account(
     let fee_payer = config.signers[fee_payer];
     let nonce_authority = config.signers[nonce_authority];
 
-    let build_message = |lamports| {
+    let build_message = |weis| {
         let vote_init = VoteInit {
             node_pubkey: identity_pubkey,
             authorized_voter: authorized_voter.unwrap_or(identity_pubkey),
@@ -792,7 +792,7 @@ pub fn process_create_vote_account(
                 &vote_account_pubkey,        // base
                 seed,                        // seed
                 &vote_init,
-                lamports,
+                weis,
             )
             .with_memo(memo)
         } else {
@@ -800,7 +800,7 @@ pub fn process_create_vote_account(
                 &config.signers[0].pubkey(),
                 &vote_account_pubkey,
                 &vote_init,
-                lamports,
+                weis,
             )
             .with_memo(memo)
         };
@@ -1172,7 +1172,7 @@ pub fn process_show_vote_account(
     rpc_client: &RpcClient,
     config: &CliConfig,
     vote_account_address: &Pubkey,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
     with_rewards: Option<usize>,
 ) -> ProcessResult {
     let (vote_account, vote_state) =
@@ -1211,7 +1211,7 @@ pub fn process_show_vote_account(
         });
 
     let vote_account_data = CliVoteAccount {
-        account_balance: vote_account.lamports,
+        account_balance: vote_account.weis,
         validator_identity: vote_state.node_pubkey.to_string(),
         authorized_voters: vote_state.authorized_voters().into(),
         authorized_withdrawer: vote_state.authorized_withdrawer.to_string(),
@@ -1221,7 +1221,7 @@ pub fn process_show_vote_account(
         recent_timestamp: vote_state.last_timestamp.clone(),
         votes,
         epoch_voting_history,
-        use_lamports_unit,
+        use_weis_unit,
         epoch_rewards,
     };
 
@@ -1250,11 +1250,11 @@ pub fn process_withdraw_from_vote_account(
     let fee_payer = config.signers[fee_payer];
     let nonce_authority = config.signers[nonce_authority];
 
-    let build_message = |lamports| {
+    let build_message = |weis| {
         let ixs = vec![withdraw(
             vote_account_pubkey,
             &withdraw_authority.pubkey(),
-            lamports,
+            weis,
             destination_account_pubkey,
         )]
         .with_memo(memo);
@@ -1290,7 +1290,7 @@ pub fn process_withdraw_from_vote_account(
             let balance_remaining = current_balance.saturating_sub(withdraw_amount);
             if balance_remaining < minimum_balance && balance_remaining != 0 {
                 return Err(CliError::BadParameter(format!(
-                    "Withdraw amount too large. The vote account balance must be at least {} GTH to remain rent exempt", lamports_to_gth(minimum_balance)
+                    "Withdraw amount too large. The vote account balance must be at least {} GTH to remain rent exempt", weis_to_gth(minimum_balance)
                 ))
                 .into());
             }

@@ -261,10 +261,10 @@ curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0","id":1,"m
 The `preBalances` and `postBalances` fields allow you to track the balance
 changes in every account without having to parse the entire transaction. They
 list the starting and ending balances of each account in
-[lamports](../terminology.md#lamport), indexed to the `accountKeys` list. For
+[weis](../terminology.md#wei), indexed to the `accountKeys` list. For
 example, if the deposit address if interest is
 `47Sbuv6jL7CViK9F2NMW51aQGhfdpUu7WNvKyH645Rfi`, this transaction represents a
-transfer of 218099990000 - 207099990000 = 11000000000 lamports = 11 GTH
+transfer of 218099990000 - 207099990000 = 11000000000 weis = 11 GTH
 
 If you need more information about the transaction type or other specifics, you
 can request the block from RPC in binary format, and parse it using either our
@@ -634,7 +634,7 @@ accounts do not:
 1. SPL Token accounts must remain [rent-exempt](developing/programming-model/accounts.md#rent-exemption)
    for the duration of their existence and therefore require a small amount of
    native GTH tokens be deposited at account creation. For SPL Token v2 accounts,
-   this amount is 0.00203928 GTH (2,039,280 lamports).
+   this amount is 0.00203928 GTH (2,039,280 weis).
 
 #### Command Line
 
@@ -743,7 +743,7 @@ From the withdrawal address, the [Associated Token Account](https://spl.solana.c
 instruction. Note that it is possible that the ATA address does not yet exist, at which point the
 exchange should fund the account on behalf of the user. For SPL Token v2
 accounts, funding the withdrawal account will require 0.00203928 GTH (2,039,280
-lamports).
+weis).
 
 Template `spl-token transfer` command for a withdrawal:
 

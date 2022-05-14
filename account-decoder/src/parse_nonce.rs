@@ -66,7 +66,7 @@ mod test {
                 authority: Pubkey::default().to_string(),
                 blockhash: Hash::default().to_string(),
                 fee_calculator: UiFeeCalculator {
-                    lamports_per_signature: 0.to_string(),
+                    weis_per_signature: 0.to_string(),
                 },
             }),
         );

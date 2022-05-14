@@ -101,19 +101,19 @@ impl TransactionStatusService {
                             durable_nonce_fee,
                             ..
                         } = details;
-                        let lamports_per_signature = match durable_nonce_fee {
-                            Some(DurableNonceFee::Valid(lamports_per_signature)) => {
-                                Some(lamports_per_signature)
+                        let weis_per_signature = match durable_nonce_fee {
+                            Some(DurableNonceFee::Valid(weis_per_signature)) => {
+                                Some(weis_per_signature)
                             }
                             Some(DurableNonceFee::Invalid) => None,
-                            None => bank.get_lamports_per_signature_for_blockhash(
+                            None => bank.get_weis_per_signature_for_blockhash(
                                 transaction.message().recent_blockhash(),
                             ),
                         }
-                        .expect("lamports_per_signature must be available");
-                        let fee = bank.get_fee_for_message_with_lamports_per_signature(
+                        .expect("weis_per_signature must be available");
+                        let fee = bank.get_fee_for_message_with_weis_per_signature(
                             transaction.message(),
-                            lamports_per_signature,
+                            weis_per_signature,
                         );
                         let tx_account_locks = transaction.get_account_locks_unchecked();
 
@@ -136,7 +136,7 @@ impl TransactionStatusService {
                                 .into_unordered_rewards_iter()
                                 .map(|(pubkey, reward_info)| Reward {
                                     pubkey: pubkey.to_string(),
-                                    lamports: reward_info.lamports,
+                                    weis: reward_info.weis,
                                     post_balance: reward_info.post_balance,
                                     reward_type: Some(reward_info.reward_type),
                                     commission: reward_info.commission,

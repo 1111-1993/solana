@@ -138,10 +138,10 @@ impl NonceSubCommands for App<'_, '_> {
                         "Address of the nonce account to display. "),
                 )
                 .arg(
-                    Arg::with_name("lamports")
-                        .long("lamports")
+                    Arg::with_name("weis")
+                        .long("weis")
                         .takes_value(false)
-                        .help("Display balance in lamports instead of GTH"),
+                        .help("Display balance in weis instead of GTH"),
                 ),
         )
         .subcommand(
@@ -282,12 +282,12 @@ pub fn parse_show_nonce_account(
 ) -> Result<CliCommandInfo, CliError> {
     let nonce_account_pubkey =
         pubkey_of_signer(matches, "nonce_account_pubkey", wallet_manager)?.unwrap();
-    let use_lamports_unit = matches.is_present("lamports");
+    let use_weis_unit = matches.is_present("weis");
 
     Ok(CliCommandInfo {
         command: CliCommand::ShowNonceAccount {
             nonce_account_pubkey,
-            use_lamports_unit,
+            use_weis_unit,
         },
         signers: vec![],
     })
@@ -301,7 +301,7 @@ pub fn parse_withdraw_from_nonce_account(
     let nonce_account = pubkey_of_signer(matches, "nonce_account_pubkey", wallet_manager)?.unwrap();
     let destination_account_pubkey =
         pubkey_of_signer(matches, "destination_account_pubkey", wallet_manager)?.unwrap();
-    let lamports = lamports_of_gth(matches, "amount").unwrap();
+    let weis = weis_of_gth(matches, "amount").unwrap();
     let memo = matches.value_of(MEMO_ARG.name).map(String::from);
     let (nonce_authority, nonce_authority_pubkey) =
         signer_of(matches, NONCE_AUTHORITY_ARG.name, wallet_manager)?;
@@ -319,7 +319,7 @@ pub fn parse_withdraw_from_nonce_account(
             nonce_authority: signer_info.index_of(nonce_authority_pubkey).unwrap(),
             memo,
             destination_account_pubkey,
-            lamports,
+            weis,
         },
         signers: signer_info.signers,
     })
@@ -420,7 +420,7 @@ pub fn process_create_nonce_account(
 
     let nonce_authority = nonce_authority.unwrap_or_else(|| config.signers[0].pubkey());
 
-    let build_message = |lamports| {
+    let build_message = |weis| {
         let ixs = if let Some(seed) = seed.clone() {
             create_nonce_account_with_seed(
                 &config.signers[0].pubkey(), // from
@@ -428,7 +428,7 @@ pub fn process_create_nonce_account(
                 &nonce_account_pubkey,       // base
                 &seed,                       // seed
                 &nonce_authority,
-                lamports,
+                weis,
             )
             .with_memo(memo)
         } else {
@@ -436,7 +436,7 @@ pub fn process_create_nonce_account(
                 &config.signers[0].pubkey(),
                 &nonce_account_pubkey,
                 &nonce_authority,
-                lamports,
+                weis,
             )
             .with_memo(memo)
         };
@@ -445,7 +445,7 @@ pub fn process_create_nonce_account(
 
     let latest_blockhash = rpc_client.get_latest_blockhash()?;
 
-    let (message, lamports) = resolve_spend_tx_and_check_account_balance(
+    let (message, weis) = resolve_spend_tx_and_check_account_balance(
         rpc_client,
         false,
         amount,
@@ -468,10 +468,10 @@ pub fn process_create_nonce_account(
     }
 
     let minimum_balance = rpc_client.get_minimum_balance_for_rent_exemption(State::size())?;
-    if lamports < minimum_balance {
+    if weis < minimum_balance {
         return Err(CliError::BadParameter(format!(
-            "need at least {} lamports for nonce account to be rent exempt, provided lamports: {}",
-            minimum_balance, lamports
+            "need at least {} weis for nonce account to be rent exempt, provided weis: {}",
+            minimum_balance, weis
         ))
         .into());
     }
@@ -585,21 +585,21 @@ pub fn process_show_nonce_account(
     rpc_client: &RpcClient,
     config: &CliConfig,
     nonce_account_pubkey: &Pubkey,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> ProcessResult {
     let nonce_account =
         get_account_with_commitment(rpc_client, nonce_account_pubkey, config.commitment)?;
     let print_account = |data: Option<&nonce::state::Data>| {
         let mut nonce_account = CliNonceAccount {
-            balance: nonce_account.lamports,
+            balance: nonce_account.weis,
             minimum_balance_for_rent_exemption: rpc_client
                 .get_minimum_balance_for_rent_exemption(State::size())?,
-            use_lamports_unit,
+            use_weis_unit,
             ..CliNonceAccount::default()
         };
         if let Some(data) = data {
             nonce_account.nonce = Some(data.blockhash.to_string());
-            nonce_account.lamports_per_signature = Some(data.fee_calculator.lamports_per_signature);
+            nonce_account.weis_per_signature = Some(data.fee_calculator.weis_per_signature);
             nonce_account.authority = Some(data.authority.to_string());
         }
 
@@ -618,7 +618,7 @@ pub fn process_withdraw_from_nonce_account(
     nonce_authority: SignerIndex,
     memo: Option<&String>,
     destination_account_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
 ) -> ProcessResult {
     let latest_blockhash = rpc_client.get_latest_blockhash()?;
 
@@ -627,7 +627,7 @@ pub fn process_withdraw_from_nonce_account(
         nonce_account,
         &nonce_authority.pubkey(),
         destination_account_pubkey,
-        lamports,
+        weis,
     )]
     .with_memo(memo);
     let message = Message::new(&ixs, Some(&config.signers[0].pubkey()));
@@ -857,7 +857,7 @@ mod tests {
             CliCommandInfo {
                 command: CliCommand::ShowNonceAccount {
                     nonce_account_pubkey: nonce_account_keypair.pubkey(),
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 },
                 signers: vec![],
             }
@@ -884,7 +884,7 @@ mod tests {
                     nonce_authority: 0,
                     memo: None,
                     destination_account_pubkey: nonce_account_pubkey,
-                    lamports: 42_000_000_000
+                    weis: 42_000_000_000
                 },
                 signers: vec![read_keypair_file(&default_keypair_file).unwrap().into()],
             }
@@ -913,7 +913,7 @@ mod tests {
                     nonce_authority: 1,
                     memo: None,
                     destination_account_pubkey: nonce_account_pubkey,
-                    lamports: 42_000_000_000
+                    weis: 42_000_000_000
                 },
                 signers: vec![
                     read_keypair_file(&default_keypair_file).unwrap().into(),

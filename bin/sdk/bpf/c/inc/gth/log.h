@@ -63,8 +63,8 @@ static void gth_log_params(const GthParameters *params) {
     gth_log_64(0, 0, 0, 0, params->ka[i].is_writable);
     gth_log("  - Key");
     gth_log_pubkey(params->ka[i].key);
-    gth_log("  - Lamports");
-    gth_log_64(0, 0, 0, 0, *params->ka[i].lamports);
+    gth_log("  - Weis");
+    gth_log_64(0, 0, 0, 0, *params->ka[i].weis);
     gth_log("  - data");
     gth_log_array(params->ka[i].data, params->ka[i].data_len);
     gth_log("  - Owner");

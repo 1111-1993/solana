@@ -197,7 +197,7 @@ pub struct InvokeContext<'a> {
     pub feature_set: Arc<FeatureSet>,
     pub timings: ExecuteDetailsTimings,
     pub blockhash: Hash,
-    pub lamports_per_signature: u64,
+    pub weis_per_signature: u64,
 }
 
 impl<'a> InvokeContext<'a> {
@@ -212,7 +212,7 @@ impl<'a> InvokeContext<'a> {
         executors: Rc<RefCell<Executors>>,
         feature_set: Arc<FeatureSet>,
         blockhash: Hash,
-        lamports_per_signature: u64,
+        weis_per_signature: u64,
         initial_accounts_data_len: u64,
     ) -> Self {
         Self {
@@ -231,7 +231,7 @@ impl<'a> InvokeContext<'a> {
             feature_set,
             timings: ExecuteDetailsTimings::default(),
             blockhash,
-            lamports_per_signature,
+            weis_per_signature,
         }
     }
 
@@ -504,10 +504,10 @@ impl<'a> InvokeContext<'a> {
                     err
                 })?;
             pre_sum = pre_sum
-                .checked_add(u128::from(pre_account.lamports()))
+                .checked_add(u128::from(pre_account.weis()))
                 .ok_or(InstructionError::UnbalancedInstruction)?;
             post_sum = post_sum
-                .checked_add(u128::from(account.lamports()))
+                .checked_add(u128::from(account.weis()))
                 .ok_or(InstructionError::UnbalancedInstruction)?;
 
             let pre_data_len = pre_account.data().len() as i64;
@@ -528,7 +528,7 @@ impl<'a> InvokeContext<'a> {
             InstructionError::NotEnoughAccountKeys,
         )?;
 
-        // Verify that the total sum of all the lamports did not change
+        // Verify that the total sum of all the weis did not change
         if pre_sum != post_sum {
             return Err(InstructionError::UnbalancedInstruction);
         }
@@ -599,10 +599,10 @@ impl<'a> InvokeContext<'a> {
                                 err
                             })?;
                         pre_sum = pre_sum
-                            .checked_add(u128::from(pre_account.lamports()))
+                            .checked_add(u128::from(pre_account.weis()))
                             .ok_or(InstructionError::UnbalancedInstruction)?;
                         post_sum = post_sum
-                            .checked_add(u128::from(account.lamports()))
+                            .checked_add(u128::from(account.weis()))
                             .ok_or(InstructionError::UnbalancedInstruction)?;
                         if is_writable && !pre_account.executable() {
                             pre_account.update(account.clone());
@@ -630,7 +630,7 @@ impl<'a> InvokeContext<'a> {
             InstructionError::NotEnoughAccountKeys,
         )?;
 
-        // Verify that the total sum of all the lamports did not change
+        // Verify that the total sum of all the weis did not change
         if pre_sum != post_sum {
             return Err(InstructionError::UnbalancedInstruction);
         }

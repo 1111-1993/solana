@@ -15,8 +15,8 @@ pub struct ReplicaAccountInfo<'a> {
     /// The Pubkey for the account
     pub pubkey: &'a [u8],
 
-    /// The lamports for the account
-    pub lamports: u64,
+    /// The weis for the account
+    pub weis: u64,
 
     /// The Pubkey of the owner program account
     pub owner: &'a [u8],

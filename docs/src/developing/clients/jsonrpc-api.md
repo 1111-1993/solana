@@ -242,7 +242,7 @@ The result will be an RpcResponse JSON object with `value` equal to:
 
 - `<null>` - if the requested account doesn't exist
 - `<object>` - otherwise, a JSON object containing:
-  - `lamports: <u64>`, number of lamports assigned to this account, as a u64
+  - `weis: <u64>`, number of weis assigned to this account, as a u64
   - `owner: <string>`, base-58 encoded Pubkey of the program this account has been assigned to
   - `data: <[string, encoding]|object>`, data associated with the account, either as encoded binary data or JSON format `{<program>: <state>}`, depending on encoding parameter
   - `executable: <bool>`, boolean indicating if the account contains a program \(and is strictly read-only\)
@@ -283,7 +283,7 @@ Response:
         "base58"
       ],
       "executable": false,
-      "lamports": 1000000000,
+      "weis": 1000000000,
       "owner": "11111111111111111111111111111111",
       "rentEpoch": 2
     }
@@ -328,13 +328,13 @@ Response:
             "authority": "Bbqg1M4YVVfbhEzwA9SpC9FhsaG83YMTYoR4a8oTDLX",
             "blockhash": "3xLP3jK6dVJwpeGeTDYTwdDK3TKchUf1gYYGHa4sF3XJ",
             "feeCalculator": {
-              "lamportsPerSignature": 5000
+              "weisPerSignature": 5000
             }
           }
         }
       },
       "executable": false,
-      "lamports": 1000000000,
+      "weis": 1000000000,
       "owner": "11111111111111111111111111111111",
       "rentEpoch": 2
     }
@@ -421,8 +421,8 @@ The result field will be an object with the following fields:
   - `signatures: <array>` - present if "signatures" are requested for transaction details; an array of signatures strings, corresponding to the transaction order in the block
   - `rewards: <array>` - present if rewards are requested; an array of JSON objects containing:
     - `pubkey: <string>` - The public key, as base-58 encoded string, of the account that received the reward
-    - `lamports: <i64>`- number of reward lamports credited or debited by the account, as a i64
-    - `postBalance: <u64>` - account balance in lamports after the reward was applied
+    - `weis: <i64>`- number of reward weis credited or debited by the account, as a i64
+    - `postBalance: <u64>` - account balance in weis after the reward was applied
     - `rewardType: <string|undefined>` - type of reward: "fee", "rent", "voting", "staking"
     - `commission: <u8|undefined>` - vote account commission when the reward was credited, only present for voting and staking rewards
   - `blockTime: <i64 | null>` - estimated production time, as Unix timestamp (seconds since the Unix epoch). null if not available
@@ -557,7 +557,7 @@ The JSON structure of a transaction is defined as follows:
   - `accountKeys: <array[string]>` - List of base-58 encoded public keys used by the transaction, including by the instructions and for signatures. The first `message.header.numRequiredSignatures` public keys must sign the transaction.
   - `header: <object>` - Details the account types and signatures required by the transaction.
     - `numRequiredSignatures: <number>` - The total number of signatures required to make the transaction valid. The signatures must match the first `numRequiredSignatures` of `message.account_keys`.
-    - `numReadonlySignedAccounts: <number>` - The last `numReadonlySignedAccounts` of the signed keys are read-only accounts. Programs may process multiple transactions that load read-only accounts within a single PoH entry, but are not permitted to credit or debit lamports or modify account data. Transactions targeting the same read-write account are evaluated sequentially.
+    - `numReadonlySignedAccounts: <number>` - The last `numReadonlySignedAccounts` of the signed keys are read-only accounts. Programs may process multiple transactions that load read-only accounts within a single PoH entry, but are not permitted to credit or debit weis or modify account data. Transactions targeting the same read-write account are evaluated sequentially.
     - `numReadonlyUnsignedAccounts: <number>` - The last `numReadonlyUnsignedAccounts` of the unsigned keys are read-only accounts.
   - `recentBlockhash: <string>` - A base-58 encoded hash of a recent block in the ledger used to prevent transaction duplication and to give transactions lifetimes.
   - `instructions: <array[object]>` - List of program instructions that will be executed in sequence and committed in one atomic transaction if all succeed.
@@ -740,8 +740,8 @@ The result field will be a JSON object containing:
 
 - `commitment` - commitment, comprising either:
   - `<null>` - Unknown block
-  - `<array>` - commitment, array of u64 integers logging the amount of cluster stake in lamports that has voted on the block at each depth from 0 to `MAX_LOCKOUT_HISTORY` + 1
-- `totalStake` - total active stake, in lamports, of the current epoch
+  - `<array>` - commitment, array of u64 integers logging the amount of cluster stake in weis that has voted on the block at each depth from 0 to `MAX_LOCKOUT_HISTORY` + 1
+- `totalStake` - total active stake, in weis, of the current epoch
 
 #### Example:
 
@@ -1361,8 +1361,8 @@ The result field will be a JSON array with the following fields:
 
 - `epoch: <u64>`, epoch for which reward occured
 - `effectiveSlot: <u64>`, the slot in which the rewards are effective
-- `amount: <u64>`, reward amount in lamports
-- `postBalance: <u64>`, post balance of the account in lamports
+- `amount: <u64>`, reward amount in weis
+- `postBalance: <u64>`, post balance of the account in weis
 - `commission: <u8|undefined>` - vote account commission when the reward was credited
 
 #### Example
@@ -1402,7 +1402,7 @@ Response:
 
 ### getLargestAccounts
 
-Returns the 20 largest accounts, by lamport balance (results may be cached up to two hours)
+Returns the 20 largest accounts, by wei balance (results may be cached up to two hours)
 
 #### Parameters:
 
@@ -1416,7 +1416,7 @@ The result will be an RpcResponse JSON object with `value` equal to an array of:
 
 - `<object>` - otherwise, a JSON object containing:
   - `address: <string>`, base-58 encoded address of the account
-  - `lamports: <u64>`, number of lamports in the account, as a u64
+  - `weis: <u64>`, number of weis in the account, as a u64
 
 #### Example:
 
@@ -1439,75 +1439,75 @@ Result:
     },
     "value": [
       {
-        "lamports": 999974,
+        "weis": 999974,
         "address": "99P8ZgtJYe1buSK8JXkvpLh8xPsCFuLYhz9hQFNw93WJ"
       },
       {
-        "lamports": 42,
+        "weis": 42,
         "address": "uPwWLo16MVehpyWqsLkK3Ka8nLowWvAHbBChqv2FZeL"
       },
       {
-        "lamports": 42,
+        "weis": 42,
         "address": "aYJCgU7REfu3XF8b3QhkqgqQvLizx8zxuLBHA25PzDS"
       },
       {
-        "lamports": 42,
+        "weis": 42,
         "address": "CTvHVtQ4gd4gUcw3bdVgZJJqApXE9nCbbbP4VTS5wE1D"
       },
       {
-        "lamports": 20,
+        "weis": 20,
         "address": "4fq3xJ6kfrh9RkJQsmVd5gNMvJbuSHfErywvEjNQDPxu"
       },
       {
-        "lamports": 4,
+        "weis": 4,
         "address": "AXJADheGVp9cruP8WYu46oNkRbeASngN5fPCMVGQqNHa"
       },
       {
-        "lamports": 2,
+        "weis": 2,
         "address": "8NT8yS6LiwNprgW4yM1jPPow7CwRUotddBVkrkWgYp24"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "SysvarEpochSchedu1e111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "11111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "Stake11111111111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "SysvarC1ock11111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "StakeConfig11111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "SysvarRent111111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "Config1111111111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "SysvarStakeHistory1111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "SysvarRecentB1ockHashes11111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "SysvarFees111111111111111111111111111111111"
       },
       {
-        "lamports": 1,
+        "weis": 1,
         "address": "Vote111111111111111111111111111111111111111"
       }
     ]
@@ -1712,7 +1712,7 @@ Returns minimum balance required to make account rent exempt.
 
 #### Results:
 
-- `<u64>` - minimum lamports required in account
+- `<u64>` - minimum weis required in account
 
 #### Example:
 
@@ -1754,7 +1754,7 @@ An array of:
 
 - `<null>` - if the account at that Pubkey doesn't exist
 - `<object>` - otherwise, a JSON object containing:
-  - `lamports: <u64>`, number of lamports assigned to this account, as a u64
+  - `weis: <u64>`, number of weis assigned to this account, as a u64
   - `owner: <string>`, base-58 encoded Pubkey of the program this account has been assigned to
   - `data: <[string, encoding]|object>`, data associated with the account, either as encoded binary data or JSON format `{<program>: <state>}`, depending on encoding parameter
   - `executable: <bool>`, boolean indicating if the account contains a program \(and is strictly read-only\)
@@ -1799,14 +1799,14 @@ Result:
       {
         "data": ["AAAAAAEAAAACtzNsyJrW0g==", "base64"],
         "executable": false,
-        "lamports": 1000000000,
+        "weis": 1000000000,
         "owner": "11111111111111111111111111111111",
         "rentEpoch": 2
       },
       {
         "data": ["", "base64"],
         "executable": false,
-        "lamports": 5000000000,
+        "weis": 5000000000,
         "owner": "11111111111111111111111111111111",
         "rentEpoch": 2
       }
@@ -1855,14 +1855,14 @@ Result:
           "base58"
         ],
         "executable": false,
-        "lamports": 1000000000,
+        "weis": 1000000000,
         "owner": "11111111111111111111111111111111",
         "rentEpoch": 2
       },
       {
         "data": ["", "base58"],
         "executable": false,
-        "lamports": 5000000000,
+        "weis": 5000000000,
         "owner": "11111111111111111111111111111111",
         "rentEpoch": 2
       }
@@ -1907,7 +1907,7 @@ The array will contain:
 
 - `pubkey: <string>` - the account Pubkey as base-58 encoded string
 - `account: <object>` - a JSON object, with the following sub fields:
-  - `lamports: <u64>`, number of lamports assigned to this account, as a u64
+  - `weis: <u64>`, number of weis assigned to this account, as a u64
   - `owner: <string>`, base-58 encoded Pubkey of the program this account has been assigned to
   - `data: <[string,encoding]|object>`, data associated with the account, either as encoded binary data or JSON format `{<program>: <state>}`, depending on encoding parameter
   - `executable: <bool>`, boolean indicating if the account contains a program \(and is strictly read-only\)
@@ -1933,7 +1933,7 @@ Result:
       "account": {
         "data": "2R9jLfiAQ9bgdcw6h8s44439",
         "executable": false,
-        "lamports": 15298080,
+        "weis": 15298080,
         "owner": "4Nd1mBQtrMJVYVfKf2PJy9NZUZdTAsp7D4xWLs4gDB4T",
         "rentEpoch": 28
       },
@@ -1984,7 +1984,7 @@ Result:
       "account": {
         "data": "2R9jLfiAQ9bgdcw6h8s44439",
         "executable": false,
-        "lamports": 15298080,
+        "weis": 15298080,
         "owner": "4Nd1mBQtrMJVYVfKf2PJy9NZUZdTAsp7D4xWLs4gDB4T",
         "rentEpoch": 28
       },
@@ -2446,9 +2446,9 @@ Returns information about the current supply.
 
 The result will be an RpcResponse JSON object with `value` equal to a JSON object containing:
 
-- `total: <u64>` - Total supply in lamports
-- `circulating: <u64>` - Circulating supply in lamports
-- `nonCirculating: <u64>` - Non-circulating supply in lamports
+- `total: <u64>` - Total supply in weis
+- `circulating: <u64>` - Circulating supply in weis
+- `nonCirculating: <u64>` - Non-circulating supply in weis
 - `nonCirculatingAccounts: <array>` - an array of account addresses of non-circulating accounts, as strings. If `excludeNonCirculatingAccountsList` is enabled, the returned array will be empty.
 
 #### Example:
@@ -2559,7 +2559,7 @@ The result will be an RpcResponse JSON object with `value` equal to an array of 
 
 - `pubkey: <string>` - the account Pubkey as base-58 encoded string
 - `account: <object>` - a JSON object, with the following sub fields:
-  - `lamports: <u64>`, number of lamports assigned to this account, as a u64
+  - `weis: <u64>`, number of weis assigned to this account, as a u64
   - `owner: <string>`, base-58 encoded Pubkey of the program this account has been assigned to
   - `data: <object>`, Token state data associated with the account, either as encoded binary data or in JSON format `{<program>: <state>}`
   - `executable: <bool>`, boolean indicating if the account contains a program \(and is strictly read-only\)
@@ -2627,7 +2627,7 @@ Result:
             "space": 165
           },
           "executable": false,
-          "lamports": 1726080,
+          "weis": 1726080,
           "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
           "rentEpoch": 4
         },
@@ -2661,7 +2661,7 @@ The result will be an RpcResponse JSON object with `value` equal to an array of 
 
 - `pubkey: <string>` - the account Pubkey as base-58 encoded string
 - `account: <object>` - a JSON object, with the following sub fields:
-  - `lamports: <u64>`, number of lamports assigned to this account, as a u64
+  - `weis: <u64>`, number of weis assigned to this account, as a u64
   - `owner: <string>`, base-58 encoded Pubkey of the program this account has been assigned to
   - `data: <object>`, Token state data associated with the account, either as encoded binary data or in JSON format `{<program>: <state>}`
   - `executable: <bool>`, boolean indicating if the account contains a program \(and is strictly read-only\)
@@ -2730,7 +2730,7 @@ Result:
             "space": 165
           },
           "executable": false,
-          "lamports": 1726080,
+          "weis": 1726080,
           "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
           "rentEpoch": 4
         },
@@ -2879,8 +2879,8 @@ Returns transaction details for a confirmed transaction
       - `"Err": <ERR>` - Transaction failed with TransactionError
     - `rewards: <array>` - present if rewards are requested; an array of JSON objects containing:
       - `pubkey: <string>` - The public key, as base-58 encoded string, of the account that received the reward
-      - `lamports: <i64>`- number of reward lamports credited or debited by the account, as a i64
-      - `postBalance: <u64>` - account balance in lamports after the reward was applied
+      - `weis: <i64>`- number of reward weis credited or debited by the account, as a i64
+      - `postBalance: <u64>` - account balance in weis after the reward was applied
       - `rewardType: <string>` - type of reward: currently only "rent", other types may be added in the future
       - `commission: <u8|undefined>` - vote account commission when the reward was credited, only present for voting and staking rewards
     - `loadedAddresses: <object|undefined>` - Transaction addresses loaded from address lookup tables. Undefined if `maxSupportedTransactionVersion` is not set in request params.
@@ -3081,7 +3081,7 @@ each containing an array of JSON objects with the following sub fields:
 
 - `votePubkey: <string>` - Vote account address, as base-58 encoded string
 - `nodePubkey: <string>` - Validator identity, as base-58 encoded string
-- `activatedStake: <u64>` - the stake, in lamports, delegated to this vote account and active in this epoch
+- `activatedStake: <u64>` - the stake, in weis, delegated to this vote account and active in this epoch
 - `epochVoteAccount: <bool>` - bool, whether the vote account is staked for this epoch
 - `commission: <number>`, percentage (0-100) of rewards payout owed to the vote account
 - `lastVote: <u64>` - Most recent slot voted on by this vote account
@@ -3257,12 +3257,12 @@ Result:
 
 ### requestAirdrop
 
-Requests an airdrop of lamports to a Pubkey
+Requests an airdrop of weis to a Pubkey
 
 #### Parameters:
 
-- `<string>` - Pubkey of account to receive lamports, as base-58 encoded string
-- `<integer>` - lamports, as a u64
+- `<string>` - Pubkey of account to receive weis, as base-58 encoded string
+- `<integer>` - weis, as a u64
 - `<object>` - (optional) [Commitment](jsonrpc-api.md#configuring-state-commitment) (used for retrieving blockhash and verifying airdrop success)
 
 #### Results:
@@ -3387,7 +3387,7 @@ The result will be an RpcResponse JSON object with `value` set to a JSON object 
 - `accounts: <array> | null>` - array of accounts with the same length as the `accounts.addresses` array in the request
   - `<null>` - if the account doesn't exist or if `err` is not null
   - `<object>` - otherwise, a JSON object containing:
-    - `lamports: <u64>`, number of lamports assigned to this account, as a u64
+    - `weis: <u64>`, number of weis assigned to this account, as a u64
     - `owner: <string>`, base-58 encoded Pubkey of the program this account has been assigned to
     - `data: <[string, encoding]|object>`, data associated with the account, either as encoded binary data or JSON format `{<program>: <state>}`, depending on encoding parameter
     - `executable: <bool>`, boolean indicating if the account contains a program \(and is strictly read-only\)
@@ -3440,7 +3440,7 @@ After connecting to the RPC PubSub websocket at `ws://<ADDRESS>/`:
 
 ### accountSubscribe
 
-Subscribe to an account to receive notifications when the lamports or data for a given account public key changes
+Subscribe to an account to receive notifications when the weis or data for a given account public key changes
 
 #### Parameters:
 
@@ -3511,7 +3511,7 @@ Base58 encoding:
           "base58"
         ],
         "executable": false,
-        "lamports": 33594,
+        "weis": 33594,
         "owner": "11111111111111111111111111111111",
         "rentEpoch": 635
       }
@@ -3541,13 +3541,13 @@ Parsed-JSON encoding:
               "authority": "Bbqg1M4YVVfbhEzwA9SpC9FhsaG83YMTYoR4a8oTDLX",
               "blockhash": "LUaQTmM7WbMRiATdMMHaRGakPtCkc2GHtH57STKXs6k",
               "feeCalculator": {
-                "lamportsPerSignature": 5000
+                "weisPerSignature": 5000
               }
             }
           }
         },
         "executable": false,
-        "lamports": 33594,
+        "weis": 33594,
         "owner": "11111111111111111111111111111111",
         "rentEpoch": 635
       }
@@ -3977,7 +3977,7 @@ Result:
 
 ### programSubscribe
 
-Subscribe to a program to receive notifications when the lamports or data for a given account owned by the program changes
+Subscribe to a program to receive notifications when the weis or data for a given account owned by the program changes
 
 #### Parameters:
 
@@ -4067,7 +4067,7 @@ Base58 encoding:
             "base58"
           ],
           "executable": false,
-          "lamports": 33594,
+          "weis": 33594,
           "owner": "11111111111111111111111111111111",
           "rentEpoch": 636
         }
@@ -4100,13 +4100,13 @@ Parsed-JSON encoding:
                 "authority": "Bbqg1M4YVVfbhEzwA9SpC9FhsaG83YMTYoR4a8oTDLX",
                 "blockhash": "LUaQTmM7WbMRiATdMMHaRGakPtCkc2GHtH57STKXs6k",
                 "feeCalculator": {
-                  "lamportsPerSignature": 5000
+                  "weisPerSignature": 5000
                 }
               }
             }
           },
           "executable": false,
-          "lamports": 33594,
+          "weis": 33594,
           "owner": "11111111111111111111111111111111",
           "rentEpoch": 636
         }
@@ -4604,8 +4604,8 @@ The result field will be an object with the following fields:
   - `signatures: <array>` - present if "signatures" are requested for transaction details; an array of signatures strings, corresponding to the transaction order in the block
   - `rewards: <array>` - present if rewards are requested; an array of JSON objects containing:
     - `pubkey: <string>` - The public key, as base-58 encoded string, of the account that received the reward
-    - `lamports: <i64>`- number of reward lamports credited or debited by the account, as a i64
-    - `postBalance: <u64>` - account balance in lamports after the reward was applied
+    - `weis: <i64>`- number of reward weis credited or debited by the account, as a i64
+    - `postBalance: <u64>` - account balance in weis after the reward was applied
     - `rewardType: <string|undefined>` - type of reward: "fee", "rent", "voting", "staking"
     - `commission: <u8|undefined>` - vote account commission when the reward was credited, only present for voting and staking rewards
   - `blockTime: <i64 | null>` - estimated production time, as Unix timestamp (seconds since the Unix epoch). null if not available
@@ -5068,7 +5068,7 @@ Result:
     },
     "value": {
       "feeCalculator": {
-        "lamportsPerSignature": 5000
+        "weisPerSignature": 5000
       }
     }
   },
@@ -5089,9 +5089,9 @@ None
 The `result` field will be an `object` with the following fields:
 
 - `burnPercent: <u8>`, Percentage of fees collected to be destroyed
-- `maxLamportsPerSignature: <u64>`, Largest value `lamportsPerSignature` can attain for the next slot
-- `minLamportsPerSignature: <u64>`, Smallest value `lamportsPerSignature` can attain for the next slot
-- `targetLamportsPerSignature: <u64>`, Desired fee rate for the cluster
+- `maxWeisPerSignature: <u64>`, Largest value `weisPerSignature` can attain for the next slot
+- `minWeisPerSignature: <u64>`, Smallest value `weisPerSignature` can attain for the next slot
+- `targetWeisPerSignature: <u64>`, Desired fee rate for the cluster
 - `targetSignaturesPerSlot: <u64>`, Desired signature rate for the cluster
 
 #### Example:
@@ -5116,9 +5116,9 @@ Result:
     "value": {
       "feeRateGovernor": {
         "burnPercent": 50,
-        "maxLamportsPerSignature": 100000,
-        "minLamportsPerSignature": 5000,
-        "targetLamportsPerSignature": 10000,
+        "maxWeisPerSignature": 100000,
+        "minWeisPerSignature": 5000,
+        "targetWeisPerSignature": 10000,
         "targetSignaturesPerSlot": 20000
       }
     }
@@ -5171,7 +5171,7 @@ Result:
     "value": {
       "blockhash": "CSymwgTNX1j3E4qhKfJAUE41nBWEwXufoYryPbkde5RR",
       "feeCalculator": {
-        "lamportsPerSignature": 5000
+        "weisPerSignature": 5000
       },
       "lastValidSlot": 297,
       "lastValidBlockHeight": 296
@@ -5222,7 +5222,7 @@ Result:
     "value": {
       "blockhash": "CSymwgTNX1j3E4qhKfJAUE41nBWEwXufoYryPbkde5RR",
       "feeCalculator": {
-        "lamportsPerSignature": 5000
+        "weisPerSignature": 5000
       }
     }
   },

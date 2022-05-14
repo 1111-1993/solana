@@ -1720,7 +1720,7 @@ pub mod tests {
             let instruction = solana_sdk::system_instruction::transfer(
                 &from_pubkey,
                 &Pubkey::new_unique(), // to
-                rng.gen(),             // lamports
+                rng.gen(),             // weis
             );
             let message = solana_sdk::message::Message::new(&[instruction], Some(&from_pubkey));
             let mut tx = solana_sdk::transaction::Transaction::new_unsigned(message);

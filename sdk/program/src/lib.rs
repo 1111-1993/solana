@@ -170,7 +170,7 @@
 //! - [`ProgramError`] and [`ProgramResult`] &mdash; The error type that all programs
 //!   must return, reported to the runtime as a `u64`.
 //! - [`Gth`] &mdash; The Solana native token type, with conversions to and from
-//!   [_lamports_], the smallest fractional unit of GTH, in the [`native_token`]
+//!   [_weis_], the smallest fractional unit of GTH, in the [`native_token`]
 //!   module.
 //!
 //! [acc]: https://docs.solana.com/developing/programming-model/accounts
@@ -184,7 +184,7 @@
 //! [`Keypair`]: https://docs.rs/solana-sdk/latest/solana_sdk/signer/keypair/struct.Keypair.html
 //! [SHA-256]: https://en.wikipedia.org/wiki/SHA-2
 //! [`Gth`]: native_token::Gth
-//! [_lamports_]: https://docs.solana.com/introduction#what-are-sols
+//! [_weis_]: https://docs.solana.com/introduction#what-are-sols
 //!
 //! # Serialization
 //!
@@ -274,7 +274,7 @@
 //! [`invoke_signed`]: program::invoke_signed
 //! [cpi]: https://docs.solana.com/developing/programming-model/calling-between-programs
 //!
-//! A simple example of transferring lamports via CPI:
+//! A simple example of transferring weis via CPI:
 //!
 //! ```
 //! use solana_program::{
@@ -307,10 +307,10 @@
 //!     assert!(recipient.is_writable);
 //!     assert!(system_program::check_id(system_account.key));
 //!
-//!     let lamports = 1000000;
+//!     let weis = 1000000;
 //!
 //!     invoke(
-//!         &system_instruction::transfer(payer.key, recipient.key, lamports),
+//!         &system_instruction::transfer(payer.key, recipient.key, weis),
 //!         &[payer.clone(), recipient.clone(), system_account.clone()],
 //!     )
 //! }
@@ -363,14 +363,14 @@
 //!
 //!     assert_eq!(vault_pda.key, &expected_vault_pda);
 //!
-//!     let lamports = 10000000;
+//!     let weis = 10000000;
 //!     let vault_size = 16;
 //!
 //!     invoke_signed(
 //!         &system_instruction::create_account(
 //!             &payer.key,
 //!             &vault_pda.key,
-//!             lamports,
+//!             weis,
 //!             vault_size,
 //!             &program_id,
 //!         ),
@@ -425,7 +425,7 @@
 //! Native programs important to Solana program authors include:
 //!
 //! - __System Program__: Creates new accounts, allocates account data, assigns
-//!   accounts to owning programs, transfers lamports from System Program owned
+//!   accounts to owning programs, transfers weis from System Program owned
 //!   accounts and pays transaction fees.
 //!   - ID: [`solana_program::system_program`]
 //!   - Instruction: [`solana_program::system_instruction`]
@@ -577,7 +577,7 @@ pub mod hash;
 pub mod incinerator;
 pub mod instruction;
 pub mod keccak;
-pub mod lamports;
+pub mod weis;
 pub mod loader_instruction;
 pub mod loader_upgradeable_instruction;
 pub mod log;

@@ -36,12 +36,12 @@ export function AccountAddressRow({ account }: AccountProps) {
 }
 
 export function AccountBalanceRow({ account }: AccountProps) {
-  const { lamports } = account;
+  const { weis } = account;
   return (
     <tr>
       <td>Balance (GTH)</td>
       <td className="text-lg-end text-uppercase">
-        <GthBalance lamports={lamports} />
+        <GthBalance weis={weis} />
       </td>
     </tr>
   );

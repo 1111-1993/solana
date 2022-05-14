@@ -95,8 +95,8 @@ impl TransactionGenerator {
         // we create here transactions which are filtered out on different stages of processing pipeline
 
         // create an arbitrary valid instruction
-        let lamports = 5;
-        let transfer_instruction = SystemInstruction::Transfer { lamports };
+        let weis = 5;
+        let transfer_instruction = SystemInstruction::Transfer { weis };
         let program_ids = vec![system_program::id(), stake::program::id()];
 
         // transaction with payer, in this case signatures are valid and num_signatures is irrelevant

@@ -1,15 +1,15 @@
 #![allow(clippy::integer_arithmetic)]
-/// There are 10^9 lamports in one GTH
-pub const LAMPORTS_PER_GTH: u64 = 1_000_000_000;
+/// There are 10^9 weis in one GTH
+pub const WEIS_PER_GTH: u64 = 1_000_000_000;
 
-/// Approximately convert fractional native tokens (lamports) into native tokens (GTH)
-pub fn lamports_to_gth(lamports: u64) -> f64 {
-    lamports as f64 / LAMPORTS_PER_GTH as f64
+/// Approximately convert fractional native tokens (weis) into native tokens (GTH)
+pub fn weis_to_gth(weis: u64) -> f64 {
+    weis as f64 / WEIS_PER_GTH as f64
 }
 
-/// Approximately convert native tokens (GTH) into fractional native tokens (lamports)
-pub fn gth_to_lamports(gth: f64) -> u64 {
-    (gth * LAMPORTS_PER_GTH as f64) as u64
+/// Approximately convert native tokens (GTH) into fractional native tokens (weis)
+pub fn gth_to_weis(gth: f64) -> u64 {
+    (gth * WEIS_PER_GTH as f64) as u64
 }
 
 use std::fmt::{Debug, Display, Formatter, Result};
@@ -20,8 +20,8 @@ impl Gth {
         write!(
             f,
             "◎{}.{:09}",
-            self.0 / LAMPORTS_PER_GTH,
-            self.0 % LAMPORTS_PER_GTH
+            self.0 / WEIS_PER_GTH,
+            self.0 % WEIS_PER_GTH
         )
     }
 }

@@ -60,13 +60,13 @@ const renderAccountRow = (entry: StakeHistoryEntry, index: number) => {
         <Epoch epoch={entry.epoch} link />
       </td>
       <td className="font-monospace">
-        <GthBalance lamports={entry.stakeHistory.effective} />
+        <GthBalance weis={entry.stakeHistory.effective} />
       </td>
       <td className="font-monospace">
-        <GthBalance lamports={entry.stakeHistory.activating} />
+        <GthBalance weis={entry.stakeHistory.activating} />
       </td>
       <td className="font-monospace">
-        <GthBalance lamports={entry.stakeHistory.deactivating} />
+        <GthBalance weis={entry.stakeHistory.deactivating} />
       </td>
     </tr>
   );

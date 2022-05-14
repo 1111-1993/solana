@@ -92,7 +92,7 @@ pub enum ProgramCliCommand {
         get_programs: bool,
         get_buffers: bool,
         all: bool,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
     },
     Dump {
         account_pubkey: Option<Pubkey>,
@@ -102,7 +102,7 @@ pub enum ProgramCliCommand {
         account_pubkey: Option<Pubkey>,
         recipient_pubkey: Pubkey,
         authority_index: SignerIndex,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
     },
 }
 
@@ -316,10 +316,10 @@ impl ProgramSubCommands for App<'_, '_> {
                                 "Authority [default: the default configured keypair]"),
                         )
                         .arg(
-                            Arg::with_name("lamports")
-                                .long("lamports")
+                            Arg::with_name("weis")
+                                .long("weis")
                                 .takes_value(false)
-                                .help("Display balance in lamports instead of GTH"),
+                                .help("Display balance in weis instead of GTH"),
                         ),
                 )
                 .subcommand(
@@ -344,7 +344,7 @@ impl ProgramSubCommands for App<'_, '_> {
                 )
                 .subcommand(
                     SubCommand::with_name("close")
-                        .about("Close a program or buffer account and withdraw all lamports")
+                        .about("Close a program or buffer account and withdraw all weis")
                         .arg(
                             Arg::with_name("account")
                                 .index(1)
@@ -373,13 +373,13 @@ impl ProgramSubCommands for App<'_, '_> {
                             pubkey!(Arg::with_name("recipient_account")
                                 .long("recipient")
                                 .value_name("RECIPIENT_ADDRESS"),
-                                "Address of the account to deposit the closed account's lamports [default: the default configured keypair]"),
+                                "Address of the account to deposit the closed account's weis [default: the default configured keypair]"),
                         )
                         .arg(
-                            Arg::with_name("lamports")
-                                .long("lamports")
+                            Arg::with_name("weis")
+                                .long("weis")
                                 .takes_value(false)
-                                .help("Display balance in lamports instead of GTH"),
+                                .help("Display balance in weis instead of GTH"),
                         ),
                 )
         )
@@ -621,7 +621,7 @@ pub fn parse_program_subcommand(
                     get_programs: matches.is_present("programs"),
                     get_buffers: matches.is_present("buffers"),
                     all: matches.is_present("all"),
-                    use_lamports_unit: matches.is_present("lamports"),
+                    use_weis_unit: matches.is_present("weis"),
                 }),
                 signers: vec![],
             }
@@ -667,7 +667,7 @@ pub fn parse_program_subcommand(
                     account_pubkey,
                     recipient_pubkey,
                     authority_index: signer_info.index_of(authority_pubkey).unwrap(),
-                    use_lamports_unit: matches.is_present("lamports"),
+                    use_weis_unit: matches.is_present("weis"),
                 }),
                 signers: signer_info.signers,
             }
@@ -755,7 +755,7 @@ pub fn process_program_subcommand(
             get_programs,
             get_buffers,
             all,
-            use_lamports_unit,
+            use_weis_unit,
         } => process_show(
             &rpc_client,
             config,
@@ -764,7 +764,7 @@ pub fn process_program_subcommand(
             *get_programs,
             *get_buffers,
             *all,
-            *use_lamports_unit,
+            *use_weis_unit,
         ),
         ProgramCliCommand::Dump {
             account_pubkey,
@@ -774,14 +774,14 @@ pub fn process_program_subcommand(
             account_pubkey,
             recipient_pubkey,
             authority_index,
-            use_lamports_unit,
+            use_weis_unit,
         } => process_close(
             &rpc_client,
             config,
             *account_pubkey,
             *recipient_pubkey,
             *authority_index,
-            *use_lamports_unit,
+            *use_weis_unit,
         ),
     }
 }
@@ -1168,7 +1168,7 @@ const PUBKEY_LEN: usize = 32;
 fn get_buffers(
     rpc_client: &RpcClient,
     authority_pubkey: Option<Pubkey>,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> Result<CliUpgradeableBuffers, Box<dyn std::error::Error>> {
     let mut filters = vec![RpcFilterType::Memcmp(Memcmp {
         offset: 0,
@@ -1205,8 +1205,8 @@ fn get_buffers(
                     .map(|pubkey| pubkey.to_string())
                     .unwrap_or_else(|| "none".to_string()),
                 data_len: 0,
-                lamports: account.lamports,
-                use_lamports_unit,
+                weis: account.weis,
+                use_weis_unit,
             });
         } else {
             return Err(format!("Error parsing Buffer account {}", address).into());
@@ -1214,14 +1214,14 @@ fn get_buffers(
     }
     Ok(CliUpgradeableBuffers {
         buffers,
-        use_lamports_unit,
+        use_weis_unit,
     })
 }
 
 fn get_programs(
     rpc_client: &RpcClient,
     authority_pubkey: Option<Pubkey>,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> Result<CliUpgradeablePrograms, Box<dyn std::error::Error>> {
     let mut filters = vec![RpcFilterType::Memcmp(Memcmp {
         offset: 0,
@@ -1282,8 +1282,8 @@ fn get_programs(
                 last_deploy_slot: slot,
                 data_len: programdata_account.data.len()
                     - UpgradeableLoaderState::programdata_data_offset()?,
-                lamports: programdata_account.lamports,
-                use_lamports_unit,
+                weis: programdata_account.weis,
+                use_weis_unit,
             });
         } else {
             return Err(
@@ -1293,7 +1293,7 @@ fn get_programs(
     }
     Ok(CliUpgradeablePrograms {
         programs,
-        use_lamports_unit,
+        use_weis_unit,
     })
 }
 
@@ -1325,7 +1325,7 @@ fn process_show(
     programs: bool,
     buffers: bool,
     all: bool,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> ProcessResult {
     if let Some(account_pubkey) = account_pubkey {
         if let Some(account) = rpc_client
@@ -1364,8 +1364,8 @@ fn process_show(
                                     last_deploy_slot: slot,
                                     data_len: programdata_account.data.len()
                                         - UpgradeableLoaderState::programdata_data_offset()?,
-                                    lamports: programdata_account.lamports,
-                                    use_lamports_unit,
+                                    weis: programdata_account.weis,
+                                    use_weis_unit,
                                 }))
                         } else {
                             Err(format!("Program {} has been closed", account_pubkey).into())
@@ -1385,8 +1385,8 @@ fn process_show(
                                 .unwrap_or_else(|| "none".to_string()),
                             data_len: account.data.len()
                                 - UpgradeableLoaderState::buffer_data_offset()?,
-                            lamports: account.lamports,
-                            use_lamports_unit,
+                            weis: account.weis,
+                            use_weis_unit,
                         }))
                 } else {
                     Err(format!(
@@ -1403,11 +1403,11 @@ fn process_show(
         }
     } else if programs {
         let authority_pubkey = if all { None } else { Some(authority_pubkey) };
-        let programs = get_programs(rpc_client, authority_pubkey, use_lamports_unit)?;
+        let programs = get_programs(rpc_client, authority_pubkey, use_weis_unit)?;
         Ok(config.output_format.formatted_string(&programs))
     } else if buffers {
         let authority_pubkey = if all { None } else { Some(authority_pubkey) };
-        let buffers = get_buffers(rpc_client, authority_pubkey, use_lamports_unit)?;
+        let buffers = get_buffers(rpc_client, authority_pubkey, use_weis_unit)?;
         Ok(config.output_format.formatted_string(&buffers))
     } else {
         Err("Invalid parameters".to_string().into())
@@ -1533,7 +1533,7 @@ fn process_close(
     account_pubkey: Option<Pubkey>,
     recipient_pubkey: Pubkey,
     authority_index: SignerIndex,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> ProcessResult {
     let authority_signer = config.signers[authority_index];
 
@@ -1570,10 +1570,10 @@ fn process_close(
                                     .map(|pubkey| pubkey.to_string())
                                     .unwrap_or_else(|| "none".to_string()),
                                 data_len: 0,
-                                lamports: account.lamports,
-                                use_lamports_unit,
+                                weis: account.weis,
+                                use_weis_unit,
                             }],
-                            use_lamports_unit,
+                            use_weis_unit,
                         }))
                 }
                 Ok(UpgradeableLoaderState::Program {
@@ -1607,8 +1607,8 @@ fn process_close(
                                 Ok(config.output_format.formatted_string(
                                     &CliUpgradeableProgramClosed {
                                         program_id: account_pubkey.to_string(),
-                                        lamports: account.lamports,
-                                        use_lamports_unit,
+                                        weis: account.weis,
+                                        use_weis_unit,
                                     },
                                 ))
                             }
@@ -1634,7 +1634,7 @@ fn process_close(
         let buffers = get_buffers(
             rpc_client,
             Some(authority_signer.pubkey()),
-            use_lamports_unit,
+            use_weis_unit,
         )?;
 
         let mut closed = vec![];
@@ -1656,7 +1656,7 @@ fn process_close(
             .output_format
             .formatted_string(&CliUpgradeableBuffers {
                 buffers: closed,
-                use_lamports_unit,
+                use_weis_unit,
             }))
     }
 }
@@ -2081,21 +2081,21 @@ fn complete_partial_program_init(
             account_data_len as u64,
         ));
         instructions.push(system_instruction::assign(elf_pubkey, loader_id));
-        if account.lamports < minimum_balance {
-            let balance = minimum_balance - account.lamports;
+        if account.weis < minimum_balance {
+            let balance = minimum_balance - account.weis;
             instructions.push(system_instruction::transfer(
                 payer_pubkey,
                 elf_pubkey,
                 balance,
             ));
             balance_needed = balance;
-        } else if account.lamports > minimum_balance
+        } else if account.weis > minimum_balance
             && system_program::check_id(&account.owner)
             && !allow_excessive_balance
         {
             return Err(format!(
                 "Buffer account has a balance: {:?}; it may already be in use",
-                Gth(account.lamports)
+                Gth(account.weis)
             )
             .into());
         }
@@ -2234,7 +2234,7 @@ fn report_ephemeral_mnemonic(words: usize, mnemonic: bip39::Mnemonic) {
     eprintln!("{}\n{}\n{}", divider, phrase, divider);
     eprintln!("To resume a deploy, pass the recovered keypair as the");
     eprintln!("[BUFFER_SIGNER] to `solana program deploy` or `solana program write-buffer'.");
-    eprintln!("Or to recover the account's lamports, pass it as the");
+    eprintln!("Or to recover the account's weis, pass it as the");
     eprintln!(
         "[BUFFER_ACCOUNT_ADDRESS] argument to `solana program close`.\n{}",
         divider
@@ -2832,7 +2832,7 @@ mod tests {
                     get_programs: false,
                     get_buffers: false,
                     all: false,
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 }),
                 signers: vec![],
             }
@@ -2844,7 +2844,7 @@ mod tests {
             "show",
             "--programs",
             "--all",
-            "--lamports",
+            "--weis",
         ]);
         assert_eq!(
             parse_command(&test_command, &default_signer, &mut None).unwrap(),
@@ -2855,7 +2855,7 @@ mod tests {
                     get_programs: true,
                     get_buffers: false,
                     all: true,
-                    use_lamports_unit: true,
+                    use_weis_unit: true,
                 }),
                 signers: vec![],
             }
@@ -2867,7 +2867,7 @@ mod tests {
             "show",
             "--buffers",
             "--all",
-            "--lamports",
+            "--weis",
         ]);
         assert_eq!(
             parse_command(&test_command, &default_signer, &mut None).unwrap(),
@@ -2878,7 +2878,7 @@ mod tests {
                     get_programs: false,
                     get_buffers: true,
                     all: true,
-                    use_lamports_unit: true,
+                    use_weis_unit: true,
                 }),
                 signers: vec![],
             }
@@ -2901,7 +2901,7 @@ mod tests {
                     get_programs: false,
                     get_buffers: true,
                     all: false,
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 }),
                 signers: vec![],
             }
@@ -2924,7 +2924,7 @@ mod tests {
                     get_programs: false,
                     get_buffers: true,
                     all: false,
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 }),
                 signers: vec![],
             }
@@ -2960,7 +2960,7 @@ mod tests {
                     account_pubkey: Some(buffer_pubkey),
                     recipient_pubkey: default_keypair.pubkey(),
                     authority_index: 0,
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 }),
                 signers: vec![read_keypair_file(&keypair_file).unwrap().into()],
             }
@@ -2983,7 +2983,7 @@ mod tests {
                     account_pubkey: Some(buffer_pubkey),
                     recipient_pubkey: default_keypair.pubkey(),
                     authority_index: 1,
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 }),
                 signers: vec![
                     read_keypair_file(&keypair_file).unwrap().into(),
@@ -3008,19 +3008,19 @@ mod tests {
                     account_pubkey: Some(buffer_pubkey),
                     recipient_pubkey,
                     authority_index: 0,
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 }),
                 signers: vec![read_keypair_file(&keypair_file).unwrap().into(),],
             }
         );
 
-        // --buffers and lamports
+        // --buffers and weis
         let test_command = test_commands.clone().get_matches_from(vec![
             "test",
             "program",
             "close",
             "--buffers",
-            "--lamports",
+            "--weis",
         ]);
         assert_eq!(
             parse_command(&test_command, &default_signer, &mut None).unwrap(),
@@ -3029,7 +3029,7 @@ mod tests {
                     account_pubkey: None,
                     recipient_pubkey: default_keypair.pubkey(),
                     authority_index: 0,
-                    use_lamports_unit: true,
+                    use_weis_unit: true,
                 }),
                 signers: vec![read_keypair_file(&keypair_file).unwrap().into(),],
             }

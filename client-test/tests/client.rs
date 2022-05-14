@@ -28,7 +28,7 @@ use {
     solana_sdk::{
         clock::Slot,
         commitment_config::{CommitmentConfig, CommitmentLevel},
-        native_token::gth_to_lamports,
+        native_token::gth_to_weis,
         pubkey::Pubkey,
         rpc_port,
         signature::{Keypair, Signer},
@@ -77,7 +77,7 @@ fn test_rpc_client() {
 
     let blockhash = client.get_latest_blockhash().unwrap();
 
-    let tx = system_transaction::transfer(&alice, &bob_pubkey, gth_to_lamports(20.0), blockhash);
+    let tx = system_transaction::transfer(&alice, &bob_pubkey, gth_to_weis(20.0), blockhash);
     let signature = client.send_transaction(&tx).unwrap();
 
     let mut confirmed_tx = false;
@@ -100,11 +100,11 @@ fn test_rpc_client() {
 
     assert_eq!(
         client.get_balance(&bob_pubkey).unwrap(),
-        gth_to_lamports(20.0)
+        gth_to_weis(20.0)
     );
     assert_eq!(
         client.get_balance(&alice.pubkey()).unwrap(),
-        original_alice_balance - gth_to_lamports(20.0)
+        original_alice_balance - gth_to_weis(20.0)
     );
 }
 
@@ -152,7 +152,7 @@ fn test_account_subscription() {
     )
     .unwrap();
 
-    // Transfer 100 lamports from alice to bob
+    // Transfer 100 weis from alice to bob
     let tx = system_transaction::transfer(&alice, &bob.pubkey(), 100, blockhash);
     bank_forks
         .write()
@@ -178,7 +178,7 @@ fn test_account_subscription() {
     "context": { "slot": 1 },
         "value": {
             "owner": system_program::id().to_string(),
-            "lamports": 100,
+            "weis": 100,
             "data": "",
             "executable": false,
             "rentEpoch": 0,

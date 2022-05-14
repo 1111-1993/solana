@@ -12,7 +12,7 @@ export function BalanceDelta({
   let gths;
 
   if (isGth) {
-    gths = <GthBalance lamports={delta.toNumber()} />;
+    gths = <GthBalance weis={delta.toNumber()} />;
   }
 
   if (delta.gt(0)) {

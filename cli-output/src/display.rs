@@ -9,7 +9,7 @@ use {
         hash::Hash,
         instruction::CompiledInstruction,
         message::v0::MessageAddressTableLookup,
-        native_token::lamports_to_gth,
+        native_token::weis_to_gth,
         program_utils::limited_deserialize,
         pubkey::Pubkey,
         signature::Signature,
@@ -23,7 +23,7 @@ use {
 
 #[derive(Clone, Debug)]
 pub struct BuildBalanceMessageConfig {
-    pub use_lamports_unit: bool,
+    pub use_weis_unit: bool,
     pub show_unit: bool,
     pub trim_trailing_zeros: bool,
 }
@@ -31,7 +31,7 @@ pub struct BuildBalanceMessageConfig {
 impl Default for BuildBalanceMessageConfig {
     fn default() -> Self {
         Self {
-            use_lamports_unit: false,
+            use_weis_unit: false,
             show_unit: true,
             trim_trailing_zeros: true,
         }
@@ -44,13 +44,13 @@ fn is_memo_program(k: &Pubkey) -> bool {
 }
 
 pub fn build_balance_message_with_config(
-    lamports: u64,
+    weis: u64,
     config: &BuildBalanceMessageConfig,
 ) -> String {
-    let value = if config.use_lamports_unit {
-        lamports.to_string()
+    let value = if config.use_weis_unit {
+        weis.to_string()
     } else {
-        let gth = lamports_to_gth(lamports);
+        let gth = weis_to_gth(weis);
         let gth_str = format!("{:.9}", gth);
         if config.trim_trailing_zeros {
             gth_str
@@ -62,9 +62,9 @@ pub fn build_balance_message_with_config(
         }
     };
     let unit = if config.show_unit {
-        if config.use_lamports_unit {
-            let ess = if lamports == 1 { "" } else { "s" };
-            format!(" lamport{}", ess)
+        if config.use_weis_unit {
+            let ess = if weis == 1 { "" } else { "s" };
+            format!(" wei{}", ess)
         } else {
             " GTH".to_string()
         }
@@ -74,11 +74,11 @@ pub fn build_balance_message_with_config(
     format!("{}{}", value, unit)
 }
 
-pub fn build_balance_message(lamports: u64, use_lamports_unit: bool, show_unit: bool) -> String {
+pub fn build_balance_message(weis: u64, use_weis_unit: bool, show_unit: bool) -> String {
     build_balance_message_with_config(
-        lamports,
+        weis,
         &BuildBalanceMessageConfig {
-            use_lamports_unit,
+            use_weis_unit,
             show_unit,
             ..BuildBalanceMessageConfig::default()
         },
@@ -514,7 +514,7 @@ fn write_rewards<W: io::Write>(
                 prefix, "Address", "Type", "Amount", "New Balance"
             )?;
             for reward in rewards {
-                let sign = if reward.lamports < 0 { "-" } else { "" };
+                let sign = if reward.weis < 0 { "-" } else { "" };
                 writeln!(
                     w,
                     "{}  {:<44}  {:^15}  {}◎{:<14.9}  ◎{:<18.9}",
@@ -526,8 +526,8 @@ fn write_rewards<W: io::Write>(
                         "-".to_string()
                     },
                     sign,
-                    lamports_to_gth(reward.lamports.abs() as u64),
-                    lamports_to_gth(reward.post_balance)
+                    weis_to_gth(reward.weis.abs() as u64),
+                    weis_to_gth(reward.post_balance)
                 )?;
             }
         }
@@ -552,7 +552,7 @@ fn write_status<W: io::Write>(
 }
 
 fn write_fees<W: io::Write>(w: &mut W, transaction_fee: u64, prefix: &str) -> io::Result<()> {
-    writeln!(w, "{}  Fee: ◎{}", prefix, lamports_to_gth(transaction_fee))
+    writeln!(w, "{}  Fee: ◎{}", prefix, weis_to_gth(transaction_fee))
 }
 
 fn write_balances<W: io::Write>(
@@ -576,7 +576,7 @@ fn write_balances<W: io::Write>(
                 "{}  Account {} balance: ◎{}",
                 prefix,
                 i,
-                lamports_to_gth(*pre)
+                weis_to_gth(*pre)
             )?;
         } else {
             writeln!(
@@ -584,8 +584,8 @@ fn write_balances<W: io::Write>(
                 "{}  Account {} balance: ◎{} -> ◎{}",
                 prefix,
                 i,
-                lamports_to_gth(*pre),
-                lamports_to_gth(*post)
+                weis_to_gth(*pre),
+                weis_to_gth(*post)
             )?;
         }
     }
@@ -760,7 +760,7 @@ mod test {
             post_token_balances: None,
             rewards: Some(vec![Reward {
                 pubkey: account_key.to_string(),
-                lamports: -100,
+                weis: -100,
                 post_balance: 9_900,
                 reward_type: Some(RewardType::Rent),
                 commission: None,
@@ -830,7 +830,7 @@ Rewards:
             post_token_balances: None,
             rewards: Some(vec![Reward {
                 pubkey: address_table_entry1.to_string(),
-                lamports: -100,
+                weis: -100,
                 post_balance: 14_900,
                 reward_type: Some(RewardType::Rent),
                 commission: None,

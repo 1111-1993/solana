@@ -4,7 +4,7 @@ use {
     crate::{
         account::{AccountSharedData, ReadableAccount, WritableAccount},
         instruction::InstructionError,
-        lamports::LamportsError,
+        weis::WeisError,
         pubkey::Pubkey,
     },
     std::{
@@ -524,32 +524,32 @@ impl<'a> BorrowedAccount<'a> {
         self.account.copy_into_owner_from_slice(pubkey);
     }
 
-    /// Returns the number of lamports of this account (transaction wide)
-    pub fn get_lamports(&self) -> u64 {
-        self.account.lamports()
+    /// Returns the number of weis of this account (transaction wide)
+    pub fn get_weis(&self) -> u64 {
+        self.account.weis()
     }
 
-    /// Overwrites the number of lamports of this account (transaction wide)
-    pub fn set_lamports(&mut self, lamports: u64) {
-        self.account.set_lamports(lamports);
+    /// Overwrites the number of weis of this account (transaction wide)
+    pub fn set_weis(&mut self, weis: u64) {
+        self.account.set_weis(weis);
     }
 
-    /// Adds lamports to this account (transaction wide)
-    pub fn checked_add_lamports(&mut self, lamports: u64) -> Result<(), InstructionError> {
-        self.set_lamports(
-            self.get_lamports()
-                .checked_add(lamports)
-                .ok_or(LamportsError::ArithmeticOverflow)?,
+    /// Adds weis to this account (transaction wide)
+    pub fn checked_add_weis(&mut self, weis: u64) -> Result<(), InstructionError> {
+        self.set_weis(
+            self.get_weis()
+                .checked_add(weis)
+                .ok_or(WeisError::ArithmeticOverflow)?,
         );
         Ok(())
     }
 
-    /// Subtracts lamports from this account (transaction wide)
-    pub fn checked_sub_lamports(&mut self, lamports: u64) -> Result<(), InstructionError> {
-        self.set_lamports(
-            self.get_lamports()
-                .checked_sub(lamports)
-                .ok_or(LamportsError::ArithmeticUnderflow)?,
+    /// Subtracts weis from this account (transaction wide)
+    pub fn checked_sub_weis(&mut self, weis: u64) -> Result<(), InstructionError> {
+        self.set_weis(
+            self.get_weis()
+                .checked_sub(weis)
+                .ok_or(WeisError::ArithmeticUnderflow)?,
         );
         Ok(())
     }

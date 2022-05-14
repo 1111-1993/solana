@@ -356,7 +356,7 @@ lazy_static! {
         (warp_timestamp_again::id(), "warp timestamp again, adjust bounding to 25% fast 80% slow #15204"),
         (check_init_vote_data::id(), "check initialized Vote data"),
         (secp256k1_recover_syscall_enabled::id(), "secp256k1_recover syscall"),
-        (system_transfer_zero_check::id(), "perform all checks for transfers of 0 lamports"),
+        (system_transfer_zero_check::id(), "perform all checks for transfers of 0 weis"),
         (blake3_syscall_enabled::id(), "blake3 syscall"),
         (dedupe_config_program_signers::id(), "dedupe config program signers"),
         (verify_tx_signatures_len::id(), "prohibit extra transaction signatures"),

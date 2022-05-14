@@ -35,7 +35,7 @@ use {
     },
 };
 
-pub fn airdrop_lamports(
+pub fn airdrop_weis(
     client: &RpcClient,
     faucet_addr: &SocketAddr,
     id: &Keypair,
@@ -47,7 +47,7 @@ pub fn airdrop_lamports(
     if starting_balance < desired_balance {
         let airdrop_amount = desired_balance - starting_balance;
         info!(
-            "Airdropping {:?} lamports from {} for {}",
+            "Airdropping {:?} weis from {} for {}",
             airdrop_amount,
             faucet_addr,
             id.pubkey(),
@@ -214,7 +214,7 @@ fn run_accounts_bench(
     maybe_space: Option<u64>,
     batch_size: usize,
     close_nth_batch: u64,
-    maybe_lamports: Option<u64>,
+    maybe_weis: Option<u64>,
     num_instructions: usize,
     mint: Option<Pubkey>,
     reclaim_accounts: bool,
@@ -238,9 +238,9 @@ fn run_accounts_bench(
         .collect();
     let mut last_balance = Instant::now();
 
-    let default_max_lamports = 1000;
-    let min_balance = maybe_lamports.unwrap_or_else(|| {
-        let space = maybe_space.unwrap_or(default_max_lamports);
+    let default_max_weis = 1000;
+    let min_balance = maybe_weis.unwrap_or_else(|| {
+        let space = maybe_space.unwrap_or(default_max_weis);
         client
             .get_minimum_balance_for_rent_exemption(space as usize)
             .expect("min balance")
@@ -283,24 +283,24 @@ fn run_accounts_bench(
         let fee = client
             .get_fee_for_message(&message)
             .expect("get_fee_for_message");
-        let lamports = min_balance + fee;
+        let weis = min_balance + fee;
 
         for (i, balance) in balances.iter_mut().enumerate() {
-            if *balance < lamports || last_balance.elapsed().as_millis() > 2000 {
+            if *balance < weis || last_balance.elapsed().as_millis() > 2000 {
                 if let Ok(b) = client.get_balance(&payer_keypairs[i].pubkey()) {
                     *balance = b;
                 }
                 last_balance = Instant::now();
-                if *balance < lamports * 2 {
+                if *balance < weis * 2 {
                     info!(
                         "Balance {} is less than needed: {}, doing aidrop...",
-                        balance, lamports
+                        balance, weis
                     );
-                    if !airdrop_lamports(
+                    if !airdrop_weis(
                         &client,
                         &faucet_addr,
                         payer_keypairs[i],
-                        lamports * 100_000,
+                        weis * 100_000,
                     ) {
                         warn!("failed airdrop, exiting");
                         return;
@@ -334,7 +334,7 @@ fn run_accounts_bench(
                                 Transaction::new(&signers, message, blockhash)
                             })
                             .collect();
-                        balances[i] = balances[i].saturating_sub(lamports * txs.len() as u64);
+                        balances[i] = balances[i].saturating_sub(weis * txs.len() as u64);
                         info!("txs: {}", txs.len());
                         let new_ids = executor.push_transactions(txs);
                         info!("ids: {}", new_ids.len());
@@ -501,11 +501,11 @@ fn main() {
                 .help("Size of accounts to create"),
         )
         .arg(
-            Arg::with_name("lamports")
-                .long("lamports")
+            Arg::with_name("weis")
+                .long("weis")
                 .takes_value(true)
-                .value_name("LAMPORTS")
-                .help("How many lamports to fund each account"),
+                .value_name("WEIS")
+                .help("How many weis to fund each account"),
         )
         .arg(
             Arg::with_name("identity")
@@ -587,7 +587,7 @@ fn main() {
     }
 
     let space = value_t!(matches, "space", u64).ok();
-    let lamports = value_t!(matches, "lamports", u64).ok();
+    let weis = value_t!(matches, "weis", u64).ok();
     let batch_size = value_t!(matches, "batch_size", usize).unwrap_or(4);
     let close_nth_batch = value_t!(matches, "close_nth_batch", u64).unwrap_or(0);
     let iterations = value_t!(matches, "iterations", usize).unwrap_or(10);
@@ -644,7 +644,7 @@ fn main() {
         space,
         batch_size,
         close_nth_batch,
-        lamports,
+        weis,
         num_instructions,
         mint,
         matches.is_present("reclaim_accounts"),
@@ -662,7 +662,7 @@ pub mod test {
             validator_configs::make_identical_validator_configs,
         },
         solana_measure::measure::Measure,
-        solana_sdk::{native_token::gth_to_lamports, poh_config::PohConfig},
+        solana_sdk::{native_token::gth_to_weis, poh_config::PohConfig},
         solana_test_validator::TestValidator,
         spl_token::{
             solana_program::program_pack::Pack,
@@ -676,7 +676,7 @@ pub mod test {
         let validator_config = ValidatorConfig::default_for_test();
         let num_nodes = 1;
         let mut config = ClusterConfig {
-            cluster_lamports: 10_000_000,
+            cluster_weis: 10_000_000,
             poh_config: PohConfig::new_sleep(Duration::from_millis(50)),
             node_stakes: vec![100; num_nodes],
             validator_configs: make_identical_validator_configs(&validator_config, num_nodes),
@@ -689,7 +689,7 @@ pub mod test {
         let maybe_space = None;
         let batch_size = 100;
         let close_nth_batch = 100;
-        let maybe_lamports = None;
+        let maybe_weis = None;
         let num_instructions = 2;
         let mut start = Measure::start("total accounts run");
         run_accounts_bench(
@@ -700,7 +700,7 @@ pub mod test {
             maybe_space,
             batch_size,
             close_nth_batch,
-            maybe_lamports,
+            maybe_weis,
             num_instructions,
             None,
             false,
@@ -730,7 +730,7 @@ pub mod test {
         let signature = rpc_client
             .request_airdrop_with_blockhash(
                 &funder.pubkey(),
-                gth_to_lamports(1.0),
+                gth_to_weis(1.0),
                 &latest_blockhash,
             )
             .unwrap();

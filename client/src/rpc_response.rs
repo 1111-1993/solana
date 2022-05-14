@@ -313,7 +313,7 @@ pub struct RpcVoteAccountInfo {
     /// The validator identity, as base-58 encoded string
     pub node_pubkey: String,
 
-    /// The current stake, in lamports, delegated to this vote account
+    /// The current stake, in weis, delegated to this vote account
     pub activated_stake: u64,
 
     /// An 8-bit integer used as a fraction (commission/MAX_U8) for rewards payout
@@ -360,7 +360,7 @@ pub struct RpcStorageTurn {
 #[serde(rename_all = "camelCase")]
 pub struct RpcAccountBalance {
     pub address: String,
-    pub lamports: u64,
+    pub weis: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -422,8 +422,8 @@ pub struct RpcPerfSample {
 pub struct RpcInflationReward {
     pub epoch: Epoch,
     pub effective_slot: Slot,
-    pub amount: u64,            // lamports
-    pub post_balance: u64,      // lamports
+    pub amount: u64,            // weis
+    pub post_balance: u64,      // weis
     pub commission: Option<u8>, // Vote account commission when the reward was credited
 }
 

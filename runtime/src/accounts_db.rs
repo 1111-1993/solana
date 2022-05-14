@@ -27,7 +27,7 @@ use {
         accounts_index::{
             AccountIndexGetResult, AccountSecondaryIndexes, AccountsIndex, AccountsIndexConfig,
             AccountsIndexRootsStats, IndexKey, IndexValue, IsCached, RefCount, ScanConfig,
-            ScanResult, SlotList, SlotSlice, ZeroLamport, ACCOUNTS_INDEX_CONFIG_FOR_BENCHMARKS,
+            ScanResult, SlotList, SlotSlice, ZeroWei, ACCOUNTS_INDEX_CONFIG_FOR_BENCHMARKS,
             ACCOUNTS_INDEX_CONFIG_FOR_TESTING,
         },
         accounts_update_notifier_interface::AccountsUpdateNotifier,
@@ -281,9 +281,9 @@ impl GenerateIndexTimings {
 
 impl IndexValue for AccountInfo {}
 
-impl ZeroLamport for AccountSharedData {
-    fn is_zero_lamport(&self) -> bool {
-        self.lamports() == 0
+impl ZeroWei for AccountSharedData {
+    fn is_zero_wei(&self) -> bool {
+        self.weis() == 0
     }
 }
 
@@ -509,10 +509,10 @@ impl<'a> LoadedAccount<'a> {
 }
 
 impl<'a> ReadableAccount for LoadedAccount<'a> {
-    fn lamports(&self) -> u64 {
+    fn weis(&self) -> u64 {
         match self {
-            LoadedAccount::Stored(stored_account_meta) => stored_account_meta.account_meta.lamports,
-            LoadedAccount::Cached(cached_account) => cached_account.account.lamports(),
+            LoadedAccount::Stored(stored_account_meta) => stored_account_meta.account_meta.weis,
+            LoadedAccount::Cached(cached_account) => cached_account.account.weis(),
         }
     }
 
@@ -547,7 +547,7 @@ impl<'a> ReadableAccount for LoadedAccount<'a> {
     fn to_account_shared_data(&self) -> AccountSharedData {
         match self {
             LoadedAccount::Stored(_stored_account_meta) => AccountSharedData::create(
-                self.lamports(),
+                self.weis(),
                 self.data().to_vec(),
                 *self.owner(),
                 self.executable(),
@@ -611,7 +611,7 @@ pub enum BankHashVerificationError {
     MismatchedAccountHash,
     MismatchedBankHash,
     MissingBankHash,
-    MismatchedTotalLamports(u64, u64),
+    MismatchedTotalWeis(u64, u64),
 }
 
 #[derive(Default)]
@@ -833,14 +833,14 @@ pub fn get_temp_accounts_paths(count: u32) -> IoResult<(Vec<TempDir>, Vec<PathBu
 pub struct BankHashStats {
     pub num_updated_accounts: u64,
     pub num_removed_accounts: u64,
-    pub num_lamports_stored: u64,
+    pub num_weis_stored: u64,
     pub total_data_len: u64,
     pub num_executable_accounts: u64,
 }
 
 impl BankHashStats {
-    pub fn update<T: ReadableAccount + ZeroLamport>(&mut self, account: &T) {
-        if account.is_zero_lamport() {
+    pub fn update<T: ReadableAccount + ZeroWei>(&mut self, account: &T) {
+        if account.is_zero_wei() {
             self.num_removed_accounts += 1;
         } else {
             self.num_updated_accounts += 1;
@@ -851,16 +851,16 @@ impl BankHashStats {
         if account.executable() {
             self.num_executable_accounts += 1;
         }
-        self.num_lamports_stored = self.num_lamports_stored.wrapping_add(account.lamports());
+        self.num_weis_stored = self.num_weis_stored.wrapping_add(account.weis());
     }
 
     pub fn merge(&mut self, other: &BankHashStats) {
         self.num_updated_accounts += other.num_updated_accounts;
         self.num_removed_accounts += other.num_removed_accounts;
         self.total_data_len = self.total_data_len.wrapping_add(other.total_data_len);
-        self.num_lamports_stored = self
-            .num_lamports_stored
-            .wrapping_add(other.num_lamports_stored);
+        self.num_weis_stored = self
+            .num_weis_stored
+            .wrapping_add(other.num_weis_stored);
         self.num_executable_accounts += other.num_executable_accounts;
     }
 }
@@ -1055,13 +1055,13 @@ pub struct AccountsDb {
     shrink_ratio: AccountShrinkThreshold,
 
     /// Set of stores which are recently rooted or had accounts removed
-    /// such that potentially a 0-lamport account update could be present which
+    /// such that potentially a 0-wei account update could be present which
     /// means we can remove the account from the index entirely.
     dirty_stores: DashMap<(Slot, AppendVecId), Arc<AccountStorageEntry>>,
 
-    /// Zero-lamport accounts that are *not* purged during clean because they need to stay alive
+    /// Zero-wei accounts that are *not* purged during clean because they need to stay alive
     /// for incremental snapshot support.
-    zero_lamport_accounts_to_purge_after_full_snapshot: DashSet<(Slot, Pubkey)>,
+    zero_wei_accounts_to_purge_after_full_snapshot: DashSet<(Slot, Pubkey)>,
 
     /// GeyserPlugin accounts update notifier
     accounts_update_notifier: Option<AccountsUpdateNotifier>,
@@ -1486,15 +1486,15 @@ impl solana_frozen_abi::abi_example::AbiExample for AccountsDb {
     }
 }
 
-impl<'a> ZeroLamport for StoredAccountMeta<'a> {
-    fn is_zero_lamport(&self) -> bool {
-        self.lamports() == 0
+impl<'a> ZeroWei for StoredAccountMeta<'a> {
+    fn is_zero_wei(&self) -> bool {
+        self.weis() == 0
     }
 }
 
 impl<'a> ReadableAccount for StoredAccountMeta<'a> {
-    fn lamports(&self) -> u64 {
-        self.account_meta.lamports
+    fn weis(&self) -> u64 {
+        self.account_meta.weis
     }
     fn data(&self) -> &[u8] {
         self.data
@@ -1607,7 +1607,7 @@ impl AccountsDb {
             remove_unrooted_slots_synchronization: RemoveUnrootedSlotsSynchronization::default(),
             shrink_ratio: AccountShrinkThreshold::default(),
             dirty_stores: DashMap::default(),
-            zero_lamport_accounts_to_purge_after_full_snapshot: DashSet::default(),
+            zero_wei_accounts_to_purge_after_full_snapshot: DashSet::default(),
             accounts_update_notifier: None,
             filler_account_count: 0,
             filler_account_suffix: None,
@@ -2041,14 +2041,14 @@ impl AccountsDb {
         hashset_to_vec.stop();
         timings.hashset_to_vec_us += hashset_to_vec.as_us();
 
-        // Check if we should purge any of the zero_lamport_accounts_to_purge_later, based on the
+        // Check if we should purge any of the zero_wei_accounts_to_purge_later, based on the
         // last_full_snapshot_slot.
         assert!(
-            last_full_snapshot_slot.is_some() || self.zero_lamport_accounts_to_purge_after_full_snapshot.is_empty(),
-            "if snapshots are disabled, then zero_lamport_accounts_to_purge_later should always be empty"
+            last_full_snapshot_slot.is_some() || self.zero_wei_accounts_to_purge_after_full_snapshot.is_empty(),
+            "if snapshots are disabled, then zero_wei_accounts_to_purge_later should always be empty"
         );
         if let Some(last_full_snapshot_slot) = last_full_snapshot_slot {
-            self.zero_lamport_accounts_to_purge_after_full_snapshot
+            self.zero_wei_accounts_to_purge_after_full_snapshot
                 .retain(|(slot, pubkey)| {
                     let is_candidate_for_clean =
                         max_slot >= *slot && last_full_snapshot_slot >= *slot;
@@ -2062,7 +2062,7 @@ impl AccountsDb {
         pubkeys
     }
 
-    // Purge zero lamport accounts and older rooted account states as garbage
+    // Purge zero wei accounts and older rooted account states as garbage
     // collection
     // Only remove those accounts where the entire rooted history of the account
     // can be purged because there are no live append vecs in the ancestors
@@ -2109,12 +2109,12 @@ impl AccountsDb {
         let useful_accum = AtomicU64::new(0);
 
         // parallel scan the index.
-        let (mut purges_zero_lamports, purges_old_accounts) = {
+        let (mut purges_zero_weis, purges_old_accounts) = {
             let do_clean_scan = || {
                 pubkeys
                     .par_chunks(4096)
                     .map(|pubkeys: &[Pubkey]| {
-                        let mut purges_zero_lamports = HashMap::new();
+                        let mut purges_zero_weis = HashMap::new();
                         let mut purges_old_accounts = Vec::new();
                         let mut found_not_zero = 0;
                         let mut not_found_on_fork = 0;
@@ -2134,9 +2134,9 @@ impl AccountsDb {
                                             // found info relative to max_clean_root
                                             let (slot, account_info) =
                                                 &slot_list[index_in_slot_list];
-                                            if account_info.is_zero_lamport() {
+                                            if account_info.is_zero_wei() {
                                                 useless = false;
-                                                purges_zero_lamports.insert(
+                                                purges_zero_weis.insert(
                                                     *pubkey,
                                                     (
                                                         self.accounts_index.get_rooted_entries(
@@ -2184,7 +2184,7 @@ impl AccountsDb {
                         not_found_on_fork_accum.fetch_add(not_found_on_fork, Ordering::Relaxed);
                         missing_accum.fetch_add(missing, Ordering::Relaxed);
                         useful_accum.fetch_add(useful, Ordering::Relaxed);
-                        (purges_zero_lamports, purges_old_accounts)
+                        (purges_zero_weis, purges_old_accounts)
                     })
                     .reduce(
                         || (HashMap::new(), Vec::new()),
@@ -2220,7 +2220,7 @@ impl AccountsDb {
         // Calculate store counts as if everything was purged
         // Then purge if we can
         let mut store_counts: HashMap<AppendVecId, (usize, HashSet<Pubkey>)> = HashMap::new();
-        for (key, (account_infos, ref_count)) in purges_zero_lamports.iter_mut() {
+        for (key, (account_infos, ref_count)) in purges_zero_weis.iter_mut() {
             if purged_account_slots.contains_key(key) {
                 *ref_count = self.accounts_index.ref_count_from_storage(key);
             }
@@ -2272,21 +2272,21 @@ impl AccountsDb {
         store_counts_time.stop();
 
         let mut calc_deps_time = Measure::start("calc_deps");
-        Self::calc_delete_dependencies(&purges_zero_lamports, &mut store_counts);
+        Self::calc_delete_dependencies(&purges_zero_weis, &mut store_counts);
         calc_deps_time.stop();
 
         let mut purge_filter = Measure::start("purge_filter");
-        self.filter_zero_lamport_clean_for_incremental_snapshots(
+        self.filter_zero_wei_clean_for_incremental_snapshots(
             max_clean_root,
             last_full_snapshot_slot,
             &store_counts,
-            &mut purges_zero_lamports,
+            &mut purges_zero_weis,
         );
         purge_filter.stop();
 
         let mut reclaims_time = Measure::start("reclaims");
         // Recalculate reclaims with new purge set
-        let pubkey_to_slot_set: Vec<_> = purges_zero_lamports
+        let pubkey_to_slot_set: Vec<_> = purges_zero_weis
             .into_iter()
             .map(|(key, (slots_list, _ref_count))| {
                 (
@@ -2470,10 +2470,10 @@ impl AccountsDb {
         }
     }
 
-    /// During clean, some zero-lamport accounts that are marked for purge should *not* actually
+    /// During clean, some zero-wei accounts that are marked for purge should *not* actually
     /// get purged.  Filter out those accounts here.
     ///
-    /// When using incremental snapshots, do not purge zero-lamport accounts if the slot is higher
+    /// When using incremental snapshots, do not purge zero-wei accounts if the slot is higher
     /// than the last full snapshot slot.  This is to protect against the following scenario:
     ///
     ///   ```text
@@ -2491,12 +2491,12 @@ impl AccountsDb {
     ///
     /// This filtering step can be skipped if there is no `last_full_snapshot_slot`, or if the
     /// `max_clean_root` is less-than-or-equal-to the `last_full_snapshot_slot`.
-    fn filter_zero_lamport_clean_for_incremental_snapshots(
+    fn filter_zero_wei_clean_for_incremental_snapshots(
         &self,
         max_clean_root: Option<Slot>,
         last_full_snapshot_slot: Option<Slot>,
         store_counts: &HashMap<AppendVecId, (usize, HashSet<Pubkey>)>,
-        purges_zero_lamports: &mut HashMap<Pubkey, (SlotList<AccountInfo>, RefCount)>,
+        purges_zero_weis: &mut HashMap<Pubkey, (SlotList<AccountInfo>, RefCount)>,
     ) {
         let should_filter_for_incremental_snapshots =
             max_clean_root.unwrap_or(Slot::MAX) > last_full_snapshot_slot.unwrap_or(Slot::MAX);
@@ -2505,8 +2505,8 @@ impl AccountsDb {
             "if filtering for incremental snapshots, then snapshots should be enabled",
         );
 
-        purges_zero_lamports.retain(|pubkey, (slot_account_infos, _ref_count)| {
-            // Only keep purges_zero_lamports where the entire history of the account in the root set
+        purges_zero_weis.retain(|pubkey, (slot_account_infos, _ref_count)| {
+            // Only keep purges_zero_weis where the entire history of the account in the root set
             // can be purged. All AppendVecs for those updates are dead.
             for (_slot, account_info) in slot_account_infos.iter() {
                 if store_counts.get(&account_info.store_id()).unwrap().0 != 0 {
@@ -2524,15 +2524,15 @@ impl AccountsDb {
                 .max_by_key(|(slot, _account_info)| slot);
 
             slot_account_info_at_highest_slot.map_or(true, |(slot, account_info)| {
-                // Do *not* purge zero-lamport accounts if the slot is greater than the last full
+                // Do *not* purge zero-wei accounts if the slot is greater than the last full
                 // snapshot slot.  Since we're `retain`ing the accounts-to-purge, I felt creating
                 // the `cannot_purge` variable made this easier to understand.  Accounts that do
                 // not get purged here are added to a list so they be considered for purging later
                 // (i.e. after the next full snapshot).
-                assert!(account_info.is_zero_lamport());
+                assert!(account_info.is_zero_wei());
                 let cannot_purge = *slot > last_full_snapshot_slot.unwrap();
                 if cannot_purge {
-                    self.zero_lamport_accounts_to_purge_after_full_snapshot
+                    self.zero_wei_accounts_to_purge_after_full_snapshot
                         .insert((*slot, *pubkey));
                 }
                 !cannot_purge
@@ -3555,8 +3555,8 @@ impl AccountsDb {
                             // after reading the index:
                             // 1) Shrink has removed the old storage entry and rewritten to
                             // a newer storage entry
-                            // 2) The `pubkey` asked for in this function is a zero-lamport account,
-                            // and the storage entry holding this account qualified for zero-lamport clean.
+                            // 2) The `pubkey` asked for in this function is a zero-wei account,
+                            // and the storage entry holding this account qualified for zero-wei clean.
                             //
                             // In both these cases, it should be safe to retry and recheck the accounts
                             // index indefinitely, without incrementing num_acceptable_failed_iterations.
@@ -4381,7 +4381,7 @@ impl AccountsDb {
     pub fn hash_stored_account(slot: Slot, account: &StoredAccountMeta) -> Hash {
         Self::hash_account_data(
             slot,
-            account.account_meta.lamports,
+            account.account_meta.weis,
             &account.account_meta.owner,
             account.account_meta.executable,
             account.account_meta.rent_epoch,
@@ -4393,7 +4393,7 @@ impl AccountsDb {
     pub fn hash_account<T: ReadableAccount>(slot: Slot, account: &T, pubkey: &Pubkey) -> Hash {
         Self::hash_account_data(
             slot,
-            account.lamports(),
+            account.weis(),
             account.owner(),
             account.executable(),
             account.rent_epoch(),
@@ -4404,20 +4404,20 @@ impl AccountsDb {
 
     fn hash_account_data(
         slot: Slot,
-        lamports: u64,
+        weis: u64,
         owner: &Pubkey,
         executable: bool,
         rent_epoch: Epoch,
         data: &[u8],
         pubkey: &Pubkey,
     ) -> Hash {
-        if lamports == 0 {
+        if weis == 0 {
             return Hash::default();
         }
 
         let mut hasher = blake3::Hasher::new();
 
-        hasher.update(&lamports.to_le_bytes());
+        hasher.update(&weis.to_le_bytes());
 
         hasher.update(&slot.to_le_bytes());
 
@@ -4507,7 +4507,7 @@ impl AccountsDb {
                     StorageLocation::AppendVec(storage.append_vec_id(), offsets[0]),
                     stored_size as StoredSize, // stored_size should never exceed StoredSize::MAX because of max data len const
                     account
-                        .map(|account| account.lamports())
+                        .map(|account| account.weis())
                         .unwrap_or_default(),
                 ));
             }
@@ -4925,7 +4925,7 @@ impl AccountsDb {
                 let account_info = AccountInfo::new(
                     StorageLocation::Cached,
                     CACHE_VIRTUAL_STORED_SIZE,
-                    account.lamports(),
+                    account.weis(),
                 );
 
                 self.notify_account_at_accounts_update(slot, meta, &account);
@@ -4947,7 +4947,7 @@ impl AccountsDb {
         'a,
         F: FnMut(Slot, usize) -> Arc<AccountStorageEntry>,
         P: Iterator<Item = u64>,
-        T: ReadableAccount + Sync + ZeroLamport,
+        T: ReadableAccount + Sync + ZeroWei,
     >(
         &self,
         accounts: &impl StorableAccounts<'a, T>,
@@ -4965,8 +4965,8 @@ impl AccountsDb {
                 self.read_only_accounts_cache.remove(*pubkey, slot);
                 // this is the source of Some(Account) or None.
                 // Some(Account) = store 'Account'
-                // None = store a default/empty account with 0 lamports
-                let (account, data_len) = if account.is_zero_lamport() {
+                // None = store a default/empty account with 0 weis
+                let (account, data_len) = if account.is_zero_wei() {
                     (None, 0)
                 } else {
                     (Some(account), account.data().len() as u64)
@@ -5135,9 +5135,9 @@ impl AccountsDb {
         let mut scan = Measure::start("scan");
         let mismatch_found = AtomicU64::new(0);
         // Pick a chunk size big enough to allow us to produce output vectors that are smaller than the overall size.
-        // We'll also accumulate the lamports within each chunk and fewer chunks results in less contention to accumulate the sum.
+        // We'll also accumulate the weis within each chunk and fewer chunks results in less contention to accumulate the sum.
         let chunks = crate::accounts_hash::MERKLE_FANOUT.pow(4);
-        let total_lamports = Mutex::<u64>::new(0);
+        let total_weis = Mutex::<u64>::new(0);
         let get_hashes = || {
             keys.par_chunks(chunks)
                 .map(|pubkeys| {
@@ -5152,7 +5152,7 @@ impl AccountsDb {
                                 self.accounts_index.get(pubkey, Some(ancestors), Some(slot))
                             {
                                 let (slot, account_info) = &lock.slot_list()[index];
-                                if !account_info.is_zero_lamport() {
+                                if !account_info.is_zero_wei() {
                                     // Because we're keeping the `lock' here, there is no need
                                     // to use retry_to_get_account_accessor()
                                     // In other words, flusher/shrinker/cleaner is blocked to
@@ -5171,7 +5171,7 @@ impl AccountsDb {
                                     .and_then(
                                         |loaded_account| {
                                             let loaded_hash = loaded_account.loaded_hash();
-                                            let balance = loaded_account.lamports();
+                                            let balance = loaded_account.weis();
                                             if check_hash && !self.is_filler_account(pubkey) {  // this will not be supported anymore
                                                 let computed_hash =
                                                     loaded_account.compute_hash(*slot, pubkey);
@@ -5195,7 +5195,7 @@ impl AccountsDb {
                             }
                         })
                         .collect();
-                    let mut total = total_lamports.lock().unwrap();
+                    let mut total = total_weis.lock().unwrap();
                     *total =
                         AccountsHash::checked_cast_for_capitalization(*total as u128 + sum);
                     result
@@ -5216,7 +5216,7 @@ impl AccountsDb {
         }
 
         scan.stop();
-        let total_lamports = *total_lamports.lock().unwrap();
+        let total_weis = *total_weis.lock().unwrap();
 
         let mut hash_time = Measure::start("hash");
         let (accumulated_hash, hash_total) = AccountsHash::calculate_hash(hashes);
@@ -5228,7 +5228,7 @@ impl AccountsDb {
             ("hash_total", hash_total, i64),
             ("collect", collect.as_us(), i64),
         );
-        Ok((accumulated_hash, total_lamports))
+        Ok((accumulated_hash, total_weis))
     }
 
     pub fn get_accounts_hash(&self, slot: Slot) -> Hash {
@@ -5558,7 +5558,7 @@ impl AccountsDb {
         is_startup: bool,
     ) -> Result<(Hash, u64), BankHashVerificationError> {
         let _guard = self.active_stats.activate(ActiveStatItem::Hash);
-        let (hash, total_lamports) = self.calculate_accounts_hash_helper(
+        let (hash, total_weis) = self.calculate_accounts_hash_helper(
             use_index,
             slot,
             ancestors,
@@ -5569,7 +5569,7 @@ impl AccountsDb {
         )?;
         if debug_verify {
             // calculate the other way (store or non-store) and verify results match.
-            let (hash_other, total_lamports_other) = self.calculate_accounts_hash_helper(
+            let (hash_other, total_weis_other) = self.calculate_accounts_hash_helper(
                 !use_index,
                 slot,
                 ancestors,
@@ -5580,11 +5580,11 @@ impl AccountsDb {
             )?;
 
             let success = hash == hash_other
-                && total_lamports == total_lamports_other
-                && total_lamports == expected_capitalization.unwrap_or(total_lamports);
-            assert!(success, "update_accounts_hash_with_index_option mismatch. hashes: {}, {}; lamports: {}, {}; expected lamports: {:?}, using index: {}, slot: {}", hash, hash_other, total_lamports, total_lamports_other, expected_capitalization, use_index, slot);
+                && total_weis == total_weis_other
+                && total_weis == expected_capitalization.unwrap_or(total_weis);
+            assert!(success, "update_accounts_hash_with_index_option mismatch. hashes: {}, {}; weis: {}, {}; expected weis: {:?}, using index: {}, slot: {}", hash, hash_other, total_weis, total_weis_other, expected_capitalization, use_index, slot);
         }
-        Ok((hash, total_lamports))
+        Ok((hash, total_weis))
     }
 
     pub fn update_accounts_hash_with_index_option(
@@ -5599,7 +5599,7 @@ impl AccountsDb {
         is_startup: bool,
     ) -> (Hash, u64) {
         let check_hash = false;
-        let (hash, total_lamports) = self
+        let (hash, total_weis) = self
             .calculate_accounts_hash_helper_with_verify(
                 use_index,
                 debug_verify,
@@ -5615,7 +5615,7 @@ impl AccountsDb {
         let mut bank_hashes = self.bank_hashes.write().unwrap();
         let mut bank_hash_info = bank_hashes.get_mut(&slot).unwrap();
         bank_hash_info.snapshot_hash = hash;
-        (hash, total_lamports)
+        (hash, total_weis)
     }
 
     fn scan_snapshot_stores_with_cache(
@@ -5655,12 +5655,12 @@ impl AccountsDb {
                 // when we are scanning with bin ranges, we don't need to use exact bin numbers. Subtract to make first bin we care about at index 0.
                 pubkey_to_bin_index -= bin_range.start;
 
-                let raw_lamports = loaded_account.lamports();
-                let zero_raw_lamports = raw_lamports == 0;
-                let balance = if zero_raw_lamports {
-                    crate::accounts_hash::ZERO_RAW_LAMPORTS_SENTINEL
+                let raw_weis = loaded_account.weis();
+                let zero_raw_weis = raw_weis == 0;
+                let balance = if zero_raw_weis {
+                    crate::accounts_hash::ZERO_RAW_WEIS_SENTINEL
                 } else {
-                    raw_lamports
+                    raw_weis
                 };
 
                 let source_item =
@@ -5770,7 +5770,7 @@ impl AccountsDb {
                 let hash = AccountsHash {
                     filler_account_suffix: filler_account_suffix.cloned(),
                 };
-                let (hash, lamports, for_next_pass) = hash.rest_of_hash_calculation(
+                let (hash, weis, for_next_pass) = hash.rest_of_hash_calculation(
                     result,
                     &mut stats,
                     pass == num_hash_scan_passes - 1,
@@ -5778,7 +5778,7 @@ impl AccountsDb {
                     bins_per_pass,
                 );
                 previous_pass = for_next_pass;
-                final_result = (hash, lamports);
+                final_result = (hash, weis);
             }
 
             info!(
@@ -5796,11 +5796,11 @@ impl AccountsDb {
     }
 
     /// Only called from startup or test code.
-    pub fn verify_bank_hash_and_lamports(
+    pub fn verify_bank_hash_and_weis(
         &self,
         slot: Slot,
         ancestors: &Ancestors,
-        total_lamports: u64,
+        total_weis: u64,
         test_hash_calculation: bool,
     ) -> Result<(), BankHashVerificationError> {
         use BankHashVerificationError::*;
@@ -5809,7 +5809,7 @@ impl AccountsDb {
         let check_hash = false; // this will not be supported anymore
         let is_startup = true;
         let can_cached_slot_be_unflushed = false;
-        let (calculated_hash, calculated_lamports) = self
+        let (calculated_hash, calculated_weis) = self
             .calculate_accounts_hash_helper_with_verify(
                 use_index,
                 test_hash_calculation,
@@ -5822,12 +5822,12 @@ impl AccountsDb {
                 is_startup,
             )?;
 
-        if calculated_lamports != total_lamports {
+        if calculated_weis != total_weis {
             warn!(
-                "Mismatched total lamports: {} calculated: {}",
-                total_lamports, calculated_lamports
+                "Mismatched total weis: {} calculated: {}",
+                total_weis, calculated_weis
             );
-            return Err(MismatchedTotalLamports(calculated_lamports, total_lamports));
+            return Err(MismatchedTotalWeis(calculated_weis, total_weis));
         }
 
         let bank_hashes = self.bank_hashes.read().unwrap();
@@ -6282,7 +6282,7 @@ impl AccountsDb {
         self.store((slot, accounts), false)
     }
 
-    fn store<'a, T: ReadableAccount + Sync + ZeroLamport>(
+    fn store<'a, T: ReadableAccount + Sync + ZeroWei>(
         &self,
         accounts: impl StorableAccounts<'a, T>,
         is_cached_store: bool,
@@ -6430,7 +6430,7 @@ impl AccountsDb {
         }
     }
 
-    fn store_accounts_unfrozen<'a, T: ReadableAccount + Sync + ZeroLamport>(
+    fn store_accounts_unfrozen<'a, T: ReadableAccount + Sync + ZeroWei>(
         &self,
         accounts: impl StorableAccounts<'a, T>,
         hashes: Option<&[&Hash]>,
@@ -6454,7 +6454,7 @@ impl AccountsDb {
         );
     }
 
-    fn store_accounts_frozen<'a, T: ReadableAccount + Sync + ZeroLamport>(
+    fn store_accounts_frozen<'a, T: ReadableAccount + Sync + ZeroWei>(
         &'a self,
         accounts: impl StorableAccounts<'a, T>,
         hashes: Option<&[impl Borrow<Hash>]>,
@@ -6476,7 +6476,7 @@ impl AccountsDb {
         )
     }
 
-    fn store_accounts_custom<'a, 'b, T: ReadableAccount + Sync + ZeroLamport>(
+    fn store_accounts_custom<'a, 'b, T: ReadableAccount + Sync + ZeroWei>(
         &'a self,
         accounts: impl StorableAccounts<'b, T>,
         hashes: Option<&[impl Borrow<Hash>]>,
@@ -6744,7 +6744,7 @@ impl AccountsDb {
                         &self.account_indexes,
                     );
                 }
-                if !stored_account.is_zero_lamport() {
+                if !stored_account.is_zero_wei() {
                     accounts_data_len += stored_account.data().len() as u64;
                 }
 
@@ -6759,7 +6759,7 @@ impl AccountsDb {
                     AccountInfo::new(
                         StorageLocation::AppendVec(store_id, stored_account.offset), // will never be cached
                         stored_account.stored_size as StoredSize, // stored_size should never exceed StoredSize::MAX because of max data len const
-                        stored_account.account_meta.lamports,
+                        stored_account.account_meta.weis,
                     ),
                 )
             },
@@ -6854,9 +6854,9 @@ impl AccountsDb {
         let string = "FiLLERACCoUNTooooooooooooooooooooooooooooooo";
         let hash = Hash::from_str(string).unwrap();
         let owner = Pubkey::from_str(string).unwrap();
-        let lamports = 100_000_000;
+        let weis = 100_000_000;
         let space = 0;
-        let account = AccountSharedData::new(lamports, space, &owner);
+        let account = AccountSharedData::new(weis, space, &owner);
         let added = AtomicUsize::default();
         for pass in 0..=passes {
             self.accounts_index.set_startup(true);
@@ -7020,7 +7020,7 @@ impl AccountsDb {
                                                 account_info.stored_account.offset,
                                             ), // will never be cached
                                             account_info.stored_account.stored_size as StoredSize, // stored_size should never exceed StoredSize::MAX because of max data len const
-                                            account_info.stored_account.account_meta.lamports,
+                                            account_info.stored_account.account_meta.weis,
                                         );
                                         assert_eq!(&ai, account_info2);
                                     }
@@ -7635,7 +7635,7 @@ pub mod tests {
 
         for i in 0..raw_expected.len() {
             raw_accounts.push(AccountSharedData::new(
-                raw_expected[i].lamports,
+                raw_expected[i].weis,
                 1,
                 AccountSharedData::default().owner(),
             ));
@@ -7935,7 +7935,7 @@ pub mod tests {
             AccountsHash::compute_merkle_root_loop(raw_expected.clone(), MERKLE_FANOUT, |item| {
                 item.hash
             });
-        let sum = raw_expected.iter().map(|item| item.lamports).sum();
+        let sum = raw_expected.iter().map(|item| item.weis).sum();
         let result = AccountsDb::calculate_accounts_hash_without_index(
             TempDir::new().unwrap().path(),
             &get_storage_refs(&storages),
@@ -8236,11 +8236,11 @@ pub mod tests {
 
         // now we have:
         //
-        //                       root0 -> key.lamports==1
+        //                       root0 -> key.weis==1
         //                        / \
         //                       /   \
-        //  key.lamports==0 <- slot1    \
-        //                             slot2 -> key.lamports==1
+        //  key.weis==0 <- slot1    \
+        //                             slot2 -> key.weis==1
         //                                       (via root0)
 
         // store value 0 in one child
@@ -8290,7 +8290,7 @@ pub mod tests {
                 .load_without_fixed_root(&ancestors, &pubkeys[idx])
                 .unwrap();
             let default_account = AccountSharedData::from(Account {
-                lamports: (idx + 1) as u64,
+                weis: (idx + 1) as u64,
                 ..Account::default()
             });
             assert_eq!((default_account, 0), account);
@@ -8310,7 +8310,7 @@ pub mod tests {
                 .load_without_fixed_root(&ancestors, &pubkeys[idx])
                 .unwrap();
             let default_account = AccountSharedData::from(Account {
-                lamports: (idx + 1) as u64,
+                weis: (idx + 1) as u64,
                 ..Account::default()
             });
             assert_eq!(&default_account, &account0.0);
@@ -8387,7 +8387,7 @@ pub mod tests {
         let account0 = AccountSharedData::new(1, 0, &key);
         db0.store_uncached(0, &[(&key, &account0)]);
 
-        // 0 lamports in the child
+        // 0 weis in the child
         let account1 = AccountSharedData::new(0, 0, &key);
         db0.store_uncached(1, &[(&key, &account1)]);
 
@@ -8527,16 +8527,16 @@ pub mod tests {
             if let Some((mut account, _)) =
                 accounts.load_without_fixed_root(&ancestors, &pubkeys[idx])
             {
-                account.checked_add_lamports(1).unwrap();
+                account.checked_add_weis(1).unwrap();
                 accounts.store_uncached(slot, &[(&pubkeys[idx], &account)]);
-                if account.is_zero_lamport() {
+                if account.is_zero_wei() {
                     let ancestors = vec![(slot, 0)].into_iter().collect();
                     assert!(accounts
                         .load_without_fixed_root(&ancestors, &pubkeys[idx])
                         .is_none());
                 } else {
                     let default_account = AccountSharedData::from(Account {
-                        lamports: account.lamports(),
+                        weis: account.weis(),
                         ..Account::default()
                     });
                     assert_eq!(default_account, account);
@@ -8628,7 +8628,7 @@ pub mod tests {
         let ancestors = vec![(0, 0)].into_iter().collect();
         let account = db.load_without_fixed_root(&ancestors, &pubkeys[0]).unwrap();
         let default_account = AccountSharedData::from(Account {
-            lamports: 1,
+            weis: 1,
             ..Account::default()
         });
         assert_eq!((default_account, 0), account);
@@ -8671,7 +8671,7 @@ pub mod tests {
                     .load_without_fixed_root(&ancestors, key)
                     .unwrap()
                     .0
-                    .lamports(),
+                    .weis(),
                 (i as u64) + 1
             );
         }
@@ -8839,14 +8839,14 @@ pub mod tests {
     }
 
     #[test]
-    fn test_clean_zero_lamport_and_dead_slot() {
+    fn test_clean_zero_wei_and_dead_slot() {
         solana_logger::setup();
 
         let accounts = AccountsDb::new(Vec::new(), &ClusterType::Development);
         let pubkey1 = solana_sdk::pubkey::new_rand();
         let pubkey2 = solana_sdk::pubkey::new_rand();
         let account = AccountSharedData::new(1, 1, AccountSharedData::default().owner());
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
         // Store two accounts
@@ -8855,7 +8855,7 @@ pub mod tests {
 
         // Make sure both accounts are in the same AppendVec in slot 0, which
         // will prevent pubkey1 from being cleaned up later even when it's a
-        // zero-lamport account
+        // zero-wei account
         let ancestors = vec![(0, 1)].into_iter().collect();
         let (slot1, account_info1) = accounts
             .accounts_index
@@ -8874,8 +8874,8 @@ pub mod tests {
         // Update account 1 in slot 1
         accounts.store_uncached(1, &[(&pubkey1, &account)]);
 
-        // Update account 1 as  zero lamports account
-        accounts.store_uncached(2, &[(&pubkey1, &zero_lamport_account)]);
+        // Update account 1 as  zero weis account
+        accounts.store_uncached(2, &[(&pubkey1, &zero_wei_account)]);
 
         // Pubkey 1 was the only account in slot 1, and it was updated in slot 2, so
         // slot 1 should be purged
@@ -8890,26 +8890,26 @@ pub mod tests {
         assert!(accounts.storage.get_slot_stores(1).is_none());
 
         // Slot 1 should be cleaned because all it's accounts are
-        // zero lamports, and are not present in any other slot's
+        // zero weis, and are not present in any other slot's
         // storage entries
         assert_eq!(accounts.alive_account_count_in_slot(1), 0);
     }
 
     #[test]
-    fn test_clean_multiple_zero_lamport_decrements_index_ref_count() {
+    fn test_clean_multiple_zero_wei_decrements_index_ref_count() {
         solana_logger::setup();
 
         let accounts = AccountsDb::new(Vec::new(), &ClusterType::Development);
         let pubkey1 = solana_sdk::pubkey::new_rand();
         let pubkey2 = solana_sdk::pubkey::new_rand();
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
         // Store 2 accounts in slot 0, then update account 1 in two more slots
-        accounts.store_uncached(0, &[(&pubkey1, &zero_lamport_account)]);
-        accounts.store_uncached(0, &[(&pubkey2, &zero_lamport_account)]);
-        accounts.store_uncached(1, &[(&pubkey1, &zero_lamport_account)]);
-        accounts.store_uncached(2, &[(&pubkey1, &zero_lamport_account)]);
+        accounts.store_uncached(0, &[(&pubkey1, &zero_wei_account)]);
+        accounts.store_uncached(0, &[(&pubkey2, &zero_wei_account)]);
+        accounts.store_uncached(1, &[(&pubkey1, &zero_wei_account)]);
+        accounts.store_uncached(2, &[(&pubkey1, &zero_wei_account)]);
         // Root all slots
         accounts.add_root(0);
         accounts.add_root(1);
@@ -8922,10 +8922,10 @@ pub mod tests {
 
         accounts.clean_accounts(None, false, None);
         // Slots 0 and 1 should each have been cleaned because all of their
-        // accounts are zero lamports
+        // accounts are zero weis
         assert!(accounts.storage.get_slot_stores(0).is_none());
         assert!(accounts.storage.get_slot_stores(1).is_none());
-        // Slot 2 only has a zero lamport account as well. But, calc_delete_dependencies()
+        // Slot 2 only has a zero wei account as well. But, calc_delete_dependencies()
         // should exclude slot 2 from the clean due to changes in other slots
         assert!(accounts.storage.get_slot_stores(2).is_some());
         // Index ref counts should be consistent with the slot stores. Account 1 ref count
@@ -8941,26 +8941,26 @@ pub mod tests {
     }
 
     #[test]
-    fn test_clean_zero_lamport_and_old_roots() {
+    fn test_clean_zero_wei_and_old_roots() {
         solana_logger::setup();
 
         let accounts = AccountsDb::new(Vec::new(), &ClusterType::Development);
         let pubkey = solana_sdk::pubkey::new_rand();
         let account = AccountSharedData::new(1, 0, AccountSharedData::default().owner());
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
-        // Store a zero-lamport account
+        // Store a zero-wei account
         accounts.store_uncached(0, &[(&pubkey, &account)]);
-        accounts.store_uncached(1, &[(&pubkey, &zero_lamport_account)]);
+        accounts.store_uncached(1, &[(&pubkey, &zero_wei_account)]);
 
-        // Simulate rooting the zero-lamport account, should be a
+        // Simulate rooting the zero-wei account, should be a
         // candidate for cleaning
         accounts.add_root(0);
         accounts.add_root(1);
 
         // Slot 0 should be removed, and
-        // zero-lamport account should be cleaned
+        // zero-wei account should be cleaned
         accounts.clean_accounts(None, false, None);
 
         assert!(accounts.storage.get_slot_stores(0).is_none());
@@ -8971,11 +8971,11 @@ pub mod tests {
         assert_eq!(accounts.alive_account_count_in_slot(0), 0);
 
         // Slot 1 should be cleaned because all it's accounts are
-        // zero lamports, and are not present in any other slot's
+        // zero weis, and are not present in any other slot's
         // storage entries
         assert_eq!(accounts.alive_account_count_in_slot(1), 0);
 
-        // zero lamport account, should no longer exist in accounts index
+        // zero wei account, should no longer exist in accounts index
         // because it has been removed
         assert!(accounts
             .accounts_index
@@ -9012,7 +9012,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_clean_old_with_zero_lamport_account() {
+    fn test_clean_old_with_zero_wei_account() {
         solana_logger::setup();
 
         let accounts = AccountsDb::new(Vec::new(), &ClusterType::Development);
@@ -9040,13 +9040,13 @@ pub mod tests {
 
         accounts.clean_accounts(None, false, None);
 
-        //Old state behind zero-lamport account is cleaned up
+        //Old state behind zero-wei account is cleaned up
         assert_eq!(accounts.alive_account_count_in_slot(0), 0);
         assert_eq!(accounts.alive_account_count_in_slot(1), 2);
     }
 
     #[test]
-    fn test_clean_old_with_both_normal_and_zero_lamport_accounts() {
+    fn test_clean_old_with_both_normal_and_zero_wei_accounts() {
         solana_logger::setup();
 
         let mut accounts = AccountsDb::new_with_config_for_tests(
@@ -9157,15 +9157,15 @@ pub mod tests {
 
         accounts.clean_accounts(None, false, None);
 
-        //both zero lamport and normal accounts are cleaned up
+        //both zero wei and normal accounts are cleaned up
         assert_eq!(accounts.alive_account_count_in_slot(0), 0);
-        // The only store to slot 1 was a zero lamport account, should
-        // be purged by zero-lamport cleaning logic because slot 1 is
+        // The only store to slot 1 was a zero wei account, should
+        // be purged by zero-wei cleaning logic because slot 1 is
         // rooted
         assert_eq!(accounts.alive_account_count_in_slot(1), 0);
         assert_eq!(accounts.alive_account_count_in_slot(2), 1);
 
-        // `pubkey1`, a zero lamport account, should no longer exist in accounts index
+        // `pubkey1`, a zero wei account, should no longer exist in accounts index
         // because it has been removed by the clean
         assert!(accounts
             .accounts_index
@@ -9188,7 +9188,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_clean_max_slot_zero_lamport_account() {
+    fn test_clean_max_slot_zero_wei_account() {
         solana_logger::setup();
 
         let accounts = AccountsDb::new(Vec::new(), &ClusterType::Development);
@@ -9196,7 +9196,7 @@ pub mod tests {
         let account = AccountSharedData::new(1, 0, AccountSharedData::default().owner());
         let zero_account = AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
-        // store an account, make it a zero lamport account
+        // store an account, make it a zero wei account
         // in slot 1
         accounts.store_uncached(0, &[(&pubkey, &account)]);
         accounts.store_uncached(1, &[(&pubkey, &zero_account)]);
@@ -9222,7 +9222,7 @@ pub mod tests {
         assert_eq!(accounts.alive_account_count_in_slot(0), 0);
         assert_eq!(accounts.alive_account_count_in_slot(1), 0);
 
-        // The zero lamport account, should no longer exist in accounts index
+        // The zero wei account, should no longer exist in accounts index
         // because it has been removed
         assert!(accounts
             .accounts_index
@@ -9292,7 +9292,7 @@ pub mod tests {
 
         // Modify the first 10 of the accounts from slot 0 in slot 1
         modify_accounts(&accounts, &pubkeys, latest_slot, 10, 3);
-        // Overwrite account 30 from slot 0 with lamports=0 into slot 1.
+        // Overwrite account 30 from slot 0 with weis=0 into slot 1.
         // Slot 1 should now have 10 + 1 = 11 accounts
         let account = AccountSharedData::new(0, 0, AccountSharedData::default().owner());
         accounts.store_uncached(latest_slot, &[(&pubkeys[30], &account)]);
@@ -9312,7 +9312,7 @@ pub mod tests {
         // Modify first 20 of the accounts from slot 0 in slot 2
         modify_accounts(&accounts, &pubkeys, latest_slot, 20, 4);
         accounts.clean_accounts(None, false, None);
-        // Overwrite account 31 from slot 0 with lamports=0 into slot 2.
+        // Overwrite account 31 from slot 0 with weis=0 into slot 2.
         // Slot 2 should now have 20 + 1 = 21 accounts
         let account = AccountSharedData::new(0, 0, AccountSharedData::default().owner());
         accounts.store_uncached(latest_slot, &[(&pubkeys[31], &account)]);
@@ -9327,7 +9327,7 @@ pub mod tests {
 
         accounts.clean_accounts(None, false, None);
         // The first 20 accounts of slot 0 have been updated in slot 2, as well as
-        // accounts 30 and  31 (overwritten with zero-lamport accounts in slot 1 and
+        // accounts 30 and  31 (overwritten with zero-wei accounts in slot 1 and
         // slot 2 respectively), so only 78 accounts are left in slot 0's storage entries.
         assert!(check_storage(&accounts, 0, 78));
         // 10 of the 21 accounts have been modified in slot 2, so only 11
@@ -9370,13 +9370,13 @@ pub mod tests {
         accounts: &AccountsDb,
         slot: Slot,
         pubkey: Pubkey,
-        expected_lamports: u64,
+        expected_weis: u64,
     ) {
         let ancestors = vec![(slot, 0)].into_iter().collect();
         let (account, slot) = accounts
             .load_without_fixed_root(&ancestors, &pubkey)
             .unwrap();
-        assert_eq!((account.lamports(), slot), (expected_lamports, slot));
+        assert_eq!((account.weis(), slot), (expected_weis, slot));
     }
 
     fn assert_not_load_account(accounts: &AccountsDb, slot: Slot, pubkey: Pubkey) {
@@ -9406,18 +9406,18 @@ pub mod tests {
     #[test]
     fn test_accounts_db_purge_keep_live() {
         solana_logger::setup();
-        let some_lamport = 223;
-        let zero_lamport = 0;
+        let some_wei = 223;
+        let zero_wei = 0;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(some_lamport, no_data, &owner);
+        let account = AccountSharedData::new(some_wei, no_data, &owner);
         let pubkey = solana_sdk::pubkey::new_rand();
 
-        let account2 = AccountSharedData::new(some_lamport, no_data, &owner);
+        let account2 = AccountSharedData::new(some_wei, no_data, &owner);
         let pubkey2 = solana_sdk::pubkey::new_rand();
 
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, no_data, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, no_data, &owner);
 
         let accounts = AccountsDb::new_single_for_tests();
         accounts.add_root(0);
@@ -9445,11 +9445,11 @@ pub mod tests {
 
         // Step B
         current_slot += 1;
-        let zero_lamport_slot = current_slot;
-        accounts.store_uncached(current_slot, &[(&pubkey, &zero_lamport_account)]);
+        let zero_wei_slot = current_slot;
+        accounts.store_uncached(current_slot, &[(&pubkey, &zero_wei_account)]);
         accounts.add_root(current_slot);
 
-        assert_load_account(&accounts, current_slot, pubkey, zero_lamport);
+        assert_load_account(&accounts, current_slot, pubkey, zero_wei);
 
         current_slot += 1;
         accounts.add_root(current_slot);
@@ -9470,8 +9470,8 @@ pub mod tests {
             (slot_list.len(), slot_list[0].0)
         };
         assert_eq!(slot_list_len, 1);
-        // Zero lamport entry was not the one purged
-        assert_eq!(index_slot, zero_lamport_slot);
+        // Zero wei entry was not the one purged
+        assert_eq!(index_slot, zero_wei_slot);
         // The ref count should still be 2 because no slots were purged
         assert_eq!(accounts.ref_count_for_pubkey(&pubkey), 2);
 
@@ -9485,15 +9485,15 @@ pub mod tests {
     #[test]
     fn test_accounts_db_purge1() {
         solana_logger::setup();
-        let some_lamport = 223;
-        let zero_lamport = 0;
+        let some_wei = 223;
+        let zero_wei = 0;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(some_lamport, no_data, &owner);
+        let account = AccountSharedData::new(some_wei, no_data, &owner);
         let pubkey = solana_sdk::pubkey::new_rand();
 
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, no_data, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, no_data, &owner);
 
         let accounts = AccountsDb::new_single_for_tests();
         accounts.add_root(0);
@@ -9505,10 +9505,10 @@ pub mod tests {
 
         current_slot += 1;
         accounts.set_hash(current_slot, current_slot - 1);
-        accounts.store_uncached(current_slot, &[(&pubkey, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&pubkey, &zero_wei_account)]);
         accounts.add_root(current_slot);
 
-        assert_load_account(&accounts, current_slot, pubkey, zero_lamport);
+        assert_load_account(&accounts, current_slot, pubkey, zero_wei);
 
         // Otherwise slot 2 will not be removed
         current_slot += 1;
@@ -9545,19 +9545,19 @@ pub mod tests {
     fn test_accounts_db_serialize_zero_and_free() {
         solana_logger::setup();
 
-        let some_lamport = 223;
-        let zero_lamport = 0;
+        let some_wei = 223;
+        let zero_wei = 0;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(some_lamport, no_data, &owner);
+        let account = AccountSharedData::new(some_wei, no_data, &owner);
         let pubkey = solana_sdk::pubkey::new_rand();
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, no_data, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, no_data, &owner);
 
-        let account2 = AccountSharedData::new(some_lamport + 1, no_data, &owner);
+        let account2 = AccountSharedData::new(some_wei + 1, no_data, &owner);
         let pubkey2 = solana_sdk::pubkey::new_rand();
 
-        let filler_account = AccountSharedData::new(some_lamport, no_data, &owner);
+        let filler_account = AccountSharedData::new(some_wei, no_data, &owner);
         let filler_account_pubkey = solana_sdk::pubkey::new_rand();
 
         let accounts = AccountsDb::new_single_for_tests();
@@ -9567,7 +9567,7 @@ pub mod tests {
         accounts.add_root(current_slot);
 
         current_slot += 1;
-        accounts.store_uncached(current_slot, &[(&pubkey, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&pubkey, &zero_wei_account)]);
         accounts.store_uncached(current_slot, &[(&pubkey2, &account2)]);
 
         // Store enough accounts such that an additional store for slot 2 is created.
@@ -9584,7 +9584,7 @@ pub mod tests {
         }
         accounts.add_root(current_slot);
 
-        assert_load_account(&accounts, current_slot, pubkey, zero_lamport);
+        assert_load_account(&accounts, current_slot, pubkey, zero_wei);
 
         accounts.print_accounts_stats("accounts");
 
@@ -9595,29 +9595,29 @@ pub mod tests {
 
         accounts.print_accounts_stats("reconstructed");
 
-        assert_load_account(&accounts, current_slot, pubkey, zero_lamport);
+        assert_load_account(&accounts, current_slot, pubkey, zero_wei);
     }
 
-    fn with_chained_zero_lamport_accounts<F>(f: F)
+    fn with_chained_zero_wei_accounts<F>(f: F)
     where
         F: Fn(AccountsDb, Slot) -> AccountsDb,
     {
-        let some_lamport = 223;
-        let zero_lamport = 0;
-        let dummy_lamport = 999;
+        let some_wei = 223;
+        let zero_wei = 0;
+        let dummy_wei = 999;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(some_lamport, no_data, &owner);
-        let account2 = AccountSharedData::new(some_lamport + 100_001, no_data, &owner);
-        let account3 = AccountSharedData::new(some_lamport + 100_002, no_data, &owner);
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, no_data, &owner);
+        let account = AccountSharedData::new(some_wei, no_data, &owner);
+        let account2 = AccountSharedData::new(some_wei + 100_001, no_data, &owner);
+        let account3 = AccountSharedData::new(some_wei + 100_002, no_data, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, no_data, &owner);
 
         let pubkey = solana_sdk::pubkey::new_rand();
         let purged_pubkey1 = solana_sdk::pubkey::new_rand();
         let purged_pubkey2 = solana_sdk::pubkey::new_rand();
 
-        let dummy_account = AccountSharedData::new(dummy_lamport, no_data, &owner);
+        let dummy_account = AccountSharedData::new(dummy_wei, no_data, &owner);
         let dummy_pubkey = Pubkey::default();
 
         let accounts = AccountsDb::new_single_for_tests();
@@ -9628,12 +9628,12 @@ pub mod tests {
         accounts.add_root(current_slot);
 
         current_slot += 1;
-        accounts.store_uncached(current_slot, &[(&purged_pubkey1, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&purged_pubkey1, &zero_wei_account)]);
         accounts.store_uncached(current_slot, &[(&purged_pubkey2, &account3)]);
         accounts.add_root(current_slot);
 
         current_slot += 1;
-        accounts.store_uncached(current_slot, &[(&purged_pubkey2, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&purged_pubkey2, &zero_wei_account)]);
         accounts.add_root(current_slot);
 
         current_slot += 1;
@@ -9647,20 +9647,20 @@ pub mod tests {
 
         accounts.print_accounts_stats("post_f");
 
-        assert_load_account(&accounts, current_slot, pubkey, some_lamport);
+        assert_load_account(&accounts, current_slot, pubkey, some_wei);
         assert_load_account(&accounts, current_slot, purged_pubkey1, 0);
         assert_load_account(&accounts, current_slot, purged_pubkey2, 0);
-        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_lamport);
+        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_wei);
 
         accounts
-            .verify_bank_hash_and_lamports(4, &Ancestors::default(), 1222, true)
+            .verify_bank_hash_and_weis(4, &Ancestors::default(), 1222, true)
             .unwrap();
     }
 
     #[test]
     fn test_accounts_purge_chained_purge_before_snapshot_restore() {
         solana_logger::setup();
-        with_chained_zero_lamport_accounts(|accounts, current_slot| {
+        with_chained_zero_wei_accounts(|accounts, current_slot| {
             accounts.clean_accounts(None, false, None);
             reconstruct_accounts_db_via_serialization(&accounts, current_slot)
         });
@@ -9669,7 +9669,7 @@ pub mod tests {
     #[test]
     fn test_accounts_purge_chained_purge_after_snapshot_restore() {
         solana_logger::setup();
-        with_chained_zero_lamport_accounts(|accounts, current_slot| {
+        with_chained_zero_wei_accounts(|accounts, current_slot| {
             let accounts = reconstruct_accounts_db_via_serialization(&accounts, current_slot);
             accounts.print_accounts_stats("after_reconstruct");
             accounts.clean_accounts(None, false, None);
@@ -9700,7 +9700,7 @@ pub mod tests {
                         let mut i = 0;
                         loop {
                             let account_bal = thread_rng().gen_range(1, 99);
-                            account.set_lamports(account_bal);
+                            account.set_weis(account_bal);
                             db.store_uncached(slot, &[(&pubkey, &account)]);
 
                             let (account, slot) = db
@@ -9709,7 +9709,7 @@ pub mod tests {
                                     panic!("Could not fetch stored account {}, iter {}", pubkey, i)
                                 });
                             assert_eq!(slot, slot);
-                            assert_eq!(account.lamports(), account_bal);
+                            assert_eq!(account.weis(), account_bal);
                             i += 1;
                         }
                     })
@@ -9789,7 +9789,7 @@ pub mod tests {
             db.load_without_fixed_root(&ancestors, &key1)
                 .unwrap()
                 .0
-                .lamports(),
+                .weis(),
             3
         );
     }
@@ -9812,7 +9812,7 @@ pub mod tests {
 
     #[test]
     fn test_stored_readable_account() {
-        let lamports = 1;
+        let weis = 1;
         let owner = Pubkey::new_unique();
         let executable = true;
         let rent_epoch = 2;
@@ -9822,14 +9822,14 @@ pub mod tests {
             data_len: 7,
         };
         let account_meta = AccountMeta {
-            lamports,
+            weis,
             owner,
             executable,
             rent_epoch,
         };
         let data = Vec::new();
         let account = Account {
-            lamports,
+            weis,
             owner,
             executable,
             rent_epoch,
@@ -9919,7 +9919,7 @@ pub mod tests {
 
         db.store_uncached(some_slot, &[(&key, &account)]);
         let mut account = db.load_without_fixed_root(&ancestors, &key).unwrap().0;
-        account.checked_sub_lamports(1).unwrap();
+        account.checked_sub_weis(1).unwrap();
         account.set_executable(true);
         db.store_uncached(some_slot, &[(&key, &account)]);
         db.add_root(some_slot);
@@ -9928,7 +9928,7 @@ pub mod tests {
         let bank_hash = bank_hashes.get(&some_slot).unwrap();
         assert_eq!(bank_hash.stats.num_updated_accounts, 1);
         assert_eq!(bank_hash.stats.num_removed_accounts, 1);
-        assert_eq!(bank_hash.stats.num_lamports_stored, 1);
+        assert_eq!(bank_hash.stats.num_weis_stored, 1);
         assert_eq!(bank_hash.stats.total_data_len, 2 * some_data_len as u64);
         assert_eq!(bank_hash.stats.num_executable_accounts, 1);
     }
@@ -10005,13 +10005,13 @@ pub mod tests {
         db.add_root(some_slot);
         db.update_accounts_hash_test(some_slot, &ancestors);
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 1, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 1, true),
             Ok(_)
         );
 
         db.bank_hashes.write().unwrap().remove(&some_slot).unwrap();
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 1, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 1, true),
             Err(MissingBankHash)
         );
 
@@ -10026,7 +10026,7 @@ pub mod tests {
             .unwrap()
             .insert(some_slot, bank_hash_info);
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 1, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 1, true),
             Err(MismatchedBankHash)
         );
     }
@@ -10047,7 +10047,7 @@ pub mod tests {
         db.add_root(some_slot);
         db.update_accounts_hash_test(some_slot, &ancestors);
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 1, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 1, true),
             Ok(_)
         );
 
@@ -10061,13 +10061,13 @@ pub mod tests {
         );
         db.update_accounts_hash_test(some_slot, &ancestors);
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 2, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 2, true),
             Ok(_)
         );
 
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 10, true),
-            Err(MismatchedTotalLamports(expected, actual)) if expected == 2 && actual == 10
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 10, true),
+            Err(MismatchedTotalWeis(expected, actual)) if expected == 2 && actual == 10
         );
     }
 
@@ -10086,7 +10086,7 @@ pub mod tests {
         db.add_root(some_slot);
         db.update_accounts_hash_test(some_slot, &ancestors);
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 0, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 0, true),
             Ok(_)
         );
     }
@@ -10116,7 +10116,7 @@ pub mod tests {
         db.store_accounts_unfrozen((some_slot, accounts), Some(&[&some_hash]), false);
         db.add_root(some_slot);
         assert_matches!(
-            db.verify_bank_hash_and_lamports(some_slot, &ancestors, 1, true),
+            db.verify_bank_hash_and_weis(some_slot, &ancestors, 1, true),
             Err(MismatchedBankHash)
         );
     }
@@ -10126,9 +10126,9 @@ pub mod tests {
         solana_logger::setup();
         let db = AccountsDb::new_sized(Vec::new(), 16 * 1024);
         let key = solana_sdk::pubkey::new_rand();
-        let lamports = 100;
+        let weis = 100;
         let data_len = 8190;
-        let account = AccountSharedData::new(lamports, data_len, &solana_sdk::pubkey::new_rand());
+        let account = AccountSharedData::new(weis, data_len, &solana_sdk::pubkey::new_rand());
         // pre-populate with a smaller empty store
         db.create_and_insert_store(1, 8192, "test_storage_finder");
         db.store_uncached(1, &[(&key, &account)]);
@@ -10280,16 +10280,16 @@ pub mod tests {
     #[test]
     fn test_accounts_purge_long_chained_after_snapshot_restore() {
         solana_logger::setup();
-        let old_lamport = 223;
-        let zero_lamport = 0;
+        let old_wei = 223;
+        let zero_wei = 0;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(old_lamport, no_data, &owner);
-        let account2 = AccountSharedData::new(old_lamport + 100_001, no_data, &owner);
-        let account3 = AccountSharedData::new(old_lamport + 100_002, no_data, &owner);
+        let account = AccountSharedData::new(old_wei, no_data, &owner);
+        let account2 = AccountSharedData::new(old_wei + 100_001, no_data, &owner);
+        let account3 = AccountSharedData::new(old_wei + 100_002, no_data, &owner);
         let dummy_account = AccountSharedData::new(99_999_999, no_data, &owner);
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, no_data, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, no_data, &owner);
 
         let pubkey = solana_sdk::pubkey::new_rand();
         let dummy_pubkey = solana_sdk::pubkey::new_rand();
@@ -10315,12 +10315,12 @@ pub mod tests {
         accounts.add_root(current_slot);
 
         current_slot += 1;
-        accounts.store_uncached(current_slot, &[(&purged_pubkey1, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&purged_pubkey1, &zero_wei_account)]);
         accounts.store_uncached(current_slot, &[(&purged_pubkey2, &account3)]);
         accounts.add_root(current_slot);
 
         current_slot += 1;
-        accounts.store_uncached(current_slot, &[(&purged_pubkey2, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&purged_pubkey2, &zero_wei_account)]);
         accounts.add_root(current_slot);
 
         current_slot += 1;
@@ -10333,7 +10333,7 @@ pub mod tests {
         accounts.clean_accounts(None, false, None);
         accounts.print_count_and_status("after purge zero");
 
-        assert_load_account(&accounts, current_slot, pubkey, old_lamport);
+        assert_load_account(&accounts, current_slot, pubkey, old_wei);
         assert_load_account(&accounts, current_slot, purged_pubkey1, 0);
         assert_load_account(&accounts, current_slot, purged_pubkey2, 0);
     }
@@ -10343,20 +10343,20 @@ pub mod tests {
         let pubkey2 = Pubkey::from_str("My22211111111111111111111111111111111111111").unwrap();
         let pubkey3 = Pubkey::from_str("My33311111111111111111111111111111111111111").unwrap();
 
-        let old_lamport = 223;
-        let zero_lamport = 0;
-        let dummy_lamport = 999_999;
+        let old_wei = 223;
+        let zero_wei = 0;
+        let dummy_wei = 999_999;
 
         // size data so only 1 fits in a 4k store
         let data_size = 2200;
 
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(old_lamport, data_size, &owner);
-        let account2 = AccountSharedData::new(old_lamport + 100_001, data_size, &owner);
-        let account3 = AccountSharedData::new(old_lamport + 100_002, data_size, &owner);
-        let account4 = AccountSharedData::new(dummy_lamport, data_size, &owner);
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, data_size, &owner);
+        let account = AccountSharedData::new(old_wei, data_size, &owner);
+        let account2 = AccountSharedData::new(old_wei + 100_001, data_size, &owner);
+        let account3 = AccountSharedData::new(old_wei + 100_002, data_size, &owner);
+        let account4 = AccountSharedData::new(dummy_wei, data_size, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, data_size, &owner);
 
         let mut current_slot = 0;
         let accounts = AccountsDb::new_sized_no_extra_stores(Vec::new(), store_size);
@@ -10410,12 +10410,12 @@ pub mod tests {
 
         accounts.print_accounts_stats("Post-C");
 
-        // D: Make all keys 0-lamport, cleans all keys
+        // D: Make all keys 0-wei, cleans all keys
         current_slot += 1;
         assert_eq!(3, accounts.ref_count_for_pubkey(&pubkey1));
-        accounts.store_uncached(current_slot, &[(&pubkey1, &zero_lamport_account)]);
-        accounts.store_uncached(current_slot, &[(&pubkey2, &zero_lamport_account)]);
-        accounts.store_uncached(current_slot, &[(&pubkey3, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&pubkey1, &zero_wei_account)]);
+        accounts.store_uncached(current_slot, &[(&pubkey2, &zero_wei_account)]);
+        accounts.store_uncached(current_slot, &[(&pubkey3, &zero_wei_account)]);
 
         let snapshot_stores = accounts.get_snapshot_storages(current_slot, None, None).0;
         let total_accounts: usize = snapshot_stores
@@ -10470,17 +10470,17 @@ pub mod tests {
     #[test]
     fn test_accounts_clean_after_snapshot_restore_then_old_revives() {
         solana_logger::setup();
-        let old_lamport = 223;
-        let zero_lamport = 0;
+        let old_wei = 223;
+        let zero_wei = 0;
         let no_data = 0;
-        let dummy_lamport = 999_999;
+        let dummy_wei = 999_999;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(old_lamport, no_data, &owner);
-        let account2 = AccountSharedData::new(old_lamport + 100_001, no_data, &owner);
-        let account3 = AccountSharedData::new(old_lamport + 100_002, no_data, &owner);
-        let dummy_account = AccountSharedData::new(dummy_lamport, no_data, &owner);
-        let zero_lamport_account = AccountSharedData::new(zero_lamport, no_data, &owner);
+        let account = AccountSharedData::new(old_wei, no_data, &owner);
+        let account2 = AccountSharedData::new(old_wei + 100_001, no_data, &owner);
+        let account3 = AccountSharedData::new(old_wei + 100_002, no_data, &owner);
+        let dummy_account = AccountSharedData::new(dummy_wei, no_data, &owner);
+        let zero_wei_account = AccountSharedData::new(zero_wei, no_data, &owner);
 
         let pubkey1 = solana_sdk::pubkey::new_rand();
         let pubkey2 = solana_sdk::pubkey::new_rand();
@@ -10517,10 +10517,10 @@ pub mod tests {
         accounts.get_accounts_delta_hash(current_slot);
         accounts.add_root(current_slot);
 
-        // D: Make pubkey1 0-lamport; also triggers clean of step B
+        // D: Make pubkey1 0-wei; also triggers clean of step B
         current_slot += 1;
         assert_eq!(3, accounts.ref_count_for_pubkey(&pubkey1));
-        accounts.store_uncached(current_slot, &[(&pubkey1, &zero_lamport_account)]);
+        accounts.store_uncached(current_slot, &[(&pubkey1, &zero_wei_account)]);
         accounts.clean_accounts(None, false, None);
 
         assert_eq!(
@@ -10538,9 +10538,9 @@ pub mod tests {
         accounts.get_accounts_delta_hash(current_slot);
         accounts.add_root(current_slot);
 
-        assert_load_account(&accounts, current_slot, pubkey1, zero_lamport);
-        assert_load_account(&accounts, current_slot, pubkey2, old_lamport);
-        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_lamport);
+        assert_load_account(&accounts, current_slot, pubkey1, zero_wei);
+        assert_load_account(&accounts, current_slot, pubkey2, old_wei);
+        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_wei);
 
         // At this point, there is no index entries for A and B
         // If step C and step D should be purged, snapshot restore would cause
@@ -10552,9 +10552,9 @@ pub mod tests {
 
         info!("pubkey: {}", pubkey1);
         accounts.print_accounts_stats("pre_clean");
-        assert_load_account(&accounts, current_slot, pubkey1, zero_lamport);
-        assert_load_account(&accounts, current_slot, pubkey2, old_lamport);
-        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_lamport);
+        assert_load_account(&accounts, current_slot, pubkey1, zero_wei);
+        assert_load_account(&accounts, current_slot, pubkey2, old_wei);
+        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_wei);
 
         // F: Finally, make Step A cleanable
         current_slot += 1;
@@ -10570,8 +10570,8 @@ pub mod tests {
 
         // Ensure pubkey2 is cleaned from the index finally
         assert_not_load_account(&accounts, current_slot, pubkey1);
-        assert_load_account(&accounts, current_slot, pubkey2, old_lamport);
-        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_lamport);
+        assert_load_account(&accounts, current_slot, pubkey2, old_wei);
+        assert_load_account(&accounts, current_slot, dummy_pubkey, dummy_wei);
     }
 
     #[test]
@@ -10681,11 +10681,11 @@ pub mod tests {
                 .map(|_| solana_sdk::pubkey::new_rand())
                 .collect();
 
-            let some_lamport = 223;
+            let some_wei = 223;
             let no_data = 0;
             let owner = *AccountSharedData::default().owner();
 
-            let account = AccountSharedData::new(some_lamport, no_data, &owner);
+            let account = AccountSharedData::new(some_wei, no_data, &owner);
 
             let mut current_slot = 0;
 
@@ -10722,12 +10722,12 @@ pub mod tests {
             let no_ancestors = Ancestors::default();
             accounts.update_accounts_hash(current_slot, &no_ancestors);
             accounts
-                .verify_bank_hash_and_lamports(current_slot, &no_ancestors, 22300, true)
+                .verify_bank_hash_and_weis(current_slot, &no_ancestors, 22300, true)
                 .unwrap();
 
             let accounts = reconstruct_accounts_db_via_serialization(&accounts, current_slot);
             accounts
-                .verify_bank_hash_and_lamports(current_slot, &no_ancestors, 22300, true)
+                .verify_bank_hash_and_weis(current_slot, &no_ancestors, 22300, true)
                 .unwrap();
 
             // repeating should be no-op
@@ -10750,11 +10750,11 @@ pub mod tests {
             .map(|_| solana_sdk::pubkey::new_rand())
             .collect();
 
-        let some_lamport = 223;
+        let some_wei = 223;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(some_lamport, no_data, &owner);
+        let account = AccountSharedData::new(some_wei, no_data, &owner);
 
         let mut current_slot = 0;
 
@@ -11034,11 +11034,11 @@ pub mod tests {
             .map(|_| solana_sdk::pubkey::new_rand())
             .collect();
 
-        let some_lamport = 223;
+        let some_wei = 223;
         let no_data = 0;
         let owner = *AccountSharedData::default().owner();
 
-        let account = AccountSharedData::new(some_lamport, no_data, &owner);
+        let account = AccountSharedData::new(some_wei, no_data, &owner);
 
         let mut current_slot = 0;
 
@@ -11199,14 +11199,14 @@ pub mod tests {
         let normal_sysvar = solana_sdk::account::create_account_for_test(
             &solana_sdk::slot_history::SlotHistory::default(),
         );
-        assert_eq!(normal_sysvar.lamports(), 1);
+        assert_eq!(normal_sysvar.weis(), 1);
     }
 
     #[test]
     fn test_account_balance_for_capitalization_native_program() {
         let normal_native_program =
             solana_sdk::native_loader::create_loadable_account_for_test("foo");
-        assert_eq!(normal_native_program.lamports(), 1);
+        assert_eq!(normal_native_program.weis(), 1);
     }
 
     #[test]
@@ -11353,7 +11353,7 @@ pub mod tests {
     #[should_panic(expected = "We've run out of storage ids!")]
     fn test_wrapping_append_vec_id() {
         let db = AccountsDb::new(Vec::new(), &ClusterType::Development);
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
         // set 'next' id to the max possible value
@@ -11363,7 +11363,7 @@ pub mod tests {
         // write unique keys to successive slots
         keys.iter().enumerate().for_each(|(slot, key)| {
             let slot = slot as Slot;
-            db.store_uncached(slot, &[(key, &zero_lamport_account)]);
+            db.store_uncached(slot, &[(key, &zero_wei_account)]);
             db.get_accounts_delta_hash(slot);
             db.add_root(slot);
         });
@@ -11379,7 +11379,7 @@ pub mod tests {
     fn test_reuse_append_vec_id() {
         solana_logger::setup();
         let db = AccountsDb::new(Vec::new(), &ClusterType::Development);
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
         // set 'next' id to the max possible value
@@ -11389,7 +11389,7 @@ pub mod tests {
         // write unique keys to successive slots
         keys.iter().enumerate().for_each(|(slot, key)| {
             let slot = slot as Slot;
-            db.store_uncached(slot, &[(key, &zero_lamport_account)]);
+            db.store_uncached(slot, &[(key, &zero_wei_account)]);
             db.get_accounts_delta_hash(slot);
             db.add_root(slot);
             // reset next_id to what it was previously to cause us to re-use the same id
@@ -11402,27 +11402,27 @@ pub mod tests {
     }
 
     #[test]
-    fn test_zero_lamport_new_root_not_cleaned() {
+    fn test_zero_wei_new_root_not_cleaned() {
         let db = AccountsDb::new(Vec::new(), &ClusterType::Development);
         let account_key = Pubkey::new_unique();
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
-        // Store zero lamport account into slots 0 and 1, root both slots
-        db.store_uncached(0, &[(&account_key, &zero_lamport_account)]);
-        db.store_uncached(1, &[(&account_key, &zero_lamport_account)]);
+        // Store zero wei account into slots 0 and 1, root both slots
+        db.store_uncached(0, &[(&account_key, &zero_wei_account)]);
+        db.store_uncached(1, &[(&account_key, &zero_wei_account)]);
         db.get_accounts_delta_hash(0);
         db.add_root(0);
         db.get_accounts_delta_hash(1);
         db.add_root(1);
 
-        // Only clean zero lamport accounts up to slot 0
+        // Only clean zero wei accounts up to slot 0
         db.clean_accounts(Some(0), false, None);
 
-        // Should still be able to find zero lamport account in slot 1
+        // Should still be able to find zero wei account in slot 1
         assert_eq!(
             db.load_without_fixed_root(&Ancestors::default(), &account_key),
-            Some((zero_lamport_account, 1))
+            Some((zero_wei_account, 1))
         );
     }
 
@@ -11630,10 +11630,10 @@ pub mod tests {
         ));
 
         let account_key = Pubkey::new_unique();
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
         let slot1_account = AccountSharedData::new(1, 1, AccountSharedData::default().owner());
-        db.store_cached(0, &[(&account_key, &zero_lamport_account)]);
+        db.store_cached(0, &[(&account_key, &zero_wei_account)]);
         db.store_cached(1, &[(&account_key, &slot1_account)]);
 
         db.add_root(0);
@@ -11648,21 +11648,21 @@ pub mod tests {
             .load_with_fixed_root(&Ancestors::default(), &account_key)
             .map(|(account, _)| account)
             .unwrap();
-        assert_eq!(account.lamports(), 1);
+        assert_eq!(account.weis(), 1);
         assert_eq!(db.read_only_accounts_cache.cache_len(), 1);
         let account = db
             .load_with_fixed_root(&Ancestors::default(), &account_key)
             .map(|(account, _)| account)
             .unwrap();
-        assert_eq!(account.lamports(), 1);
+        assert_eq!(account.weis(), 1);
         assert_eq!(db.read_only_accounts_cache.cache_len(), 1);
-        db.store_cached(2, &[(&account_key, &zero_lamport_account)]);
+        db.store_cached(2, &[(&account_key, &zero_wei_account)]);
         assert_eq!(db.read_only_accounts_cache.cache_len(), 1);
         let account = db
             .load_with_fixed_root(&Ancestors::default(), &account_key)
             .map(|(account, _)| account)
             .unwrap();
-        assert_eq!(account.lamports(), 0);
+        assert_eq!(account.weis(), 0);
         assert_eq!(db.read_only_accounts_cache.cache_len(), 1);
     }
 
@@ -11678,10 +11678,10 @@ pub mod tests {
         ));
 
         let account_key = Pubkey::new_unique();
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
         let slot1_account = AccountSharedData::new(1, 1, AccountSharedData::default().owner());
-        db.store_cached(0, &[(&account_key, &zero_lamport_account)]);
+        db.store_cached(0, &[(&account_key, &zero_wei_account)]);
         db.store_cached(1, &[(&account_key, &slot1_account)]);
 
         db.add_root(0);
@@ -11697,7 +11697,7 @@ pub mod tests {
                 LoadHint::Unspecified,
             )
             .unwrap();
-        assert_eq!(account.0.lamports(), 0);
+        assert_eq!(account.0.weis(), 0);
         // since this item is in the cache, it should not be in the read only cache
         assert_eq!(db.read_only_accounts_cache.cache_len(), 0);
 
@@ -11716,7 +11716,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_flush_cache_dont_clean_zero_lamport_account() {
+    fn test_flush_cache_dont_clean_zero_wei_account() {
         let caching_enabled = true;
         let db = Arc::new(AccountsDb::new_with_config_for_tests(
             Vec::new(),
@@ -11726,34 +11726,34 @@ pub mod tests {
             AccountShrinkThreshold::default(),
         ));
 
-        let zero_lamport_account_key = Pubkey::new_unique();
+        let zero_wei_account_key = Pubkey::new_unique();
         let other_account_key = Pubkey::new_unique();
 
-        let original_lamports = 1;
+        let original_weis = 1;
         let slot0_account =
-            AccountSharedData::new(original_lamports, 1, AccountSharedData::default().owner());
-        let zero_lamport_account =
+            AccountSharedData::new(original_weis, 1, AccountSharedData::default().owner());
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
 
         // Store into slot 0, and then flush the slot to storage
-        db.store_cached(0, &[(&zero_lamport_account_key, &slot0_account)]);
-        // Second key keeps other lamport account entry for slot 0 alive,
-        // preventing clean of the zero_lamport_account in slot 1.
+        db.store_cached(0, &[(&zero_wei_account_key, &slot0_account)]);
+        // Second key keeps other wei account entry for slot 0 alive,
+        // preventing clean of the zero_wei_account in slot 1.
         db.store_cached(0, &[(&other_account_key, &slot0_account)]);
         db.add_root(0);
         db.flush_accounts_cache(true, None);
         assert!(!db.storage.get_slot_storage_entries(0).unwrap().is_empty());
 
         // Store into slot 1, a dummy slot that will be dead and purged before flush
-        db.store_cached(1, &[(&zero_lamport_account_key, &zero_lamport_account)]);
+        db.store_cached(1, &[(&zero_wei_account_key, &zero_wei_account)]);
 
         // Store into slot 2, which makes all updates from slot 1 outdated.
         // This means slot 1 is a dead slot. Later, slot 1 will be cleaned/purged
         // before it even reaches storage, but this purge of slot 1should not affect
-        // the refcount of `zero_lamport_account_key` because cached keys do not bump
+        // the refcount of `zero_wei_account_key` because cached keys do not bump
         // the refcount in the index. This means clean should *not* remove
-        // `zero_lamport_account_key` from slot 2
-        db.store_cached(2, &[(&zero_lamport_account_key, &zero_lamport_account)]);
+        // `zero_wei_account_key` from slot 2
+        db.store_cached(2, &[(&zero_wei_account_key, &zero_wei_account)]);
         db.add_root(1);
         db.add_root(2);
 
@@ -11762,11 +11762,11 @@ pub mod tests {
         db.flush_accounts_cache(true, None);
         db.clean_accounts(None, false, None);
 
-        // The `zero_lamport_account_key` is still alive in slot 1, so refcount for the
+        // The `zero_wei_account_key` is still alive in slot 1, so refcount for the
         // pubkey should be 2
         assert_eq!(
             db.accounts_index
-                .ref_count_from_storage(&zero_lamport_account_key),
+                .ref_count_from_storage(&zero_wei_account_key),
             2
         );
         assert_eq!(
@@ -11774,8 +11774,8 @@ pub mod tests {
             1
         );
 
-        // The zero-lamport account in slot 2 should not be purged yet, because the
-        // entry in slot 1 is blocking cleanup of the zero-lamport account.
+        // The zero-wei account in slot 2 should not be purged yet, because the
+        // entry in slot 1 is blocking cleanup of the zero-wei account.
         let max_root = None;
         // Fine to simulate a transaction load since we are not doing any out of band
         // removals, only using clean_accounts
@@ -11783,13 +11783,13 @@ pub mod tests {
         assert_eq!(
             db.do_load(
                 &Ancestors::default(),
-                &zero_lamport_account_key,
+                &zero_wei_account_key,
                 max_root,
                 load_hint
             )
             .unwrap()
             .0
-            .lamports(),
+            .weis(),
             0
         );
     }
@@ -11863,19 +11863,19 @@ pub mod tests {
         ));
         let account_key = Pubkey::new_unique();
         let account_key2 = Pubkey::new_unique();
-        let zero_lamport_account =
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
         let slot1_account = AccountSharedData::new(1, 1, AccountSharedData::default().owner());
         let slot2_account = AccountSharedData::new(2, 1, AccountSharedData::default().owner());
 
         /*
-            Store zero lamport account into slots 0, 1, 2 where
+            Store zero wei account into slots 0, 1, 2 where
             root slots are 0, 2, and slot 1 is unrooted.
                                     0 (root)
                                 /        \
                               1            2 (root)
         */
-        db.store_cached(0, &[(&account_key, &zero_lamport_account)]);
+        db.store_cached(0, &[(&account_key, &zero_wei_account)]);
         db.store_cached(1, &[(&account_key, &slot1_account)]);
         // Fodder for the scan so that the lock on `account_key` is not held
         db.store_cached(1, &[(&account_key2, &slot1_account)]);
@@ -11916,7 +11916,7 @@ pub mod tests {
                 LoadHint::Unspecified,
             )
             .unwrap();
-        assert_eq!(account.0.lamports(), zero_lamport_account.lamports());
+        assert_eq!(account.0.weis(), zero_wei_account.weis());
 
         // Run clean, unrooted slot 1 should not be purged, and still readable from the cache,
         // because we're still doing a scan on it.
@@ -11929,7 +11929,7 @@ pub mod tests {
                 LoadHint::Unspecified,
             )
             .unwrap();
-        assert_eq!(account.0.lamports(), slot1_account.lamports());
+        assert_eq!(account.0.weis(), slot1_account.weis());
 
         // When the scan is over, clean should not panic and should not purge something
         // still in the cache.
@@ -11943,7 +11943,7 @@ pub mod tests {
                 LoadHint::Unspecified,
             )
             .unwrap();
-        assert_eq!(account.0.lamports(), slot1_account.lamports());
+        assert_eq!(account.0.weis(), slot1_account.weis());
 
         // Simulate dropping the bank, which finally removes the slot from the cache
         let bank_id = 1;
@@ -12645,7 +12645,7 @@ pub mod tests {
         db: Arc<AccountsDb>,
         exit: Arc<AtomicBool>,
         pubkey: Arc<Pubkey>,
-        expected_lamports: impl Fn(&(AccountSharedData, Slot)) -> u64 + Send + 'static,
+        expected_weis: impl Fn(&(AccountSharedData, Slot)) -> u64 + Send + 'static,
     ) -> JoinHandle<()> {
         let load_hint = if with_retry {
             LoadHint::FixedMaxRoot
@@ -12670,10 +12670,10 @@ pub mod tests {
 
                     // Load should never be unable to find this key
                     let loaded_account = db.do_load(&ancestors, &pubkey, None, load_hint).unwrap();
-                    // slot + 1 == account.lamports because of the account-cache-flush thread
+                    // slot + 1 == account.weis because of the account-cache-flush thread
                     assert_eq!(
-                        loaded_account.0.lamports(),
-                        expected_lamports(&loaded_account)
+                        loaded_account.0.weis(),
+                        expected_weis(&loaded_account)
                     );
                 }
             })
@@ -12718,7 +12718,7 @@ pub mod tests {
                         if exit.load(Ordering::Relaxed) {
                             return;
                         }
-                        account.set_lamports(slot + 1);
+                        account.set_weis(slot + 1);
                         db.store_cached(slot, &[(&pubkey, &account)]);
                         db.add_root(slot);
                         sleep(Duration::from_millis(RACY_SLEEP_MS));
@@ -12770,9 +12770,9 @@ pub mod tests {
         let slot = 1;
 
         // Store an account
-        let lamports = 42;
+        let weis = 42;
         let mut account = AccountSharedData::new(1, 0, AccountSharedData::default().owner());
-        account.set_lamports(lamports);
+        account.set_weis(weis);
         db.store_uncached(slot, &[(&pubkey, &account)]);
 
         // Set the slot as a root so account loads will see the contents of this slot
@@ -12810,7 +12810,7 @@ pub mod tests {
             db,
             exit.clone(),
             pubkey,
-            move |_| lamports,
+            move |_| weis,
         );
 
         sleep(Duration::from_secs(RACE_TIME));
@@ -12844,9 +12844,9 @@ pub mod tests {
         let slot = 10;
         let bank_id = 10;
 
-        let lamports = 42;
+        let weis = 42;
         let mut account = AccountSharedData::new(1, 0, AccountSharedData::default().owner());
-        account.set_lamports(lamports);
+        account.set_weis(weis);
 
         // Start up a thread to flush the accounts cache
         let (flush_trial_start_sender, flush_trial_start_receiver) = unbounded();
@@ -12958,9 +12958,9 @@ pub mod tests {
         // dumped them in previous trials.
         for _ in 0..num_trials {
             // Store an account
-            let lamports = 42;
+            let weis = 42;
             let mut account = AccountSharedData::new(1, 0, AccountSharedData::default().owner());
-            account.set_lamports(lamports);
+            account.set_weis(weis);
 
             // Pick random 50% of the slots to pass to `remove_unrooted_slots()`
             let mut all_slots: Vec<(Slot, BankId)> = (0..num_cached_slots)
@@ -13348,7 +13348,7 @@ pub mod tests {
         let slot0 = 0;
         let slot1 = 1;
 
-        // Store accounts with greater than 0 lamports
+        // Store accounts with greater than 0 weis
         let account = AccountSharedData::new(1, 1, AccountSharedData::default().owner());
         accounts.store_uncached(slot0, &[(&shared_key, &account)]);
         accounts.store_uncached(slot0, &[(&unrooted_key, &account)]);
@@ -13357,16 +13357,16 @@ pub mod tests {
         // not a rooted slot
         accounts.get_accounts_delta_hash(slot0);
 
-        // On the next *rooted* slot, update the `shared_key` account to zero lamports
-        let zero_lamport_account =
+        // On the next *rooted* slot, update the `shared_key` account to zero weis
+        let zero_wei_account =
             AccountSharedData::new(0, 0, AccountSharedData::default().owner());
-        accounts.store_uncached(slot1, &[(&shared_key, &zero_lamport_account)]);
+        accounts.store_uncached(slot1, &[(&shared_key, &zero_wei_account)]);
 
         // Simulate adding dirty pubkeys on bank freeze, set root
         accounts.get_accounts_delta_hash(slot1);
         accounts.add_root(slot1);
 
-        // The later rooted zero-lamport update to `shared_key` cannot be cleaned
+        // The later rooted zero-wei update to `shared_key` cannot be cleaned
         // because it is kept alive by the unrooted slot.
         accounts.clean_accounts(None, false, None);
         assert!(accounts
@@ -13439,7 +13439,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_filter_zero_lamport_clean_for_incremental_snapshots() {
+    fn test_filter_zero_wei_clean_for_incremental_snapshots() {
         solana_logger::setup();
         let slot = 10;
 
@@ -13457,19 +13457,19 @@ pub mod tests {
             let store_count = 0;
             let mut store_counts = HashMap::default();
             store_counts.insert(account_info.store_id(), (store_count, key_set));
-            let mut purges_zero_lamports = HashMap::default();
-            purges_zero_lamports.insert(pubkey, (vec![(slot, account_info)], 1));
+            let mut purges_zero_weis = HashMap::default();
+            purges_zero_weis.insert(pubkey, (vec![(slot, account_info)], 1));
 
             let accounts_db = AccountsDb::new_single_for_tests();
-            accounts_db.filter_zero_lamport_clean_for_incremental_snapshots(
+            accounts_db.filter_zero_wei_clean_for_incremental_snapshots(
                 test_params.max_clean_root,
                 test_params.last_full_snapshot_slot,
                 &store_counts,
-                &mut purges_zero_lamports,
+                &mut purges_zero_weis,
             );
 
             assert_eq!(
-                purges_zero_lamports.contains_key(&pubkey),
+                purges_zero_weis.contains_key(&pubkey),
                 test_params.should_contain
             );
         };
@@ -13492,7 +13492,7 @@ pub mod tests {
             });
         }
 
-        // Scenario 2: last full snapshot is GREATER THAN zero lamport account slot
+        // Scenario 2: last full snapshot is GREATER THAN zero wei account slot
         // In this scenario always purge, and just test the various permutations of
         // `should_filter_for_incremental_snapshots` based on `max_clean_root`.
         {
@@ -13517,7 +13517,7 @@ pub mod tests {
             });
         }
 
-        // Scenario 3: last full snapshot is EQUAL TO zero lamport account slot
+        // Scenario 3: last full snapshot is EQUAL TO zero wei account slot
         // In this scenario always purge, as it's the same as Scenario 2.
         {
             let last_full_snapshot_slot = Some(slot);
@@ -13541,7 +13541,7 @@ pub mod tests {
             });
         }
 
-        // Scenario 4: last full snapshot is LESS THAN zero lamport account slot
+        // Scenario 4: last full snapshot is LESS THAN zero wei account slot
         // In this scenario do *not* purge, except when `should_filter_for_incremental_snapshots`
         // is false
         {

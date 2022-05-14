@@ -159,7 +159,7 @@ mod test {
         Mint::pack(mint_data, &mut data).unwrap();
         let mint_pubkey = Pubkey::new_unique();
         let mint = Account {
-            lamports: 100,
+            weis: 100,
             data: data.to_vec(),
             owner: pubkey_from_spl_token(&spl_token::id()),
             executable: false,
@@ -167,7 +167,7 @@ mod test {
         };
         let other_mint_pubkey = Pubkey::new_unique();
         let other_mint = Account {
-            lamports: 100,
+            weis: 100,
             data: data.to_vec(),
             owner: Pubkey::new_unique(),
             executable: false,
@@ -189,14 +189,14 @@ mod test {
         TokenAccount::pack(token_data, &mut data).unwrap();
 
         let spl_token_account = Account {
-            lamports: 100,
+            weis: 100,
             data: data.to_vec(),
             owner: pubkey_from_spl_token(&spl_token::id()),
             executable: false,
             rent_epoch: 0,
         };
         let other_account = Account {
-            lamports: 100,
+            weis: 100,
             data: data.to_vec(),
             owner: Pubkey::new_unique(),
             executable: false,
@@ -217,7 +217,7 @@ mod test {
         TokenAccount::pack(other_mint_data, &mut data).unwrap();
 
         let other_mint_token_account = Account {
-            lamports: 100,
+            weis: 100,
             data: data.to_vec(),
             owner: pubkey_from_spl_token(&spl_token::id()),
             executable: false,

@@ -55,7 +55,7 @@ impl StakesCache {
 
     pub fn check_and_store(&self, pubkey: &Pubkey, account: &AccountSharedData) {
         if solana_vote_program::check_id(account.owner()) {
-            let new_vote_account = if account.lamports() != 0
+            let new_vote_account = if account.weis() != 0
                 && VoteState::is_correct_size_and_initialized(account.data())
             {
                 let vote_account = VoteAccount::from(account.clone());
@@ -75,10 +75,10 @@ impl StakesCache {
         } else if solana_stake_program::check_id(account.owner()) {
             let new_delegation = stake_state::delegation_from(account).map(|delegation| {
                 let stakes = self.stakes();
-                let stake = if account.lamports() != 0 {
+                let stake = if account.weis() != 0 {
                     delegation.stake(stakes.epoch, Some(&stakes.stake_history))
                 } else {
-                    // when account is removed (lamports == 0), this special `else` clause ensures
+                    // when account is removed (weis == 0), this special `else` clause ensures
                     // resetting cached stake value below, even if the account happens to be
                     // still staked for some (odd) reason
                     0
@@ -237,13 +237,13 @@ impl Stakes {
             .sum()
     }
 
-    /// Sum the lamports of the vote accounts and the delegated stake
+    /// Sum the weis of the vote accounts and the delegated stake
     pub fn vote_balance_and_staked(&self) -> u64 {
         let get_stake = |(_, stake_delegation): (_, &Delegation)| stake_delegation.stake;
-        let get_lamports = |(_, (_, vote_account)): (_, &(_, VoteAccount))| vote_account.lamports();
+        let get_weis = |(_, (_, vote_account)): (_, &(_, VoteAccount))| vote_account.weis();
 
         self.stake_delegations.iter().map(get_stake).sum::<u64>()
-            + self.vote_accounts.iter().map(get_lamports).sum::<u64>()
+            + self.vote_accounts.iter().map(get_weis).sum::<u64>()
     }
 
     pub fn remove_vote_account(&mut self, vote_pubkey: &Pubkey) {
@@ -284,7 +284,7 @@ impl Stakes {
         stake_pubkey: &Pubkey,
         new_delegation: Option<(u64, Delegation)>,
     ) {
-        //  old_stake is stake lamports and voter_pubkey from the pre-store() version
+        //  old_stake is stake weis and voter_pubkey from the pre-store() version
         let old_stake = self.stake_delegations.get(stake_pubkey).map(|delegation| {
             (
                 delegation.voter_pubkey,
@@ -431,7 +431,7 @@ pub mod tests {
                 );
             }
 
-            stake_account.set_lamports(42);
+            stake_account.set_weis(42);
             stakes_cache.check_and_store(&stake_pubkey, &stake_account);
             {
                 let stakes = stakes_cache.stakes();
@@ -457,7 +457,7 @@ pub mod tests {
                 ); // now stake of 42 is activated
             }
 
-            stake_account.set_lamports(0);
+            stake_account.set_weis(0);
             stakes_cache.check_and_store(&stake_pubkey, &stake_account);
             {
                 let stakes = stakes_cache.stakes();
@@ -512,7 +512,7 @@ pub mod tests {
             assert_eq!(vote_accounts.get(&vote_pubkey).unwrap().0, 10);
         }
 
-        vote_account.set_lamports(0);
+        vote_account.set_weis(0);
         stakes_cache.check_and_store(&vote_pubkey, &vote_account);
 
         {
@@ -521,7 +521,7 @@ pub mod tests {
             assert!(vote_accounts.get(&vote_pubkey).is_none());
         }
 
-        vote_account.set_lamports(1);
+        vote_account.set_weis(1);
         stakes_cache.check_and_store(&vote_pubkey, &vote_account);
 
         {
@@ -718,7 +718,7 @@ pub mod tests {
             pub fn vote_balance_and_warmed_staked(&self) -> u64 {
                 self.vote_accounts
                     .iter()
-                    .map(|(_pubkey, (staked, account))| staked + account.lamports())
+                    .map(|(_pubkey, (staked, account))| staked + account.weis())
                     .sum()
             }
         }
@@ -738,7 +738,7 @@ pub mod tests {
         let thread_pool = ThreadPoolBuilder::new().num_threads(1).build().unwrap();
         for (epoch, expected_warmed_stake) in ((genesis_epoch + 1)..=3).zip(&[2, 3, 4]) {
             stakes_cache.activate_epoch(epoch, &thread_pool);
-            // vote_balance_and_staked() always remain to return same lamports
+            // vote_balance_and_staked() always remain to return same weis
             // while vote_balance_and_warmed_staked() gradually increases
             let stakes = stakes_cache.stakes();
             assert_eq!(stakes.vote_balance_and_staked(), 11);

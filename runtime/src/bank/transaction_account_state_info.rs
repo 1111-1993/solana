@@ -25,7 +25,7 @@ impl Bank {
                     let state = if let Ok(account) = transaction_context.get_account_at_index(i) {
                         let account = account.borrow();
 
-                        // Native programs appear to be RentPaying because they carry low lamport
+                        // Native programs appear to be RentPaying because they carry low wei
                         // balances; however they will never be loaded as writable
                         debug_assert!(!native_loader::check_id(account.owner()));
 

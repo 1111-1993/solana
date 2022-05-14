@@ -23,13 +23,13 @@ extern uint64_t entrypoint(const uint8_t *input) {
     return ERROR_MISSING_REQUIRED_SIGNATURES;
   }
 
-  int64_t lamports = *(int64_t *)params.data;
-  if (*params.ka[0].lamports >= lamports) {
-    *params.ka[0].lamports -= lamports;
-    *params.ka[2].lamports += lamports;
-    // gth_log_64(0, 0, *ka[0].lamports, *ka[2].lamports, lamports);
+  int64_t weis = *(int64_t *)params.data;
+  if (*params.ka[0].weis >= weis) {
+    *params.ka[0].weis -= weis;
+    *params.ka[2].weis += weis;
+    // gth_log_64(0, 0, *ka[0].weis, *ka[2].weis, weis);
   } else {
-    // gth_log_64(0, 0, 0xFF, *ka[0].lamports, lamports);
+    // gth_log_64(0, 0, 0xFF, *ka[0].weis, weis);
   }
   return SUCCESS;
 }

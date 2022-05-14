@@ -15,10 +15,10 @@ solana gossip
 
 Your account balance should decrease by the transaction fee amount as your
 validator submits votes, and increase after serving as the leader. Pass the
-`--lamports` are to observe in finer detail:
+`--weis` are to observe in finer detail:
 
 ```bash
-solana balance --lamports
+solana balance --weis
 ```
 
 ## Check Vote Activity

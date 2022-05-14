@@ -37,7 +37,7 @@ export type CreateVoteAccountParams = {
   fromPubkey: PublicKey;
   votePubkey: PublicKey;
   voteInit: VoteInit;
-  lamports: number;
+  weis: number;
 };
 
 /**
@@ -66,7 +66,7 @@ export type AuthorizeVoteParams = {
 export type WithdrawFromVoteAccountParams = {
   votePubkey: PublicKey;
   authorizedWithdrawerPubkey: PublicKey;
-  lamports: number;
+  weis: number;
   toPubkey: PublicKey;
 };
 
@@ -164,7 +164,7 @@ export class VoteInstruction {
     this.checkProgramId(instruction.programId);
     this.checkKeyLength(instruction.keys, 3);
 
-    const {lamports} = decodeData(
+    const {weis} = decodeData(
       VOTE_INSTRUCTION_LAYOUTS.Withdraw,
       instruction.data,
     );
@@ -172,7 +172,7 @@ export class VoteInstruction {
     return {
       votePubkey: instruction.keys[0].pubkey,
       authorizedWithdrawerPubkey: instruction.keys[2].pubkey,
-      lamports,
+      weis,
       toPubkey: instruction.keys[1].pubkey,
     };
   }
@@ -228,7 +228,7 @@ const VOTE_INSTRUCTION_LAYOUTS: {
     index: 3,
     layout: BufferLayout.struct([
       BufferLayout.u32('instruction'),
-      BufferLayout.ns64('lamports'),
+      BufferLayout.ns64('weis'),
     ]),
   },
 });
@@ -318,7 +318,7 @@ export class VoteProgram {
       SystemProgram.createAccount({
         fromPubkey: params.fromPubkey,
         newAccountPubkey: params.votePubkey,
-        lamports: params.lamports,
+        weis: params.weis,
         space: this.space,
         programId: this.programId,
       }),
@@ -367,9 +367,9 @@ export class VoteProgram {
    * Generate a transaction to withdraw from a Vote account.
    */
   static withdraw(params: WithdrawFromVoteAccountParams): Transaction {
-    const {votePubkey, authorizedWithdrawerPubkey, lamports, toPubkey} = params;
+    const {votePubkey, authorizedWithdrawerPubkey, weis, toPubkey} = params;
     const type = VOTE_INSTRUCTION_LAYOUTS.Withdraw;
-    const data = encodeData(type, {lamports});
+    const data = encodeData(type, {weis});
 
     const keys = [
       {pubkey: votePubkey, isSigner: false, isWritable: true},

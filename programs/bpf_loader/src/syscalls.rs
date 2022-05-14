@@ -1999,7 +1999,7 @@ impl<'a, 'b> SyscallObject<BpfError> for SyscallBlake3<'a, 'b> {
 // Cross-program invocation syscalls
 
 struct CallerAccount<'a> {
-    lamports: &'a mut u64,
+    weis: &'a mut u64,
     owner: &'a mut Pubkey,
     original_data_len: usize,
     data: &'a mut [u8],
@@ -2116,11 +2116,11 @@ impl<'a, 'b> SyscallInvokeSigned<'a, 'b> for SyscallInvokeSignedRust<'a, 'b> {
         let translate = |account_info: &AccountInfo, invoke_context: &InvokeContext| {
             // Translate the account from user space
 
-            let lamports = {
-                // Double translate lamports out of RefCell
+            let weis = {
+                // Double translate weis out of RefCell
                 let ptr = translate_type::<u64>(
                     memory_mapping,
-                    account_info.lamports.as_ptr() as u64,
+                    account_info.weis.as_ptr() as u64,
                     loader_id,
                 )?;
                 translate_type_mut::<u64>(memory_mapping, *ptr, loader_id)?
@@ -2172,7 +2172,7 @@ impl<'a, 'b> SyscallInvokeSigned<'a, 'b> for SyscallInvokeSignedRust<'a, 'b> {
             };
 
             Ok(CallerAccount {
-                lamports,
+                weis,
                 owner,
                 original_data_len: 0, // set later
                 data,
@@ -2296,7 +2296,7 @@ struct GthAccountMeta {
 #[repr(C)]
 struct GthAccountInfo {
     key_addr: u64,
-    lamports_addr: u64,
+    weis_addr: u64,
     data_len: u64,
     data_addr: u64,
     owner_addr: u64,
@@ -2421,8 +2421,8 @@ impl<'a, 'b> SyscallInvokeSigned<'a, 'b> for SyscallInvokeSignedC<'a, 'b> {
         let translate = |account_info: &GthAccountInfo, invoke_context: &InvokeContext| {
             // Translate the account from user space
 
-            let lamports =
-                translate_type_mut::<u64>(memory_mapping, account_info.lamports_addr, loader_id)?;
+            let weis =
+                translate_type_mut::<u64>(memory_mapping, account_info.weis_addr, loader_id)?;
             let owner =
                 translate_type_mut::<Pubkey>(memory_mapping, account_info.owner_addr, loader_id)?;
             let vm_data_addr = account_info.data_addr;
@@ -2472,7 +2472,7 @@ impl<'a, 'b> SyscallInvokeSigned<'a, 'b> for SyscallInvokeSignedC<'a, 'b> {
             )?;
 
             Ok(CallerAccount {
-                lamports,
+                weis,
                 owner,
                 original_data_len: 0, // set later
                 data,
@@ -2618,7 +2618,7 @@ where
                     let mut account = account.borrow_mut();
                     account.copy_into_owner_from_slice(caller_account.owner.as_ref());
                     account.set_data_from_slice(caller_account.data);
-                    account.set_lamports(*caller_account.lamports);
+                    account.set_weis(*caller_account.weis);
                     account.set_executable(caller_account.executable);
                     account.set_rent_epoch(caller_account.rent_epoch);
                 }
@@ -2809,7 +2809,7 @@ fn call<'a, 'b: 'a>(
                 .get_account_at_index(*callee_account_index)
                 .map_err(SyscallError::InstructionError)?
                 .borrow();
-            *caller_account.lamports = callee_account.lamports();
+            *caller_account.weis = callee_account.weis();
             *caller_account.owner = *callee_account.owner();
             let new_len = callee_account.data().len();
             if caller_account.data.len() != new_len {
@@ -4194,11 +4194,11 @@ mod tests {
         };
         let src_fees = Fees {
             fee_calculator: FeeCalculator {
-                lamports_per_signature: 1,
+                weis_per_signature: 1,
             },
         };
         let src_rent = Rent {
-            lamports_per_byte_year: 1,
+            weis_per_byte_year: 1,
             exemption_threshold: 2.0,
             burn_percent: 3,
         };

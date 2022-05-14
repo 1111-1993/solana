@@ -36,7 +36,7 @@ pub const MAX_BASE58_BYTES: usize = 128;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct UiAccount {
-    pub lamports: u64,
+    pub weis: u64,
     pub data: UiAccountData,
     pub owner: String,
     pub executable: bool,
@@ -121,7 +121,7 @@ impl UiAccount {
             }
         };
         UiAccount {
-            lamports: account.lamports(),
+            weis: account.weis(),
             data,
             owner: account.owner().to_string(),
             executable: account.executable(),
@@ -147,7 +147,7 @@ impl UiAccount {
             },
         }?;
         Some(T::create(
-            self.lamports,
+            self.weis,
             data,
             Pubkey::from_str(&self.owner).ok()?,
             self.executable,
@@ -159,13 +159,13 @@ impl UiAccount {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct UiFeeCalculator {
-    pub lamports_per_signature: StringAmount,
+    pub weis_per_signature: StringAmount,
 }
 
 impl From<FeeCalculator> for UiFeeCalculator {
     fn from(fee_calculator: FeeCalculator) -> Self {
         Self {
-            lamports_per_signature: fee_calculator.lamports_per_signature.to_string(),
+            weis_per_signature: fee_calculator.weis_per_signature.to_string(),
         }
     }
 }
@@ -173,7 +173,7 @@ impl From<FeeCalculator> for UiFeeCalculator {
 impl Default for UiFeeCalculator {
     fn default() -> Self {
         Self {
-            lamports_per_signature: "0".to_string(),
+            weis_per_signature: "0".to_string(),
         }
     }
 }

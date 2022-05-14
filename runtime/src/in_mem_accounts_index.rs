@@ -2,7 +2,7 @@ use {
     crate::{
         accounts_index::{
             AccountMapEntry, AccountMapEntryInner, AccountMapEntryMeta, IndexValue,
-            PreAllocatedAccountMapEntry, RefCount, SlotList, SlotSlice, ZeroLamport,
+            PreAllocatedAccountMapEntry, RefCount, SlotList, SlotSlice, ZeroWei,
         },
         bucket_map_holder::{Age, BucketMapHolder},
         bucket_map_holder_stats::BucketMapHolderStats,
@@ -60,8 +60,8 @@ impl<T: IndexValue> Debug for InMemAccountsIndex<T> {
 
 pub enum InsertNewEntryResults {
     DidNotExist,
-    ExistedNewEntryZeroLamports,
-    ExistedNewEntryNonZeroLamports,
+    ExistedNewEntryZeroWeis,
+    ExistedNewEntryNonZeroWeis,
 }
 
 struct FlushScanResult<T> {
@@ -576,7 +576,7 @@ impl<T: IndexValue> InMemAccountsIndex<T> {
         let mut map = self.map().write().unwrap();
         let entry = map.entry(pubkey);
         m.stop();
-        let new_entry_zero_lamports = new_entry.is_zero_lamport();
+        let new_entry_zero_weis = new_entry.is_zero_wei();
         let (found_in_mem, already_existed) = match entry {
             Entry::Occupied(occupied) => {
                 // in cache, so merge into cache
@@ -648,10 +648,10 @@ impl<T: IndexValue> InMemAccountsIndex<T> {
         }
         if !already_existed {
             InsertNewEntryResults::DidNotExist
-        } else if new_entry_zero_lamports {
-            InsertNewEntryResults::ExistedNewEntryZeroLamports
+        } else if new_entry_zero_weis {
+            InsertNewEntryResults::ExistedNewEntryZeroWeis
         } else {
-            InsertNewEntryResults::ExistedNewEntryNonZeroLamports
+            InsertNewEntryResults::ExistedNewEntryNonZeroWeis
         }
     }
 

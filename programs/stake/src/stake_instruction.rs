@@ -142,10 +142,10 @@ pub fn process_instruction(
                 .ok_or(InstructionError::InvalidArgument)?;
             me.delegate(vote, &clock, &stake_history, &config, &signers)
         }
-        StakeInstruction::Split(lamports) => {
+        StakeInstruction::Split(weis) => {
             let split_stake =
                 &keyed_account_at_index(keyed_accounts, first_instruction_account + 1)?;
-            me.split(lamports, split_stake, &signers)
+            me.split(weis, split_stake, &signers)
         }
         StakeInstruction::Merge => {
             let source_stake =
@@ -166,7 +166,7 @@ pub fn process_instruction(
                 &signers,
             )
         }
-        StakeInstruction::Withdraw(lamports) => {
+        StakeInstruction::Withdraw(weis) => {
             let to = &keyed_account_at_index(keyed_accounts, first_instruction_account + 1)?;
             let clock = get_sysvar_with_account_check::clock(
                 keyed_account_at_index(keyed_accounts, first_instruction_account + 2)?,
@@ -177,7 +177,7 @@ pub fn process_instruction(
                 invoke_context,
             )?;
             me.withdraw(
-                lamports,
+                weis,
                 to,
                 &clock,
                 &stake_history,
@@ -1199,10 +1199,10 @@ mod tests {
     fn test_stake_initialize() {
         let rent = Rent::default();
         let rent_exempt_reserve = rent.minimum_balance(std::mem::size_of::<StakeState>());
-        let stake_lamports = rent_exempt_reserve + MINIMUM_STAKE_DELEGATION;
+        let stake_weis = rent_exempt_reserve + MINIMUM_STAKE_DELEGATION;
         let stake_address = solana_sdk::pubkey::new_rand();
         let stake_account =
-            AccountSharedData::new(stake_lamports, std::mem::size_of::<StakeState>(), &id());
+            AccountSharedData::new(stake_weis, std::mem::size_of::<StakeState>(), &id());
         let custodian_address = solana_sdk::pubkey::new_rand();
         let lockup = Lockup {
             epoch: 1,
@@ -1265,7 +1265,7 @@ mod tests {
         transaction_accounts[1] = (
             sysvar::rent::id(),
             account::create_account_shared_data_for_test(&Rent {
-                lamports_per_byte_year: rent.lamports_per_byte_year + 1,
+                weis_per_byte_year: rent.weis_per_byte_year + 1,
                 ..rent
             }),
         );
@@ -1278,7 +1278,7 @@ mod tests {
 
         // incorrect account sizes
         let stake_account =
-            AccountSharedData::new(stake_lamports, std::mem::size_of::<StakeState>() + 1, &id());
+            AccountSharedData::new(stake_weis, std::mem::size_of::<StakeState>() + 1, &id());
         transaction_accounts[0] = (stake_address, stake_account);
         process_instruction(
             &instruction_data,
@@ -1288,7 +1288,7 @@ mod tests {
         );
 
         let stake_account =
-            AccountSharedData::new(stake_lamports, std::mem::size_of::<StakeState>() - 1, &id());
+            AccountSharedData::new(stake_weis, std::mem::size_of::<StakeState>() - 1, &id());
         transaction_accounts[0] = (stake_address, stake_account);
         process_instruction(
             &instruction_data,
@@ -1303,9 +1303,9 @@ mod tests {
         let authority_address = solana_sdk::pubkey::new_rand();
         let authority_address_2 = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = 42;
+        let stake_weis = 42;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::default(),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -1358,7 +1358,7 @@ mod tests {
 
         // should pass
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta::auto(&stake_address)),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -1454,7 +1454,7 @@ mod tests {
             },
         ];
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -1464,7 +1464,7 @@ mod tests {
         // Test that withdrawal to account fails without authorized withdrawer
         instruction_accounts[4].is_signer = false;
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis)).unwrap(),
             transaction_accounts,
             instruction_accounts,
             Err(InstructionError::MissingRequiredSignature),
@@ -1476,9 +1476,9 @@ mod tests {
         let authority_address = solana_sdk::pubkey::new_rand();
         let mallory_address = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = 42;
+        let stake_weis = 42;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta::auto(&stake_address)),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -1590,9 +1590,9 @@ mod tests {
         let authority_address = solana_sdk::pubkey::new_rand();
         let seed = "42";
         let stake_address = Pubkey::create_with_seed(&authority_base_address, seed, &id()).unwrap();
-        let stake_lamports = 42;
+        let stake_weis = 42;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta::auto(&stake_address)),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -1699,9 +1699,9 @@ mod tests {
     fn test_authorize_delegated_stake() {
         let authority_address = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = 42;
+        let stake_weis = 42;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta::auto(&stake_address)),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -1897,10 +1897,10 @@ mod tests {
         vote_account_2
             .set_state(&VoteStateVersions::new_current(vote_state))
             .unwrap();
-        let stake_lamports = 42;
+        let stake_weis = 42;
         let stake_address = solana_sdk::pubkey::new_rand();
         let mut stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta {
                 authorized: Authorized {
                     staker: stake_address,
@@ -1984,7 +1984,7 @@ mod tests {
             Stake {
                 delegation: Delegation {
                     voter_pubkey: vote_address,
-                    stake: stake_lamports,
+                    stake: stake_weis,
                     activation_epoch: clock.epoch,
                     deactivation_epoch: std::u64::MAX,
                     ..Delegation::default()
@@ -2083,7 +2083,7 @@ mod tests {
             Stake {
                 delegation: Delegation {
                     voter_pubkey: vote_address_2,
-                    stake: stake_lamports,
+                    stake: stake_weis,
                     activation_epoch: clock.epoch,
                     deactivation_epoch: std::u64::MAX,
                     ..Delegation::default()
@@ -2121,8 +2121,8 @@ mod tests {
         let mut clock = Clock::default();
         let rent = Rent::default();
         let rent_exempt_reserve = rent.minimum_balance(std::mem::size_of::<StakeState>());
-        let initial_lamports = 4242424242;
-        let stake_lamports = rent_exempt_reserve + initial_lamports;
+        let initial_weis = 4242424242;
+        let stake_weis = rent_exempt_reserve + initial_weis;
         let recipient_address = solana_sdk::pubkey::new_rand();
         let authority_address = solana_sdk::pubkey::new_rand();
         let vote_address = solana_sdk::pubkey::new_rand();
@@ -2130,7 +2130,7 @@ mod tests {
             vote_state::create_account(&vote_address, &solana_sdk::pubkey::new_rand(), 0, 100);
         let stake_address = solana_sdk::pubkey::new_rand();
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta {
                 rent_exempt_reserve,
                 ..Meta::auto(&authority_address)
@@ -2237,9 +2237,9 @@ mod tests {
             sysvar::clock::id(),
             account::create_account_shared_data_for_test(&clock),
         );
-        let withdraw_lamports = initial_lamports / 2;
+        let withdraw_weis = initial_weis / 2;
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(withdraw_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(withdraw_weis)).unwrap(),
             transaction_accounts.clone(),
             vec![
                 AccountMeta {
@@ -2270,8 +2270,8 @@ mod tests {
             ],
             Ok(()),
         );
-        let expected_balance = rent_exempt_reserve + initial_lamports - withdraw_lamports;
-        assert_eq!(accounts[0].lamports(), expected_balance);
+        let expected_balance = rent_exempt_reserve + initial_weis - withdraw_weis;
+        assert_eq!(accounts[0].weis(), expected_balance);
         transaction_accounts[0] = (stake_address, accounts[0].clone());
 
         clock.epoch += 1;
@@ -2287,7 +2287,7 @@ mod tests {
         );
         assert_eq!(
             stake_from(&accounts[0]).unwrap().delegation.stake,
-            accounts[0].lamports() - rent_exempt_reserve,
+            accounts[0].weis() - rent_exempt_reserve,
         );
         transaction_accounts[0] = (stake_address, accounts[0].clone());
 
@@ -2307,7 +2307,7 @@ mod tests {
         // Out of band deposit
         transaction_accounts[0]
             .1
-            .checked_add_lamports(withdraw_lamports)
+            .checked_add_weis(withdraw_weis)
             .unwrap();
 
         clock.epoch += 1;
@@ -2323,14 +2323,14 @@ mod tests {
         );
         assert_eq!(
             stake_from(&accounts[0]).unwrap().delegation.stake,
-            accounts[0].lamports() - rent_exempt_reserve,
+            accounts[0].weis() - rent_exempt_reserve,
         );
     }
 
     #[test]
     fn test_split() {
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = MINIMUM_STAKE_DELEGATION * 2;
+        let stake_weis = MINIMUM_STAKE_DELEGATION * 2;
         let split_to_address = solana_sdk::pubkey::new_rand();
         let split_to_account = AccountSharedData::new_data_with_space(
             0,
@@ -2358,10 +2358,10 @@ mod tests {
 
         for state in [
             StakeState::Initialized(Meta::auto(&stake_address)),
-            just_stake(Meta::auto(&stake_address), stake_lamports),
+            just_stake(Meta::auto(&stake_address), stake_weis),
         ] {
             let stake_account = AccountSharedData::new_data_with_space(
-                stake_lamports,
+                stake_weis,
                 &state,
                 std::mem::size_of::<StakeState>(),
                 &id(),
@@ -2371,7 +2371,7 @@ mod tests {
 
             // should fail, split more than available
             process_instruction(
-                &serialize(&StakeInstruction::Split(stake_lamports + 1)).unwrap(),
+                &serialize(&StakeInstruction::Split(stake_weis + 1)).unwrap(),
                 transaction_accounts.clone(),
                 instruction_accounts.clone(),
                 Err(InstructionError::InsufficientFunds),
@@ -2379,15 +2379,15 @@ mod tests {
 
             // should pass
             let accounts = process_instruction(
-                &serialize(&StakeInstruction::Split(stake_lamports / 2)).unwrap(),
+                &serialize(&StakeInstruction::Split(stake_weis / 2)).unwrap(),
                 transaction_accounts.clone(),
                 instruction_accounts.clone(),
                 Ok(()),
             );
-            // no lamport leakage
+            // no wei leakage
             assert_eq!(
-                accounts[0].lamports() + accounts[1].lamports(),
-                stake_lamports
+                accounts[0].weis() + accounts[1].weis(),
+                stake_weis
             );
 
             assert_eq!(from(&accounts[0]).unwrap(), from(&accounts[1]).unwrap());
@@ -2397,7 +2397,7 @@ mod tests {
                 }
                 StakeState::Stake(_meta, _stake) => {
                     let stake_0 = from(&accounts[0]).unwrap().stake();
-                    assert_eq!(stake_0.unwrap().delegation.stake, stake_lamports / 2);
+                    assert_eq!(stake_0.unwrap().delegation.stake, stake_weis / 2);
                 }
                 _ => unreachable!(),
             }
@@ -2413,7 +2413,7 @@ mod tests {
         .unwrap();
         transaction_accounts[1] = (split_to_address, split_to_account);
         process_instruction(
-            &serialize(&StakeInstruction::Split(stake_lamports / 2)).unwrap(),
+            &serialize(&StakeInstruction::Split(stake_weis / 2)).unwrap(),
             transaction_accounts,
             instruction_accounts,
             Err(InstructionError::IncorrectProgramId),
@@ -2426,9 +2426,9 @@ mod tests {
         let authority_address = solana_sdk::pubkey::new_rand();
         let custodian_address = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = MINIMUM_STAKE_DELEGATION;
+        let stake_weis = MINIMUM_STAKE_DELEGATION;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Uninitialized,
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -2497,7 +2497,7 @@ mod tests {
         // should fail, no signer
         instruction_accounts[4].is_signer = false;
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::MissingRequiredSignature),
@@ -2506,12 +2506,12 @@ mod tests {
 
         // should pass, signed keyed account and uninitialized
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
         );
-        assert_eq!(accounts[0].lamports(), 0);
+        assert_eq!(accounts[0].weis(), 0);
         assert_eq!(from(&accounts[0]).unwrap(), StakeState::Uninitialized);
 
         // initialize stake
@@ -2545,13 +2545,13 @@ mod tests {
 
         // should fail, signed keyed account and locked up, more than available
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports + 1)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis + 1)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::InsufficientFunds),
         );
 
-        // Stake some lamports (available lamports for withdrawals will reduce to zero)
+        // Stake some weis (available weis for withdrawals will reduce to zero)
         let accounts = process_instruction(
             &serialize(&StakeInstruction::DelegateStake).unwrap(),
             transaction_accounts.clone(),
@@ -2587,7 +2587,7 @@ mod tests {
         transaction_accounts[0] = (stake_address, accounts[0].clone());
 
         // simulate rewards
-        transaction_accounts[0].1.checked_add_lamports(10).unwrap();
+        transaction_accounts[0].1.checked_add_weis(10).unwrap();
 
         // withdrawal before deactivate works for rewards amount
         process_instruction(
@@ -2637,20 +2637,20 @@ mod tests {
 
         // Try to withdraw more than what's available
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports + 11)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis + 11)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::InsufficientFunds),
         );
 
-        // Try to withdraw all lamports
+        // Try to withdraw all weis
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports + 10)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis + 10)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
         );
-        assert_eq!(accounts[0].lamports(), 0);
+        assert_eq!(accounts[0].weis(), 0);
         assert_eq!(from(&accounts[0]).unwrap(), StakeState::Uninitialized);
 
         // overflow
@@ -2682,7 +2682,7 @@ mod tests {
 
         // should fail, invalid state
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::RewardsPool,
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -2690,7 +2690,7 @@ mod tests {
         .unwrap();
         transaction_accounts[0] = (stake_address, stake_account);
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis)).unwrap(),
             transaction_accounts,
             instruction_accounts,
             Err(InstructionError::InvalidAccountData),
@@ -2701,10 +2701,10 @@ mod tests {
     fn test_withdraw_stake_before_warmup() {
         let recipient_address = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = 42;
-        let total_lamports = 100;
+        let stake_weis = 42;
+        let total_weis = 100;
         let stake_account = AccountSharedData::new_data_with_space(
-            total_lamports,
+            total_weis,
             &StakeState::Initialized(Meta::auto(&stake_address)),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -2765,7 +2765,7 @@ mod tests {
             },
         ];
 
-        // Stake some lamports (available lamports for withdrawals will reduce to zero)
+        // Stake some weis (available weis for withdrawals will reduce to zero)
         let accounts = process_instruction(
             &serialize(&StakeInstruction::DelegateStake).unwrap(),
             transaction_accounts.clone(),
@@ -2817,7 +2817,7 @@ mod tests {
         );
         process_instruction(
             &serialize(&StakeInstruction::Withdraw(
-                total_lamports - stake_lamports + 1,
+                total_weis - stake_weis + 1,
             ))
             .unwrap(),
             transaction_accounts,
@@ -2831,7 +2831,7 @@ mod tests {
         let recipient_address = solana_sdk::pubkey::new_rand();
         let custodian_address = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let total_lamports = 100;
+        let total_weis = 100;
         let mut meta = Meta {
             lockup: Lockup {
                 unix_timestamp: 0,
@@ -2841,7 +2841,7 @@ mod tests {
             ..Meta::auto(&stake_address)
         };
         let stake_account = AccountSharedData::new_data_with_space(
-            total_lamports,
+            total_weis,
             &StakeState::Initialized(meta),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -2891,7 +2891,7 @@ mod tests {
 
         // should fail, lockup is still in force
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(total_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(total_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(StakeError::LockupInForce.into()),
@@ -2904,7 +2904,7 @@ mod tests {
             is_writable: false,
         });
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(total_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(total_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -2915,7 +2915,7 @@ mod tests {
         instruction_accounts[5].pubkey = stake_address;
         meta.lockup.custodian = stake_address;
         let stake_account_self_as_custodian = AccountSharedData::new_data_with_space(
-            total_lamports,
+            total_weis,
             &StakeState::Initialized(meta),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -2923,7 +2923,7 @@ mod tests {
         .unwrap();
         transaction_accounts[0] = (stake_address, stake_account_self_as_custodian);
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(total_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(total_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Ok(()),
@@ -2939,7 +2939,7 @@ mod tests {
             account::create_account_shared_data_for_test(&clock),
         );
         let accounts = process_instruction(
-            &serialize(&StakeInstruction::Withdraw(total_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(total_weis)).unwrap(),
             transaction_accounts,
             instruction_accounts,
             Ok(()),
@@ -2954,9 +2954,9 @@ mod tests {
         let stake_address = solana_sdk::pubkey::new_rand();
         let rent = Rent::default();
         let rent_exempt_reserve = rent.minimum_balance(std::mem::size_of::<StakeState>());
-        let stake_lamports = 7 * MINIMUM_STAKE_DELEGATION;
+        let stake_weis = 7 * MINIMUM_STAKE_DELEGATION;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports + rent_exempt_reserve,
+            stake_weis + rent_exempt_reserve,
             &StakeState::Initialized(Meta {
                 rent_exempt_reserve,
                 ..Meta::auto(&stake_address)
@@ -3009,7 +3009,7 @@ mod tests {
         // should pass, withdrawing account down to minimum balance
         process_instruction(
             &serialize(&StakeInstruction::Withdraw(
-                stake_lamports - MINIMUM_STAKE_DELEGATION,
+                stake_weis - MINIMUM_STAKE_DELEGATION,
             ))
             .unwrap(),
             transaction_accounts.clone(),
@@ -3019,7 +3019,7 @@ mod tests {
 
         // should fail, withdrawing account down to only rent-exempt reserve
         process_instruction(
-            &serialize(&StakeInstruction::Withdraw(stake_lamports)).unwrap(),
+            &serialize(&StakeInstruction::Withdraw(stake_weis)).unwrap(),
             transaction_accounts.clone(),
             instruction_accounts.clone(),
             Err(InstructionError::InsufficientFunds),
@@ -3028,7 +3028,7 @@ mod tests {
         // should fail, withdrawal that would leave less than rent-exempt reserve
         process_instruction(
             &serialize(&StakeInstruction::Withdraw(
-                stake_lamports + MINIMUM_STAKE_DELEGATION,
+                stake_weis + MINIMUM_STAKE_DELEGATION,
             ))
             .unwrap(),
             transaction_accounts.clone(),
@@ -3039,7 +3039,7 @@ mod tests {
         // should pass, withdrawal of complete account
         process_instruction(
             &serialize(&StakeInstruction::Withdraw(
-                stake_lamports + rent_exempt_reserve,
+                stake_weis + rent_exempt_reserve,
             ))
             .unwrap(),
             transaction_accounts,
@@ -3051,9 +3051,9 @@ mod tests {
     #[test]
     fn test_deactivate() {
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = 42;
+        let stake_weis = 42;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Initialized(Meta::auto(&stake_address)),
             std::mem::size_of::<StakeState>(),
             &id(),
@@ -3170,9 +3170,9 @@ mod tests {
         let custodian_address = solana_sdk::pubkey::new_rand();
         let authorized_address = solana_sdk::pubkey::new_rand();
         let stake_address = solana_sdk::pubkey::new_rand();
-        let stake_lamports = MINIMUM_STAKE_DELEGATION;
+        let stake_weis = MINIMUM_STAKE_DELEGATION;
         let stake_account = AccountSharedData::new_data_with_space(
-            stake_lamports,
+            stake_weis,
             &StakeState::Uninitialized,
             std::mem::size_of::<StakeState>(),
             &id(),

@@ -75,7 +75,7 @@ pub enum InstructionError {
     #[error("instruction requires an initialized account")]
     UninitializedAccount,
 
-    /// Program's instruction lamport balance does not equal the balance after the instruction
+    /// Program's instruction wei balance does not equal the balance after the instruction
     #[error("sum of account balances before and after instruction do not match")]
     UnbalancedInstruction,
 
@@ -83,17 +83,17 @@ pub enum InstructionError {
     #[error("instruction illegally modified the program id of an account")]
     ModifiedProgramId,
 
-    /// Program spent the lamports of an account that doesn't belong to it
+    /// Program spent the weis of an account that doesn't belong to it
     #[error("instruction spent from the balance of an account it does not own")]
-    ExternalAccountLamportSpend,
+    ExternalAccountWeiSpend,
 
     /// Program modified the data of an account that doesn't belong to it
     #[error("instruction modified data of an account it does not own")]
     ExternalAccountDataModified,
 
-    /// Read-only account's lamports modified
+    /// Read-only account's weis modified
     #[error("instruction changed the balance of a read-only account")]
-    ReadonlyLamportChange,
+    ReadonlyWeiChange,
 
     /// Read-only account's data was modified
     #[error("instruction modified data of a read-only account")]
@@ -153,9 +153,9 @@ pub enum InstructionError {
     #[error("instruction changed executable accounts data")]
     ExecutableDataModified,
 
-    /// Executable account's lamports modified
+    /// Executable account's weis modified
     #[error("instruction changed the balance of a executable account")]
-    ExecutableLamportChange,
+    ExecutableWeiChange,
 
     /// Executable accounts must be rent exempt
     #[error("executable accounts must be rent exempt")]
@@ -229,8 +229,8 @@ pub enum InstructionError {
     #[error("Failed to serialize or deserialize account data: {0}")]
     BorshIoError(String),
 
-    /// An account does not have enough lamports to be rent-exempt
-    #[error("An account does not have enough lamports to be rent-exempt")]
+    /// An account does not have enough weis to be rent-exempt
+    #[error("An account does not have enough weis to be rent-exempt")]
     AccountNotRentExempt,
 
     /// Invalid account owner
@@ -291,11 +291,11 @@ pub enum InstructionError {
 /// not specified as writable will cause the transaction to fail. Writing to an
 /// account that is not owned by the program will cause the transaction to fail.
 ///
-/// Any account whose lamport balance may be mutated by the program during
+/// Any account whose wei balance may be mutated by the program during
 /// execution must be specified as writable. During execution, mutating the
-/// lamports of an account that was not specified as writable will cause the
-/// transaction to fail. While _subtracting_ lamports from an account not owned
-/// by the program will cause the transaction to fail, _adding_ lamports to any
+/// weis of an account that was not specified as writable will cause the
+/// transaction to fail. While _subtracting_ weis from an account not owned
+/// by the program will cause the transaction to fail, _adding_ weis to any
 /// account is allowed, as long is it is mutable.
 ///
 /// Accounts that are not read or written by the program may still be specified
@@ -359,16 +359,16 @@ impl Instruction {
     /// #
     /// #[derive(BorshSerialize, BorshDeserialize)]
     /// pub struct MyInstruction {
-    ///     pub lamports: u64,
+    ///     pub weis: u64,
     /// }
     ///
     /// pub fn create_instruction(
     ///     program_id: &Pubkey,
     ///     from: &Pubkey,
     ///     to: &Pubkey,
-    ///     lamports: u64,
+    ///     weis: u64,
     /// ) -> Instruction {
-    ///     let instr = MyInstruction { lamports };
+    ///     let instr = MyInstruction { weis };
     ///
     ///     Instruction::new_with_borsh(
     ///         *program_id,
@@ -411,16 +411,16 @@ impl Instruction {
     /// #
     /// #[derive(Serialize, Deserialize)]
     /// pub struct MyInstruction {
-    ///     pub lamports: u64,
+    ///     pub weis: u64,
     /// }
     ///
     /// pub fn create_instruction(
     ///     program_id: &Pubkey,
     ///     from: &Pubkey,
     ///     to: &Pubkey,
-    ///     lamports: u64,
+    ///     weis: u64,
     /// ) -> Instruction {
-    ///     let instr = MyInstruction { lamports };
+    ///     let instr = MyInstruction { weis };
     ///
     ///     Instruction::new_with_bincode(
     ///         *program_id,
@@ -465,16 +465,16 @@ impl Instruction {
     /// #
     /// #[derive(BorshSerialize, BorshDeserialize)]
     /// pub struct MyInstruction {
-    ///     pub lamports: u64,
+    ///     pub weis: u64,
     /// }
     ///
     /// pub fn create_instruction(
     ///     program_id: &Pubkey,
     ///     from: &Pubkey,
     ///     to: &Pubkey,
-    ///     lamports: u64,
+    ///     weis: u64,
     /// ) -> Result<Instruction> {
-    ///     let instr = MyInstruction { lamports };
+    ///     let instr = MyInstruction { weis };
     ///
     ///     let mut instr_in_bytes: Vec<u8> = Vec::new();
     ///     instr.serialize(&mut instr_in_bytes)?;
@@ -520,7 +520,7 @@ pub fn checked_add(a: u64, b: u64) -> Result<u64, InstructionError> {
 /// When constructing an [`Instruction`], a list of all accounts that may be
 /// read or written during the execution of that instruction must be supplied.
 /// Any account that may be mutated by the program during execution, either its
-/// data or metadata such as held lamports, must be writable.
+/// data or metadata such as held weis, must be writable.
 ///
 /// Note that because the Solana runtime schedules parallel transaction
 /// execution around which accounts are writable, care should be taken that only

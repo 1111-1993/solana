@@ -4,11 +4,11 @@ use {
         cli::CliError,
     },
     clap::ArgMatches,
-    solana_clap_utils::{input_parsers::lamports_of_gth, offline::SIGN_ONLY_ARG},
+    solana_clap_utils::{input_parsers::weis_of_gth, offline::SIGN_ONLY_ARG},
     solana_client::rpc_client::RpcClient,
     solana_sdk::{
         commitment_config::CommitmentConfig, hash::Hash, message::Message,
-        native_token::lamports_to_gth, pubkey::Pubkey,
+        native_token::weis_to_gth, pubkey::Pubkey,
     },
 };
 
@@ -28,14 +28,14 @@ impl Default for SpendAmount {
 impl SpendAmount {
     pub fn new(amount: Option<u64>, sign_only: bool) -> Self {
         match amount {
-            Some(lamports) => Self::Some(lamports),
+            Some(weis) => Self::Some(weis),
             None if !sign_only => Self::All,
             _ => panic!("ALL amount not supported for sign-only operations"),
         }
     }
 
     pub fn new_from_matches(matches: &ArgMatches<'_>, name: &str) -> Self {
-        let amount = lamports_of_gth(matches, name);
+        let amount = weis_of_gth(matches, name);
         let sign_only = matches.is_present(SIGN_ONLY_ARG.name);
         SpendAmount::new(amount, sign_only)
     }
@@ -118,22 +118,22 @@ where
         if from_pubkey == fee_pubkey {
             if from_balance == 0 || from_balance < spend + fee {
                 return Err(CliError::InsufficientFundsForSpendAndFee(
-                    lamports_to_gth(spend),
-                    lamports_to_gth(fee),
+                    weis_to_gth(spend),
+                    weis_to_gth(fee),
                     *from_pubkey,
                 ));
             }
         } else {
             if from_balance < spend {
                 return Err(CliError::InsufficientFundsForSpend(
-                    lamports_to_gth(spend),
+                    weis_to_gth(spend),
                     *from_pubkey,
                 ));
             }
             if !check_account_for_balance_with_commitment(rpc_client, fee_pubkey, fee, commitment)?
             {
                 return Err(CliError::InsufficientFundsForFee(
-                    lamports_to_gth(fee),
+                    weis_to_gth(fee),
                     *fee_pubkey,
                 ));
             }
@@ -165,38 +165,38 @@ where
     };
 
     match amount {
-        SpendAmount::Some(lamports) => Ok((
-            build_message(lamports),
+        SpendAmount::Some(weis) => Ok((
+            build_message(weis),
             SpendAndFee {
-                spend: lamports,
+                spend: weis,
                 fee,
             },
         )),
         SpendAmount::All => {
-            let lamports = if from_pubkey == fee_pubkey {
+            let weis = if from_pubkey == fee_pubkey {
                 from_balance.saturating_sub(fee)
             } else {
                 from_balance
             };
             Ok((
-                build_message(lamports),
+                build_message(weis),
                 SpendAndFee {
-                    spend: lamports,
+                    spend: weis,
                     fee,
                 },
             ))
         }
         SpendAmount::RentExempt => {
-            let mut lamports = if from_pubkey == fee_pubkey {
+            let mut weis = if from_pubkey == fee_pubkey {
                 from_balance.saturating_sub(fee)
             } else {
                 from_balance
             };
-            lamports = lamports.saturating_sub(from_rent_exempt_minimum);
+            weis = weis.saturating_sub(from_rent_exempt_minimum);
             Ok((
-                build_message(lamports),
+                build_message(weis),
                 SpendAndFee {
-                    spend: lamports,
+                    spend: weis,
                     fee,
                 },
             ))

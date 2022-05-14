@@ -93,7 +93,7 @@ pub enum CliCommand {
     },
     Rent {
         data_length: usize,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
     },
     ShowBlockProduction {
         epoch: Option<Epoch>,
@@ -101,11 +101,11 @@ pub enum CliCommand {
     },
     ShowGossip,
     ShowStakes {
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
         vote_account_pubkeys: Option<Vec<Pubkey>>,
     },
     ShowValidators {
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
         sort_order: CliValidatorsSortOrder,
         reverse_sort: bool,
         number_validators: bool,
@@ -148,14 +148,14 @@ pub enum CliCommand {
     },
     ShowNonceAccount {
         nonce_account_pubkey: Pubkey,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
     },
     WithdrawFromNonceAccount {
         nonce_account: Pubkey,
         nonce_authority: SignerIndex,
         memo: Option<String>,
         destination_account_pubkey: Pubkey,
-        lamports: u64,
+        weis: u64,
     },
     // Program Deployment
     Deploy {
@@ -220,7 +220,7 @@ pub enum CliCommand {
         memo: Option<String>,
         split_stake_account: SignerIndex,
         seed: Option<String>,
-        lamports: u64,
+        weis: u64,
         fee_payer: SignerIndex,
     },
     MergeStake {
@@ -236,12 +236,12 @@ pub enum CliCommand {
         fee_payer: SignerIndex,
     },
     ShowStakeHistory {
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
         limit_results: usize,
     },
     ShowStakeAccount {
         pubkey: Pubkey,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
         with_rewards: Option<usize>,
     },
     StakeAuthorize {
@@ -310,7 +310,7 @@ pub enum CliCommand {
     },
     ShowVoteAccount {
         pubkey: Pubkey,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
         with_rewards: Option<usize>,
     },
     WithdrawFromVoteAccount {
@@ -375,11 +375,11 @@ pub enum CliCommand {
     Address,
     Airdrop {
         pubkey: Option<Pubkey>,
-        lamports: u64,
+        weis: u64,
     },
     Balance {
         pubkey: Option<Pubkey>,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
     },
     Confirm(Signature),
     CreateAddressWithSeed {
@@ -392,7 +392,7 @@ pub enum CliCommand {
     ShowAccount {
         pubkey: Pubkey,
         output_file: Option<String>,
-        use_lamports_unit: bool,
+        use_weis_unit: bool,
     },
     Transfer {
         amount: SpendAmount,
@@ -502,7 +502,7 @@ impl Default for CliConfig<'_> {
         CliConfig {
             command: CliCommand::Balance {
                 pubkey: Some(Pubkey::default()),
-                use_lamports_unit: false,
+                use_weis_unit: false,
             },
             json_rpc_url: ConfigInput::default().json_rpc_url,
             websocket_url: ConfigInput::default().websocket_url,
@@ -601,11 +601,11 @@ pub fn parse_command(
             let data_length = value_of::<RentLengthValue>(matches, "data_length")
                 .unwrap()
                 .length();
-            let use_lamports_unit = matches.is_present("lamports");
+            let use_weis_unit = matches.is_present("weis");
             Ok(CliCommandInfo {
                 command: CliCommand::Rent {
                     data_length,
-                    use_lamports_unit,
+                    use_weis_unit,
                 },
                 signers: vec![],
             })
@@ -889,26 +889,26 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         ),
         CliCommand::Rent {
             data_length,
-            use_lamports_unit,
-        } => process_calculate_rent(&rpc_client, config, *data_length, *use_lamports_unit),
+            use_weis_unit,
+        } => process_calculate_rent(&rpc_client, config, *data_length, *use_weis_unit),
         CliCommand::ShowBlockProduction { epoch, slot_limit } => {
             process_show_block_production(&rpc_client, config, *epoch, *slot_limit)
         }
         CliCommand::ShowGossip => process_show_gossip(&rpc_client, config),
         CliCommand::ShowStakes {
-            use_lamports_unit,
+            use_weis_unit,
             vote_account_pubkeys,
         } => process_show_stakes(
             &rpc_client,
             config,
-            *use_lamports_unit,
+            *use_weis_unit,
             vote_account_pubkeys.as_deref(),
         ),
         CliCommand::WaitForMaxStake { max_stake_percent } => {
             process_wait_for_max_stake(&rpc_client, config, *max_stake_percent)
         }
         CliCommand::ShowValidators {
-            use_lamports_unit,
+            use_weis_unit,
             sort_order,
             reverse_sort,
             number_validators,
@@ -917,7 +917,7 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         } => process_show_validators(
             &rpc_client,
             config,
-            *use_lamports_unit,
+            *use_weis_unit,
             *sort_order,
             *reverse_sort,
             *number_validators,
@@ -995,20 +995,20 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         // Show the contents of a nonce account
         CliCommand::ShowNonceAccount {
             nonce_account_pubkey,
-            use_lamports_unit,
+            use_weis_unit,
         } => process_show_nonce_account(
             &rpc_client,
             config,
             nonce_account_pubkey,
-            *use_lamports_unit,
+            *use_weis_unit,
         ),
-        // Withdraw lamports from a nonce account
+        // Withdraw weis from a nonce account
         CliCommand::WithdrawFromNonceAccount {
             nonce_account,
             nonce_authority,
             memo,
             destination_account_pubkey,
-            lamports,
+            weis,
         } => process_withdraw_from_nonce_account(
             &rpc_client,
             config,
@@ -1016,7 +1016,7 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
             *nonce_authority,
             memo.as_ref(),
             destination_account_pubkey,
-            *lamports,
+            *weis,
         ),
 
         // Program Deployment
@@ -1142,7 +1142,7 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
             memo,
             split_stake_account,
             seed,
-            lamports,
+            weis,
             fee_payer,
         } => process_split_stake(
             &rpc_client,
@@ -1157,7 +1157,7 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
             memo.as_ref(),
             *split_stake_account,
             seed,
-            *lamports,
+            *weis,
             *fee_payer,
         ),
         CliCommand::MergeStake {
@@ -1187,19 +1187,19 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         ),
         CliCommand::ShowStakeAccount {
             pubkey: stake_account_pubkey,
-            use_lamports_unit,
+            use_weis_unit,
             with_rewards,
         } => process_show_stake_account(
             &rpc_client,
             config,
             stake_account_pubkey,
-            *use_lamports_unit,
+            *use_weis_unit,
             *with_rewards,
         ),
         CliCommand::ShowStakeHistory {
-            use_lamports_unit,
+            use_weis_unit,
             limit_results,
-        } => process_show_stake_history(&rpc_client, config, *use_lamports_unit, *limit_results),
+        } => process_show_stake_history(&rpc_client, config, *use_weis_unit, *limit_results),
         CliCommand::StakeAuthorize {
             stake_account_pubkey,
             ref new_authorizations,
@@ -1341,13 +1341,13 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         ),
         CliCommand::ShowVoteAccount {
             pubkey: vote_account_pubkey,
-            use_lamports_unit,
+            use_weis_unit,
             with_rewards,
         } => process_show_vote_account(
             &rpc_client,
             config,
             vote_account_pubkey,
-            *use_lamports_unit,
+            *use_weis_unit,
             *with_rewards,
         ),
         CliCommand::WithdrawFromVoteAccount {
@@ -1475,14 +1475,14 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         // Wallet Commands
 
         // Request an airdrop from Solana Faucet;
-        CliCommand::Airdrop { pubkey, lamports } => {
-            process_airdrop(&rpc_client, config, pubkey, *lamports)
+        CliCommand::Airdrop { pubkey, weis } => {
+            process_airdrop(&rpc_client, config, pubkey, *weis)
         }
         // Check client balance
         CliCommand::Balance {
             pubkey,
-            use_lamports_unit,
-        } => process_balance(&rpc_client, config, pubkey, *use_lamports_unit),
+            use_weis_unit,
+        } => process_balance(&rpc_client, config, pubkey, *use_weis_unit),
         // Confirm the last client transaction by signature
         CliCommand::Confirm(signature) => process_confirm(&rpc_client, config, signature),
         CliCommand::DecodeTransaction(transaction) => {
@@ -1498,8 +1498,8 @@ pub fn process_command(config: &CliConfig) -> ProcessResult {
         CliCommand::ShowAccount {
             pubkey,
             output_file,
-            use_lamports_unit,
-        } => process_show_account(&rpc_client, config, pubkey, output_file, *use_lamports_unit),
+            use_weis_unit,
+        } => process_show_account(&rpc_client, config, pubkey, output_file, *use_weis_unit),
         CliCommand::Transfer {
             amount,
             to,
@@ -1540,11 +1540,11 @@ pub fn request_and_confirm_airdrop(
     rpc_client: &RpcClient,
     config: &CliConfig,
     to_pubkey: &Pubkey,
-    lamports: u64,
+    weis: u64,
 ) -> ClientResult<Signature> {
     let recent_blockhash = rpc_client.get_latest_blockhash()?;
     let signature =
-        rpc_client.request_airdrop_with_blockhash(to_pubkey, lamports, &recent_blockhash)?;
+        rpc_client.request_airdrop_with_blockhash(to_pubkey, weis, &recent_blockhash)?;
     rpc_client.confirm_transaction_with_spinner(
         &signature,
         &recent_blockhash,
@@ -1736,7 +1736,7 @@ mod tests {
             CliCommandInfo {
                 command: CliCommand::Airdrop {
                     pubkey: Some(pubkey),
-                    lamports: 50_000_000_000,
+                    weis: 50_000_000_000,
                 },
                 signers: vec![],
             }
@@ -1753,7 +1753,7 @@ mod tests {
             CliCommandInfo {
                 command: CliCommand::Balance {
                     pubkey: Some(keypair.pubkey()),
-                    use_lamports_unit: false,
+                    use_weis_unit: false,
                 },
                 signers: vec![],
             }
@@ -1762,14 +1762,14 @@ mod tests {
             "test",
             "balance",
             &keypair_file,
-            "--lamports",
+            "--weis",
         ]);
         assert_eq!(
             parse_command(&test_balance, &default_signer, &mut None).unwrap(),
             CliCommandInfo {
                 command: CliCommand::Balance {
                     pubkey: Some(keypair.pubkey()),
-                    use_lamports_unit: true,
+                    use_weis_unit: true,
                 },
                 signers: vec![],
             }
@@ -1777,13 +1777,13 @@ mod tests {
         let test_balance =
             test_commands
                 .clone()
-                .get_matches_from(vec!["test", "balance", "--lamports"]);
+                .get_matches_from(vec!["test", "balance", "--weis"]);
         assert_eq!(
             parse_command(&test_balance, &default_signer, &mut None).unwrap(),
             CliCommandInfo {
                 command: CliCommand::Balance {
                     pubkey: None,
-                    use_lamports_unit: true,
+                    use_weis_unit: true,
                 },
                 signers: vec![read_keypair_file(&keypair_file).unwrap().into()],
             }
@@ -1943,13 +1943,13 @@ mod tests {
 
         config.command = CliCommand::Balance {
             pubkey: None,
-            use_lamports_unit: true,
+            use_weis_unit: true,
         };
-        assert_eq!(process_command(&config).unwrap(), "50 lamports");
+        assert_eq!(process_command(&config).unwrap(), "50 weis");
 
         config.command = CliCommand::Balance {
             pubkey: None,
-            use_lamports_unit: false,
+            use_weis_unit: false,
         };
         assert_eq!(process_command(&config).unwrap(), "0.00000005 GTH");
 
@@ -1986,7 +1986,7 @@ mod tests {
             context: RpcResponseContext { slot: 1 },
             value: json!({
                 "data": ["KLUv/QBYNQIAtAIBAAAAbnoc3Smwt4/ROvTFWY/v9O8qlxZuPKby5Pv8zYBQW/EFAAEAAB8ACQD6gx92zAiAAecDP4B2XeEBSIx7MQeung==", "base64+zstd"],
-                "lamports": 42,
+                "weis": 42,
                 "owner": "Vote111111111111111111111111111111111111111",
                 "executable": false,
                 "rentEpoch": 1,
@@ -2115,7 +2115,7 @@ mod tests {
             memo: None,
             split_stake_account: 1,
             seed: None,
-            lamports: 30,
+            weis: 30,
             fee_payer: 0,
         };
         config.signers = vec![&keypair, &split_stake_account];
@@ -2165,7 +2165,7 @@ mod tests {
         config.signers = vec![&keypair];
         config.command = CliCommand::Airdrop {
             pubkey: Some(to),
-            lamports: 50,
+            weis: 50,
         };
         assert!(process_command(&config).is_ok());
 
@@ -2189,13 +2189,13 @@ mod tests {
 
         config.command = CliCommand::Airdrop {
             pubkey: None,
-            lamports: 50,
+            weis: 50,
         };
         assert!(process_command(&config).is_err());
 
         config.command = CliCommand::Balance {
             pubkey: None,
-            use_lamports_unit: false,
+            use_weis_unit: false,
         };
         assert!(process_command(&config).is_err());
 

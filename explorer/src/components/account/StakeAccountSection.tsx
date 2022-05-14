@@ -126,13 +126,13 @@ function OverviewCard({
         <tr>
           <td>Balance (GTH)</td>
           <td className="text-lg-end text-uppercase">
-            <GthBalance lamports={account.lamports || 0} />
+            <GthBalance weis={account.weis || 0} />
           </td>
         </tr>
         <tr>
           <td>Rent Reserve (GTH)</td>
           <td className="text-lg-end">
-            <GthBalance lamports={stakeAccount.meta.rentExemptReserve} />
+            <GthBalance weis={stakeAccount.meta.rentExemptReserve} />
           </td>
         </tr>
         {hideDelegation && (
@@ -191,7 +191,7 @@ function DelegationCard({
             <tr>
               <td>Delegated Stake (GTH)</td>
               <td className="text-lg-end">
-                <GthBalance lamports={stake.delegation.stake} />
+                <GthBalance weis={stake.delegation.stake} />
               </td>
             </tr>
 
@@ -200,14 +200,14 @@ function DelegationCard({
                 <tr>
                   <td>Active Stake (GTH)</td>
                   <td className="text-lg-end">
-                    <GthBalance lamports={activation.active} />
+                    <GthBalance weis={activation.active} />
                   </td>
                 </tr>
 
                 <tr>
                   <td>Inactive Stake (GTH)</td>
                   <td className="text-lg-end">
-                    <GthBalance lamports={activation.inactive} />
+                    <GthBalance weis={activation.inactive} />
                   </td>
                 </tr>
               </>

@@ -295,7 +295,7 @@ function StatusCard({
           <tr>
             <td>Fee (GTH)</td>
             <td className="text-lg-end">
-              <GthBalance lamports={fee} />
+              <GthBalance weis={fee} />
             </td>
           </tr>
         )}
@@ -375,7 +375,7 @@ function AccountsCard({ signature }: SignatureProps) {
           <BalanceDelta delta={delta} isGth/>
         </td>
         <td>
-          <GthBalance lamports={post} />
+          <GthBalance weis={post} />
         </td>
         <td>
           {index === 0 && (

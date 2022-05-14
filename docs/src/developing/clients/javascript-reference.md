@@ -73,7 +73,7 @@ let connection = new web3.Connection(web3.clusterApiUrl('devnet'), 'confirmed');
 
 let airdropSignature = await connection.requestAirdrop(
     payer.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
 );
 
 await connection.confirmTransaction(airdropSignature);
@@ -87,7 +87,7 @@ let transaction = new web3.Transaction();
 transaction.add(web3.SystemProgram.transfer({
     fromPubkey: payer.publicKey,
     toPubkey: toAccount.publicKey,
-    lamports: 1000,
+    weis: 1000,
 }));
 
 // Send and confirm transaction
@@ -103,7 +103,7 @@ let manualTransaction = new web3.Transaction({
 manualTransaction.add(web3.SystemProgram.transfer({
     fromPubkey: payer.publicKey,
     toPubkey: toAccount.publicKey,
-    lamports: 1000,
+    weis: 1000,
 }));
 
 let transactionBuffer = manualTransaction.serializeMessage();
@@ -224,7 +224,7 @@ console.log(`Valid Program Address: ${validProgramAddress}`);
 
 [SourceDocumentation](https://solana-labs.github.io/solana-web3.js/classes/SystemProgram.html)
 
-The SystemProgram grants the ability to create accounts, allocate account data, assign an account to programs, work with nonce accounts, and transfer lamports. You can use the SystemInstruction class to help with decoding and reading individual instructions
+The SystemProgram grants the ability to create accounts, allocate account data, assign an account to programs, work with nonce accounts, and transfer weis. You can use the SystemInstruction class to help with decoding and reading individual instructions
 
 #### Example Usage
 
@@ -237,7 +237,7 @@ let connection = new web3.Connection(web3.clusterApiUrl('devnet'), 'confirmed');
 
 let airdropSignature = await connection.requestAirdrop(
     payer.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
 );
 
 await connection.confirmTransaction(airdropSignature);
@@ -262,7 +262,7 @@ web3.SystemProgram.createNonceAccount({
     fromPubkey: payer.publicKey,
     noncePubkey: nonceAccount.publicKey,
     authorizedPubkey: payer.publicKey,
-    lamports: minimumAmountForNonceAccount,
+    weis: minimumAmountForNonceAccount,
 }),
 );
 
@@ -278,14 +278,14 @@ let advanceNonceTransaction = new web3.Transaction().add(
 
 await web3.sendAndConfirmTransaction(connection, advanceNonceTransaction, [payer])
 
-// Transfer lamports between accounts
+// Transfer weis between accounts
 let toAccount = web3.Keypair.generate();
 
 let transferTransaction = new web3.Transaction().add(
 web3.SystemProgram.transfer({
     fromPubkey: payer.publicKey,
     toPubkey: toAccount.publicKey,
-    lamports: 1000,
+    weis: 1000,
 }),
 );
 await web3.sendAndConfirmTransaction(connection, transferTransaction, [payer])
@@ -336,7 +336,7 @@ let connection = new web3.Connection(web3.clusterApiUrl('devnet'), 'confirmed');
 
 let airdropSignature = await connection.requestAirdrop(
     fromPublicKey.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
 );
 await connection.confirmTransaction(airdropSignature);
 
@@ -385,7 +385,7 @@ let connection = new web3.Connection(
 
 let airdropSignature = await connection.requestAirdrop(
     fromPublicKey.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
 );
 
 await connection.confirmTransaction(airdropSignature);
@@ -505,7 +505,7 @@ let nonceAccount = web3.Keypair.generate();
 // Fund account
 let airdropSignature = await connection.requestAirdrop(
     account.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
 );
 
 await connection.confirmTransaction(airdropSignature);
@@ -521,7 +521,7 @@ web3.SystemProgram.createNonceAccount({
     fromPubkey: account.publicKey,
     noncePubkey: nonceAccount.publicKey,
     authorizedPubkey: account.publicKey,
-    lamports: minimumAmount,
+    weis: minimumAmount,
 }),
 );
 // Create Nonce Account
@@ -542,7 +542,7 @@ console.log(nonceAccountData);
 //     _bn: <BN: 919981a5497e8f85c805547439ae59f607ea625b86b1138ea6e41a68ab8ee038>
 //   },
 //   nonce: '93zGZbhMmReyz4YHXjt2gHsvu5tjARsyukxD4xnaWaBq',
-//   feeCalculator: { lamportsPerSignature: 5000 }
+//   feeCalculator: { weisPerSignature: 5000 }
 // }
 
 let nonceAccountInfo = await connection.getAccountInfo(
@@ -560,7 +560,7 @@ console.log(nonceAccountFromInfo);
 //     _bn: <BN: 919981a5497e8f85c805547439ae59f607ea625b86b1138ea6e41a68ab8ee038>
 //   },
 //   nonce: '93zGZbhMmReyz4YHXjt2gHsvu5tjARsyukxD4xnaWaBq',
-//   feeCalculator: { lamportsPerSignature: 5000 }
+//   feeCalculator: { weisPerSignature: 5000 }
 // }
 ```
 
@@ -654,21 +654,21 @@ let connection = new web3.Connection(web3.clusterApiUrl('devnet'), 'confirmed');
 
 let airdropSignature = await connection.requestAirdrop(
     fromPublicKey.publicKey,
-    web3.LAMPORTS_PER_GTH,
+    web3.WEIS_PER_GTH,
 );
 await connection.confirmTransaction(airdropSignature);
 
 // Create Account
 let stakeAccount = web3.Keypair.generate();
 let authorizedAccount = web3.Keypair.generate();
-/* Note: This is the minimum amount for a stake account -- Add additional Lamports for staking
-    For example, we add 50 lamports as part of the stake */
-let lamportsForStakeAccount = (await connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)) + 50;
+/* Note: This is the minimum amount for a stake account -- Add additional Weis for staking
+    For example, we add 50 weis as part of the stake */
+let weisForStakeAccount = (await connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)) + 50;
 
 let createAccountTransaction = web3.StakeProgram.createAccount({
     fromPubkey: fromPublicKey.publicKey,
     authorized: new web3.Authorized(authorizedAccount.publicKey, authorizedAccount.publicKey),
-    lamports: lamportsForStakeAccount,
+    weis: weisForStakeAccount,
     lockup: new web3.Lockup(0, 0, fromPublicKey.publicKey),
     stakePubkey: stakeAccount.publicKey
 });
@@ -711,7 +711,7 @@ let withdrawTransaction = web3.StakeProgram.withdraw({
     stakePubkey: stakeAccount.publicKey,
     authorizedPubkey: authorizedAccount.publicKey,
     toPubkey: fromPublicKey.publicKey,
-    lamports: stakeBalance,
+    weis: stakeBalance,
 });
 
 await web3.sendAndConfirmTransaction(connection, withdrawTransaction, [fromPublicKey, authorizedAccount]);
@@ -744,7 +744,7 @@ let lockup = new Lockup(0, 0, account.publicKey);
 let createStakeAccountInstruction = StakeProgram.createAccount({
     fromPubkey: account.publicKey,
     authorized: authorized,
-    lamports: 1000,
+    weis: 1000,
     lockup: lockup,
     stakePubkey: stakeAccount.publicKey
 });

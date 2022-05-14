@@ -2453,7 +2453,7 @@ mod tests {
         } = create_slow_genesis_config(2);
         let (verified_sender, verified_receiver) = unbounded();
 
-        // Process a batch that includes a transaction that receives two lamports.
+        // Process a batch that includes a transaction that receives two weis.
         let alice = Keypair::new();
         let tx =
             system_transaction::transfer(&mint_keypair, &alice.pubkey(), 2, genesis_config.hash());
@@ -2538,7 +2538,7 @@ mod tests {
                     .for_each(|x| assert_eq!(*x, Ok(())));
             }
 
-            // Assert the user holds two lamports, not three. If the stage only outputs one
+            // Assert the user holds two weis, not three. If the stage only outputs one
             // entry, then the second transaction will be rejected, because it drives
             // the account balance below zero before the credit is added.
             assert_eq!(bank.get_balance(&alice.pubkey()), 2);
@@ -2602,7 +2602,7 @@ mod tests {
             // InstructionErrors should still be recorded
             results[0] = new_execution_result(Err(TransactionError::InstructionError(
                 1,
-                SystemError::ResultWithNegativeLamports.into(),
+                SystemError::ResultWithNegativeWeis.into(),
             )));
             let RecordTransactionsSummary {
                 result,
@@ -2794,8 +2794,8 @@ mod tests {
         );
     }
 
-    fn create_slow_genesis_config(lamports: u64) -> GenesisConfigInfo {
-        let mut config_info = create_genesis_config(lamports);
+    fn create_slow_genesis_config(weis: u64) -> GenesisConfigInfo {
+        let mut config_info = create_genesis_config(weis);
         // For these tests there's only 1 slot, don't want to run out of ticks
         config_info.genesis_config.ticks_per_slot *= 8;
         config_info
@@ -3342,12 +3342,12 @@ mod tests {
     #[test]
     fn test_process_transactions_instruction_error() {
         solana_logger::setup();
-        let lamports = 10_000;
+        let weis = 10_000;
         let GenesisConfigInfo {
             genesis_config,
             mint_keypair,
             ..
-        } = create_slow_genesis_config(lamports);
+        } = create_slow_genesis_config(weis);
         let bank = Arc::new(Bank::new_no_wallclock_throttle_for_tests(&genesis_config));
         // set cost tracker limits to MAX so it will not filter out TXs
         bank.write_cost_tracker()
@@ -3362,7 +3362,7 @@ mod tests {
             system_transaction::transfer(
                 &mint_keypair,
                 &Pubkey::new_unique(),
-                lamports + 1,
+                weis + 1,
                 genesis_config.hash(),
             );
             MAX_NUM_TRANSACTIONS_PER_BATCH
@@ -3466,8 +3466,8 @@ mod tests {
             mut genesis_config,
             mint_keypair,
             ..
-        } = create_slow_genesis_config(solana_sdk::native_token::gth_to_lamports(1000.0));
-        genesis_config.rent.lamports_per_byte_year = 50;
+        } = create_slow_genesis_config(solana_sdk::native_token::gth_to_weis(1000.0));
+        genesis_config.rent.weis_per_byte_year = 50;
         genesis_config.rent.exemption_threshold = 2.0;
         let bank = Arc::new(Bank::new_no_wallclock_throttle_for_tests(&genesis_config));
         let pubkey = solana_sdk::pubkey::new_rand();

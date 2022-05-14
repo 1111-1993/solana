@@ -7,7 +7,7 @@ title: "Runtime"
 The runtime only permits the owner program to debit the account or modify its
 data. The program then defines additional rules for whether the client can
 modify accounts it owns. In the case of the System program, it allows users to
-transfer lamports by recognizing transaction signatures. If it sees the client
+transfer weis by recognizing transaction signatures. If it sees the client
 signed the transaction using the keypair's _private key_, it knows the client
 authorized the token transfer.
 

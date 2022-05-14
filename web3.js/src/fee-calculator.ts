@@ -5,12 +5,12 @@ import * as BufferLayout from '@solana/buffer-layout';
  *
  * @internal
  */
-export const FeeCalculatorLayout = BufferLayout.nu64('lamportsPerSignature');
+export const FeeCalculatorLayout = BufferLayout.nu64('weisPerSignature');
 
 /**
  * Calculator for transaction fees.
  */
 export interface FeeCalculator {
-  /** Cost in lamports to validate a signature. */
-  lamportsPerSignature: number;
+  /** Cost in weis to validate a signature. */
+  weisPerSignature: number;
 }

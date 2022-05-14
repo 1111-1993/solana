@@ -191,12 +191,12 @@ impl Banks for BanksServer {
     ) -> (FeeCalculator, Hash, u64) {
         let bank = self.bank(commitment);
         let blockhash = bank.last_blockhash();
-        let lamports_per_signature = bank.get_lamports_per_signature();
+        let weis_per_signature = bank.get_weis_per_signature();
         let last_valid_block_height = bank
             .get_blockhash_last_valid_block_height(&blockhash)
             .unwrap();
         (
-            FeeCalculator::new(lamports_per_signature),
+            FeeCalculator::new(weis_per_signature),
             blockhash,
             last_valid_block_height,
         )

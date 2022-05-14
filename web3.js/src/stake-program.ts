@@ -79,7 +79,7 @@ export type CreateStakeAccountParams = {
   /** Lockup of the new stake account */
   lockup?: Lockup;
   /** Funding amount */
-  lamports: number;
+  weis: number;
 };
 
 /**
@@ -92,7 +92,7 @@ export type CreateStakeAccountWithSeedParams = {
   seed: string;
   authorized: Authorized;
   lockup?: Lockup;
-  lamports: number;
+  weis: number;
 };
 
 /**
@@ -144,7 +144,7 @@ export type SplitStakeParams = {
   stakePubkey: PublicKey;
   authorizedPubkey: PublicKey;
   splitStakePubkey: PublicKey;
-  lamports: number;
+  weis: number;
 };
 
 /**
@@ -156,7 +156,7 @@ export type SplitStakeWithSeedParams = {
   splitStakePubkey: PublicKey;
   basePubkey: PublicKey;
   seed: string;
-  lamports: number;
+  weis: number;
 };
 
 /**
@@ -166,7 +166,7 @@ export type WithdrawStakeParams = {
   stakePubkey: PublicKey;
   authorizedPubkey: PublicKey;
   toPubkey: PublicKey;
-  lamports: number;
+  weis: number;
   custodianPubkey?: PublicKey;
 };
 
@@ -335,7 +335,7 @@ export class StakeInstruction {
   static decodeSplit(instruction: TransactionInstruction): SplitStakeParams {
     this.checkProgramId(instruction.programId);
     this.checkKeyLength(instruction.keys, 3);
-    const {lamports} = decodeData(
+    const {weis} = decodeData(
       STAKE_INSTRUCTION_LAYOUTS.Split,
       instruction.data,
     );
@@ -344,7 +344,7 @@ export class StakeInstruction {
       stakePubkey: instruction.keys[0].pubkey,
       splitStakePubkey: instruction.keys[1].pubkey,
       authorizedPubkey: instruction.keys[2].pubkey,
-      lamports,
+      weis,
     };
   }
 
@@ -371,7 +371,7 @@ export class StakeInstruction {
   ): WithdrawStakeParams {
     this.checkProgramId(instruction.programId);
     this.checkKeyLength(instruction.keys, 5);
-    const {lamports} = decodeData(
+    const {weis} = decodeData(
       STAKE_INSTRUCTION_LAYOUTS.Withdraw,
       instruction.data,
     );
@@ -380,7 +380,7 @@ export class StakeInstruction {
       stakePubkey: instruction.keys[0].pubkey,
       toPubkey: instruction.keys[1].pubkey,
       authorizedPubkey: instruction.keys[4].pubkey,
-      lamports,
+      weis,
     };
     if (instruction.keys.length > 5) {
       o.custodianPubkey = instruction.keys[5].pubkey;
@@ -469,14 +469,14 @@ export const STAKE_INSTRUCTION_LAYOUTS: {
     index: 3,
     layout: BufferLayout.struct([
       BufferLayout.u32('instruction'),
-      BufferLayout.ns64('lamports'),
+      BufferLayout.ns64('weis'),
     ]),
   },
   Withdraw: {
     index: 4,
     layout: BufferLayout.struct([
       BufferLayout.u32('instruction'),
-      BufferLayout.ns64('lamports'),
+      BufferLayout.ns64('weis'),
     ]),
   },
   Deactivate: {
@@ -587,7 +587,7 @@ export class StakeProgram {
         newAccountPubkey: params.stakePubkey,
         basePubkey: params.basePubkey,
         seed: params.seed,
-        lamports: params.lamports,
+        weis: params.weis,
         space: this.space,
         programId: this.programId,
       }),
@@ -606,7 +606,7 @@ export class StakeProgram {
       SystemProgram.createAccount({
         fromPubkey: params.fromPubkey,
         newAccountPubkey: params.stakePubkey,
-        lamports: params.lamports,
+        weis: params.weis,
         space: this.space,
         programId: this.programId,
       }),
@@ -721,9 +721,9 @@ export class StakeProgram {
    * @internal
    */
   static splitInstruction(params: SplitStakeParams): TransactionInstruction {
-    const {stakePubkey, authorizedPubkey, splitStakePubkey, lamports} = params;
+    const {stakePubkey, authorizedPubkey, splitStakePubkey, weis} = params;
     const type = STAKE_INSTRUCTION_LAYOUTS.Split;
-    const data = encodeData(type, {lamports});
+    const data = encodeData(type, {weis});
     return new TransactionInstruction({
       keys: [
         {pubkey: stakePubkey, isSigner: false, isWritable: true},
@@ -744,7 +744,7 @@ export class StakeProgram {
       SystemProgram.createAccount({
         fromPubkey: params.authorizedPubkey,
         newAccountPubkey: params.splitStakePubkey,
-        lamports: 0,
+        weis: 0,
         space: this.space,
         programId: this.programId,
       }),
@@ -763,7 +763,7 @@ export class StakeProgram {
       splitStakePubkey,
       basePubkey,
       seed,
-      lamports,
+      weis,
     } = params;
     const transaction = new Transaction();
     transaction.add(
@@ -780,7 +780,7 @@ export class StakeProgram {
         stakePubkey,
         authorizedPubkey,
         splitStakePubkey,
-        lamports,
+        weis,
       }),
     );
   }
@@ -814,10 +814,10 @@ export class StakeProgram {
    * Generate a Transaction that withdraws deactivated Stake tokens.
    */
   static withdraw(params: WithdrawStakeParams): Transaction {
-    const {stakePubkey, authorizedPubkey, toPubkey, lamports, custodianPubkey} =
+    const {stakePubkey, authorizedPubkey, toPubkey, weis, custodianPubkey} =
       params;
     const type = STAKE_INSTRUCTION_LAYOUTS.Withdraw;
-    const data = encodeData(type, {lamports});
+    const data = encodeData(type, {weis});
 
     const keys = [
       {pubkey: stakePubkey, isSigner: false, isWritable: true},

@@ -4,7 +4,7 @@
 //! Note that AccountInfo is saved to disk buckets during runtime, but disk buckets are recreated at startup.
 use crate::{
     accounts_db::{AppendVecId, CACHE_VIRTUAL_OFFSET},
-    accounts_index::{IsCached, ZeroLamport},
+    accounts_index::{IsCached, ZeroWei},
     append_vec::ALIGN_BOUNDARY_OFFSET,
 };
 
@@ -78,15 +78,15 @@ pub struct AccountInfo {
 
 /// These flags can be present in stored_size_mask to indicate additional info about the AccountInfo
 
-/// presence of this flag in stored_size_mask indicates this account info references an account with zero lamports
-const IS_ZERO_LAMPORT_FLAG: StoredSize = 1 << (StoredSize::BITS - 1);
+/// presence of this flag in stored_size_mask indicates this account info references an account with zero weis
+const IS_ZERO_WEI_FLAG: StoredSize = 1 << (StoredSize::BITS - 1);
 /// presence of this flag in stored_size_mask indicates this account info references an account stored in the cache
 const IS_CACHED_STORE_ID_FLAG: StoredSize = 1 << (StoredSize::BITS - 2);
-const ALL_FLAGS: StoredSize = IS_ZERO_LAMPORT_FLAG | IS_CACHED_STORE_ID_FLAG;
+const ALL_FLAGS: StoredSize = IS_ZERO_WEI_FLAG | IS_CACHED_STORE_ID_FLAG;
 
-impl ZeroLamport for AccountInfo {
-    fn is_zero_lamport(&self) -> bool {
-        self.stored_size_mask & IS_ZERO_LAMPORT_FLAG == IS_ZERO_LAMPORT_FLAG
+impl ZeroWei for AccountInfo {
+    fn is_zero_wei(&self) -> bool {
+        self.stored_size_mask & IS_ZERO_WEI_FLAG == IS_ZERO_WEI_FLAG
     }
 }
 
@@ -106,7 +106,7 @@ impl IsCached for StorageLocation {
 const CACHE_VIRTUAL_STORAGE_ID: AppendVecId = AppendVecId::MAX;
 
 impl AccountInfo {
-    pub fn new(storage_location: StorageLocation, stored_size: StoredSize, lamports: u64) -> Self {
+    pub fn new(storage_location: StorageLocation, stored_size: StoredSize, weis: u64) -> Self {
         assert_eq!(stored_size & ALL_FLAGS, 0);
         let mut stored_size_mask = stored_size;
         let (store_id, raw_offset) = match storage_location {
@@ -116,8 +116,8 @@ impl AccountInfo {
                 (CACHE_VIRTUAL_STORAGE_ID, CACHE_VIRTUAL_OFFSET)
             }
         };
-        if lamports == 0 {
-            stored_size_mask |= IS_ZERO_LAMPORT_FLAG;
+        if weis == 0 {
+            stored_size_mask |= IS_ZERO_WEI_FLAG;
         }
         let reduced_offset: OffsetReduced = (raw_offset / ALIGN_BOUNDARY_OFFSET) as OffsetReduced;
         let result = Self {
@@ -140,7 +140,7 @@ impl AccountInfo {
     }
 
     pub fn stored_size(&self) -> StoredSize {
-        // elminate the special bit that indicates the info references an account with zero lamports
+        // elminate the special bit that indicates the info references an account with zero weis
         self.stored_size_mask & !ALL_FLAGS
     }
 

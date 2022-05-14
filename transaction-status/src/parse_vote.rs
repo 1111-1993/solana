@@ -109,7 +109,7 @@ pub fn parse_vote(
                 }),
             })
         }
-        VoteInstruction::Withdraw(lamports) => {
+        VoteInstruction::Withdraw(weis) => {
             check_num_vote_accounts(&instruction.accounts, 3)?;
             Ok(ParsedInstructionEnum {
                 instruction_type: "withdraw".to_string(),
@@ -117,7 +117,7 @@ pub fn parse_vote(
                     "voteAccount": account_keys[instruction.accounts[0] as usize].to_string(),
                     "destination": account_keys[instruction.accounts[1] as usize].to_string(),
                     "withdrawAuthority": account_keys[instruction.accounts[2] as usize].to_string(),
-                    "lamports": lamports,
+                    "weis": weis,
                 }),
             })
         }
@@ -195,7 +195,7 @@ mod test {
 
     #[test]
     fn test_parse_vote_initialize_ix() {
-        let lamports = 55;
+        let weis = 55;
 
         let commission = 10;
         let node_pubkey = Pubkey::new_unique();
@@ -213,7 +213,7 @@ mod test {
             &Pubkey::new_unique(),
             &vote_pubkey,
             &vote_init,
-            lamports,
+            weis,
         );
         let message = Message::new(&instructions, None);
         assert_eq!(
@@ -322,14 +322,14 @@ mod test {
 
     #[test]
     fn test_parse_vote_withdraw_ix() {
-        let lamports = 55;
+        let weis = 55;
         let vote_pubkey = Pubkey::new_unique();
         let authorized_withdrawer_pubkey = Pubkey::new_unique();
         let to_pubkey = Pubkey::new_unique();
         let instruction = vote_instruction::withdraw(
             &vote_pubkey,
             &authorized_withdrawer_pubkey,
-            lamports,
+            weis,
             &to_pubkey,
         );
         let message = Message::new(&[instruction], None);
@@ -345,7 +345,7 @@ mod test {
                     "voteAccount": vote_pubkey.to_string(),
                     "destination": to_pubkey.to_string(),
                     "withdrawAuthority": authorized_withdrawer_pubkey.to_string(),
-                    "lamports": lamports,
+                    "weis": weis,
                 }),
             }
         );

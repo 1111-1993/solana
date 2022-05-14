@@ -18,7 +18,7 @@ extern "C" {
  * Use this function to deserialize the buffer passed to the program entrypoint
  * into usable types.  This function does not perform copy deserialization,
  * instead it populates the pointers and lengths in GthAccountInfo and data so
- * that any modification to lamports or account data take place on the original
+ * that any modification to weis or account data take place on the original
  * buffer.  Doing so also eliminates the need to serialize back into the buffer
  * at the end of the program.
  *
@@ -68,8 +68,8 @@ static bool gth_deserialize_deprecated(
       params->ka[i].key = (GthPubkey *) input;
       input += sizeof(GthPubkey);
 
-      // lamports
-      params->ka[i].lamports = (uint64_t *) input;
+      // weis
+      params->ka[i].weis = (uint64_t *) input;
       input += sizeof(uint64_t);
 
       // account data
@@ -92,7 +92,7 @@ static bool gth_deserialize_deprecated(
     } else {
       params->ka[i].is_signer = params->ka[dup_info].is_signer;
       params->ka[i].key = params->ka[dup_info].key;
-      params->ka[i].lamports = params->ka[dup_info].lamports;
+      params->ka[i].weis = params->ka[dup_info].weis;
       params->ka[i].data_len = params->ka[dup_info].data_len;
       params->ka[i].data = params->ka[dup_info].data;
       params->ka[i].owner = params->ka[dup_info].owner;

@@ -26,6 +26,6 @@ export * from './util/send-and-confirm-raw-transaction';
 export * from './util/cluster';
 
 /**
- * There are 1-billion lamports in one GTH
+ * There are 1-billion weis in one GTH
  */
-export const LAMPORTS_PER_GTH = 1000000000;
+export const WEIS_PER_GTH = 1000000000;

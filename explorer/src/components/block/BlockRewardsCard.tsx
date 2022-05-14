@@ -38,8 +38,8 @@ export function BlockRewardsCard({ block }: { block: BlockResponse }) {
               let percentChange;
               if (reward.postBalance !== null && reward.postBalance !== 0) {
                 percentChange = (
-                  (Math.abs(reward.lamports) /
-                    (reward.postBalance - reward.lamports)) *
+                  (Math.abs(reward.weis) /
+                    (reward.postBalance - reward.weis)) *
                   100
                 ).toFixed(9);
               }
@@ -50,11 +50,11 @@ export function BlockRewardsCard({ block }: { block: BlockResponse }) {
                   </td>
                   <td>{reward.rewardType}</td>
                   <td>
-                    <GthBalance lamports={reward.lamports} />
+                    <GthBalance weis={reward.weis} />
                   </td>
                   <td>
                     {reward.postBalance ? (
-                      <GthBalance lamports={reward.postBalance} />
+                      <GthBalance weis={reward.postBalance} />
                     ) : (
                       "-"
                     )}

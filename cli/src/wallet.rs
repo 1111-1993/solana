@@ -72,10 +72,10 @@ impl WalletSubCommands for App<'_, '_> {
                         .help("Write the account data to this file"),
                 )
                 .arg(
-                    Arg::with_name("lamports")
-                        .long("lamports")
+                    Arg::with_name("weis")
+                        .long("weis")
                         .takes_value(false)
-                        .help("Display balance in lamports instead of GTH"),
+                        .help("Display balance in weis instead of GTH"),
                 ),
         )
         .subcommand(
@@ -117,10 +117,10 @@ impl WalletSubCommands for App<'_, '_> {
                         "The account address of the balance to check. ")
                 )
                 .arg(
-                    Arg::with_name("lamports")
-                        .long("lamports")
+                    Arg::with_name("weis")
+                        .long("weis")
                         .takes_value(false)
-                        .help("Display balance in lamports instead of GTH"),
+                        .help("Display balance in weis instead of GTH"),
                 ),
         )
         .subcommand(
@@ -293,12 +293,12 @@ pub fn parse_account(
 ) -> Result<CliCommandInfo, CliError> {
     let account_pubkey = pubkey_of_signer(matches, "account_pubkey", wallet_manager)?.unwrap();
     let output_file = matches.value_of("output_file");
-    let use_lamports_unit = matches.is_present("lamports");
+    let use_weis_unit = matches.is_present("weis");
     Ok(CliCommandInfo {
         command: CliCommand::ShowAccount {
             pubkey: account_pubkey,
             output_file: output_file.map(ToString::to_string),
-            use_lamports_unit,
+            use_weis_unit,
         },
         signers: vec![],
     })
@@ -315,9 +315,9 @@ pub fn parse_airdrop(
     } else {
         vec![default_signer.signer_from_path(matches, wallet_manager)?]
     };
-    let lamports = lamports_of_gth(matches, "amount").unwrap();
+    let weis = weis_of_gth(matches, "amount").unwrap();
     Ok(CliCommandInfo {
-        command: CliCommand::Airdrop { pubkey, lamports },
+        command: CliCommand::Airdrop { pubkey, weis },
         signers,
     })
 }
@@ -336,7 +336,7 @@ pub fn parse_balance(
     Ok(CliCommandInfo {
         command: CliCommand::Balance {
             pubkey,
-            use_lamports_unit: matches.is_present("lamports"),
+            use_weis_unit: matches.is_present("weis"),
         },
         signers,
     })
@@ -448,7 +448,7 @@ pub fn process_show_account(
     config: &CliConfig,
     account_pubkey: &Pubkey,
     output_file: &Option<String>,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> ProcessResult {
     let account = rpc_client.get_account(account_pubkey)?;
     let data = account.data.clone();
@@ -463,7 +463,7 @@ pub fn process_show_account(
                 None,
             ),
         },
-        use_lamports_unit,
+        use_weis_unit,
     };
 
     let mut account_string = config.output_format.formatted_string(&cli_account);
@@ -498,7 +498,7 @@ pub fn process_airdrop(
     rpc_client: &RpcClient,
     config: &CliConfig,
     pubkey: &Option<Pubkey>,
-    lamports: u64,
+    weis: u64,
 ) -> ProcessResult {
     let pubkey = if let Some(pubkey) = pubkey {
         *pubkey
@@ -507,19 +507,19 @@ pub fn process_airdrop(
     };
     println!(
         "Requesting airdrop of {}",
-        build_balance_message(lamports, false, true),
+        build_balance_message(weis, false, true),
     );
 
     let pre_balance = rpc_client.get_balance(&pubkey)?;
 
-    let result = request_and_confirm_airdrop(rpc_client, config, &pubkey, lamports);
+    let result = request_and_confirm_airdrop(rpc_client, config, &pubkey, weis);
     if let Ok(signature) = result {
         let signature_cli_message = log_instruction_custom_error::<SystemError>(result, config)?;
         println!("{}", signature_cli_message);
 
         let current_balance = rpc_client.get_balance(&pubkey)?;
 
-        if current_balance < pre_balance.saturating_add(lamports) {
+        if current_balance < pre_balance.saturating_add(weis) {
             println!("Balance unchanged");
             println!("Run `solana confirm -v {:?}` for more info", signature);
             Ok("".to_string())
@@ -535,7 +535,7 @@ pub fn process_balance(
     rpc_client: &RpcClient,
     config: &CliConfig,
     pubkey: &Option<Pubkey>,
-    use_lamports_unit: bool,
+    use_weis_unit: bool,
 ) -> ProcessResult {
     let pubkey = if let Some(pubkey) = pubkey {
         *pubkey
@@ -543,7 +543,7 @@ pub fn process_balance(
         config.pubkey()?
     };
     let balance = rpc_client.get_balance(&pubkey)?;
-    Ok(build_balance_message(balance, use_lamports_unit, true))
+    Ok(build_balance_message(balance, use_weis_unit, true))
 }
 
 pub fn process_confirm(
@@ -695,7 +695,7 @@ pub fn process_transfer(
         None
     };
 
-    let build_message = |lamports| {
+    let build_message = |weis| {
         let ixs = if let Some((base_pubkey, seed, program_id, from_pubkey)) = with_seed.as_ref() {
             vec![system_instruction::transfer_with_seed(
                 from_pubkey,
@@ -703,11 +703,11 @@ pub fn process_transfer(
                 seed.clone(),
                 program_id,
                 to,
-                lamports,
+                weis,
             )]
             .with_memo(memo)
         } else {
-            vec![system_instruction::transfer(&from_pubkey, to, lamports)].with_memo(memo)
+            vec![system_instruction::transfer(&from_pubkey, to, weis)].with_memo(memo)
         };
 
         if let Some(nonce_account) = &nonce_account {

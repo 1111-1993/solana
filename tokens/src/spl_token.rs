@@ -8,7 +8,7 @@ use {
         pubkey_from_spl_token, real_number_string, real_number_string_trimmed, spl_token_pubkey,
     },
     solana_client::rpc_client::RpcClient,
-    solana_sdk::{instruction::Instruction, message::Message, native_token::lamports_to_gth},
+    solana_sdk::{instruction::Instruction, message::Message, native_token::weis_to_gth},
     solana_transaction_status::parse_token::spl_token_instruction,
     spl_associated_token_account::{
         get_associated_token_address, instruction::create_associated_token_account,
@@ -104,7 +104,7 @@ pub fn check_spl_token_balances(
     if fee_payer_balance < fees + account_creation_amount {
         return Err(Error::InsufficientFunds(
             vec![FundingSource::FeePayer].into(),
-            lamports_to_gth(fees + account_creation_amount).to_string(),
+            weis_to_gth(fees + account_creation_amount).to_string(),
         ));
     }
     let source_token_account = client

@@ -103,7 +103,7 @@ pub fn serialize_parameters_unaligned(
             size += size_of::<u8>() // is_signer
                 + size_of::<u8>() // is_writable
                 + size_of::<Pubkey>() // key
-                + size_of::<u64>()  // lamports
+                + size_of::<u64>()  // weis
                 + size_of::<u64>()  // data len
                 + data_len // data
                 + size_of::<Pubkey>() // owner
@@ -136,7 +136,7 @@ pub fn serialize_parameters_unaligned(
                 .map_err(|_| InstructionError::InvalidArgument)?;
             v.write_all(borrowed_account.get_key().as_ref())
                 .map_err(|_| InstructionError::InvalidArgument)?;
-            v.write_u64::<LittleEndian>(borrowed_account.get_lamports())
+            v.write_u64::<LittleEndian>(borrowed_account.get_weis())
                 .map_err(|_| InstructionError::InvalidArgument)?;
             v.write_u64::<LittleEndian>(borrowed_account.get_data().len() as u64)
                 .map_err(|_| InstructionError::InvalidArgument)?;
@@ -183,12 +183,12 @@ pub fn deserialize_parameters_unaligned(
             start += size_of::<u8>(); // is_signer
             start += size_of::<u8>(); // is_writable
             start += size_of::<Pubkey>(); // key
-            let _ = borrowed_account.set_lamports(LittleEndian::read_u64(
+            let _ = borrowed_account.set_weis(LittleEndian::read_u64(
                 buffer
                     .get(start..)
                     .ok_or(InstructionError::InvalidArgument)?,
             ));
-            start += size_of::<u64>() // lamports
+            start += size_of::<u64>() // weis
                 + size_of::<u64>(); // data length
             let _ = borrowed_account.set_data(
                 buffer
@@ -228,7 +228,7 @@ pub fn serialize_parameters_aligned(
                 + 4 // padding to 128-bit aligned
                 + size_of::<Pubkey>()  // key
                 + size_of::<Pubkey>() // owner
-                + size_of::<u64>()  // lamports
+                + size_of::<u64>()  // weis
                 + size_of::<u64>()  // data len
                 + data_len
                 + MAX_PERMITTED_DATA_INCREASE
@@ -270,7 +270,7 @@ pub fn serialize_parameters_aligned(
                 .map_err(|_| InstructionError::InvalidArgument)?;
             v.write_all(borrowed_account.get_owner().as_ref())
                 .map_err(|_| InstructionError::InvalidArgument)?;
-            v.write_u64::<LittleEndian>(borrowed_account.get_lamports())
+            v.write_u64::<LittleEndian>(borrowed_account.get_weis())
                 .map_err(|_| InstructionError::InvalidArgument)?;
             v.write_u64::<LittleEndian>(borrowed_account.get_data().len() as u64)
                 .map_err(|_| InstructionError::InvalidArgument)?;
@@ -330,12 +330,12 @@ pub fn deserialize_parameters_aligned(
                     .ok_or(InstructionError::InvalidArgument)?,
             );
             start += size_of::<Pubkey>(); // owner
-            let _ = borrowed_account.set_lamports(LittleEndian::read_u64(
+            let _ = borrowed_account.set_weis(LittleEndian::read_u64(
                 buffer
                     .get(start..)
                     .ok_or(InstructionError::InvalidArgument)?,
             ));
-            start += size_of::<u64>(); // lamports
+            start += size_of::<u64>(); // weis
             let post_len = LittleEndian::read_u64(
                 buffer
                     .get(start..)
@@ -397,7 +397,7 @@ mod tests {
             (
                 program_id,
                 AccountSharedData::from(Account {
-                    lamports: 0,
+                    weis: 0,
                     data: vec![],
                     owner: bpf_loader::id(),
                     executable: true,
@@ -407,7 +407,7 @@ mod tests {
             (
                 solana_sdk::pubkey::new_rand(),
                 AccountSharedData::from(Account {
-                    lamports: 1,
+                    weis: 1,
                     data: vec![1u8, 2, 3, 4, 5],
                     owner: bpf_loader::id(),
                     executable: false,
@@ -417,7 +417,7 @@ mod tests {
             (
                 solana_sdk::pubkey::new_rand(),
                 AccountSharedData::from(Account {
-                    lamports: 2,
+                    weis: 2,
                     data: vec![11u8, 12, 13, 14, 15, 16, 17, 18, 19],
                     owner: bpf_loader::id(),
                     executable: true,
@@ -427,7 +427,7 @@ mod tests {
             (
                 solana_sdk::pubkey::new_rand(),
                 AccountSharedData::from(Account {
-                    lamports: 3,
+                    weis: 3,
                     data: vec![],
                     owner: bpf_loader::id(),
                     executable: false,
@@ -437,7 +437,7 @@ mod tests {
             (
                 solana_sdk::pubkey::new_rand(),
                 AccountSharedData::from(Account {
-                    lamports: 4,
+                    weis: 4,
                     data: vec![1u8, 2, 3, 4, 5],
                     owner: bpf_loader::id(),
                     executable: false,
@@ -447,7 +447,7 @@ mod tests {
             (
                 solana_sdk::pubkey::new_rand(),
                 AccountSharedData::from(Account {
-                    lamports: 5,
+                    weis: 5,
                     data: vec![11u8, 12, 13, 14, 15, 16, 17, 18, 19],
                     owner: bpf_loader::id(),
                     executable: true,
@@ -457,7 +457,7 @@ mod tests {
             (
                 solana_sdk::pubkey::new_rand(),
                 AccountSharedData::from(Account {
-                    lamports: 6,
+                    weis: 6,
                     data: vec![],
                     owner: bpf_loader::id(),
                     executable: false,
@@ -521,14 +521,14 @@ mod tests {
                 .get_account_at_index(index_in_transaction)
                 .unwrap()
                 .borrow();
-            assert_eq!(account.lamports(), account_info.lamports());
+            assert_eq!(account.weis(), account_info.weis());
             assert_eq!(account.data(), &account_info.data.borrow()[..]);
             assert_eq!(account.owner(), account_info.owner);
             assert_eq!(account.executable(), account_info.executable);
             assert_eq!(account.rent_epoch(), account_info.rent_epoch);
 
             assert_eq!(
-                (*account_info.lamports.borrow() as *const u64).align_offset(BPF_ALIGN_OF_U128),
+                (*account_info.weis.borrow() as *const u64).align_offset(BPF_ALIGN_OF_U128),
                 0
             );
             assert_eq!(
@@ -547,7 +547,7 @@ mod tests {
                 .get_account_at_index(index_in_transaction)
                 .unwrap()
                 .borrow_mut();
-            account.set_lamports(0);
+            account.set_weis(0);
             account.set_data(vec![0; 0]);
             account.set_owner(Pubkey::default());
         }
@@ -601,7 +601,7 @@ mod tests {
                 .get_account_at_index(index_in_transaction)
                 .unwrap()
                 .borrow();
-            assert_eq!(account.lamports(), account_info.lamports());
+            assert_eq!(account.weis(), account_info.weis());
             assert_eq!(account.data(), &account_info.data.borrow()[..]);
             assert_eq!(account.owner(), account_info.owner);
             assert_eq!(account.executable(), account_info.executable);
@@ -614,7 +614,7 @@ mod tests {
                 .get_account_at_index(index_in_transaction)
                 .unwrap()
                 .borrow_mut();
-            account.set_lamports(0);
+            account.set_weis(0);
             account.set_data(vec![0; 0]);
         }
         deserialize_parameters(
@@ -668,7 +668,7 @@ mod tests {
                 offset += size_of::<Pubkey>();
 
                 #[allow(clippy::cast_ptr_alignment)]
-                let lamports = Rc::new(RefCell::new(&mut *(input.add(offset) as *mut u64)));
+                let weis = Rc::new(RefCell::new(&mut *(input.add(offset) as *mut u64)));
                 offset += size_of::<u64>();
 
                 #[allow(clippy::cast_ptr_alignment)]
@@ -695,7 +695,7 @@ mod tests {
                     key,
                     is_signer,
                     is_writable,
-                    lamports,
+                    weis,
                     data,
                     owner,
                     executable,

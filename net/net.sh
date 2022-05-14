@@ -69,18 +69,18 @@ Operate a configured testnet
                                       - Override the default --hashes-per-tick for the cluster
    --no-airdrop
                                       - If set, disables the faucet keypair.  Nodes must be funded in genesis config
-   --faucet-lamports NUM_LAMPORTS_TO_MINT
-                                      - Override the default 500000000000000000 lamports minted in genesis
+   --faucet-weis NUM_WEIS_TO_MINT
+                                      - Override the default 500000000000000000 weis minted in genesis
    --extra-primordial-stakes NUM_EXTRA_PRIMORDIAL_STAKES
                                       - Number of extra nodes to be initially staked in genesis.
                                         Implies --wait-for-supermajority 1 --async-node-init and the supermajority
                                         wait slot may be overridden with the corresponding flag
-   --internal-nodes-stake-lamports NUM_LAMPORTS_PER_NODE
+   --internal-nodes-stake-weis NUM_WEIS_PER_NODE
                                       - Amount to stake internal nodes.
-   --internal-nodes-lamports NUM_LAMPORTS_PER_NODE
+   --internal-nodes-weis NUM_WEIS_PER_NODE
                                       - Amount to fund internal nodes in genesis config.
    --external-accounts-file FILE_PATH
-                                      - A YML file with a list of account pubkeys and corresponding lamport balances
+                                      - A YML file with a list of account pubkeys and corresponding wei balances
                                         in genesis config for external nodes
    --no-snapshot-fetch
                                       - If set, disables booting validators from a snapshot
@@ -304,8 +304,8 @@ startBootstrapLeader() {
          $failOnValidatorBootupFailure \
          \"$remoteExternalPrimordialAccountsFile\" \
          \"$maybeDisableAirdrops\" \
-         \"$internalNodesStakeLamports\" \
-         \"$internalNodesLamports\" \
+         \"$internalNodesStakeWeis\" \
+         \"$internalNodesWeis\" \
          $nodeIndex \
          ${#clientIpList[@]} \"$benchTpsExtraArgs\" \
          \"$genesisOptions\" \
@@ -376,8 +376,8 @@ startNode() {
          $failOnValidatorBootupFailure \
          \"$remoteExternalPrimordialAccountsFile\" \
          \"$maybeDisableAirdrops\" \
-         \"$internalNodesStakeLamports\" \
-         \"$internalNodesLamports\" \
+         \"$internalNodesStakeWeis\" \
+         \"$internalNodesWeis\" \
          $nodeIndex \
          ${#clientIpList[@]} \"$benchTpsExtraArgs\" \
          \"$genesisOptions\" \
@@ -772,8 +772,8 @@ genesisOptions=
 numValidatorsRequested=
 externalPrimordialAccountsFile=
 remoteExternalPrimordialAccountsFile=
-internalNodesStakeLamports=
-internalNodesLamports=
+internalNodesStakeWeis=
+internalNodesWeis=
 maybeNoSnapshot=""
 maybeLimitLedgerSize=""
 maybeSkipLedgerVerify=""
@@ -809,10 +809,10 @@ while [[ -n $1 ]]; do
     elif [[ $1 = --slots-per-epoch ]]; then
       genesisOptions="$genesisOptions $1 $2"
       shift 2
-    elif [[ $1 = --target-lamports-per-signature ]]; then
+    elif [[ $1 = --target-weis-per-signature ]]; then
       genesisOptions="$genesisOptions $1 $2"
       shift 2
-    elif [[ $1 = --faucet-lamports ]]; then
+    elif [[ $1 = --faucet-weis ]]; then
       genesisOptions="$genesisOptions $1 $2"
       shift 2
     elif [[ $1 = --cluster-type ]]; then
@@ -853,11 +853,11 @@ while [[ -n $1 ]]; do
     elif [[ $1 = --platform ]]; then
       updatePlatforms="$updatePlatforms $2"
       shift 2
-    elif [[ $1 = --internal-nodes-stake-lamports ]]; then
-      internalNodesStakeLamports="$2"
+    elif [[ $1 = --internal-nodes-stake-weis ]]; then
+      internalNodesStakeWeis="$2"
       shift 2
-    elif [[ $1 = --internal-nodes-lamports ]]; then
-      internalNodesLamports="$2"
+    elif [[ $1 = --internal-nodes-weis ]]; then
+      internalNodesWeis="$2"
       shift 2
     elif [[ $1 = --external-accounts-file ]]; then
       externalPrimordialAccountsFile="$2"

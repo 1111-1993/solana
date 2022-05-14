@@ -132,9 +132,9 @@ const renderAccountRow = (
         <Address pubkey={account.address} link />
       </td>
       <td className="text-end">
-        <GthBalance lamports={account.lamports} maximumFractionDigits={0} />
+        <GthBalance weis={account.weis} maximumFractionDigits={0} />
       </td>
-      <td className="text-end">{`${((100 * account.lamports) / supply).toFixed(
+      <td className="text-end">{`${((100 * account.weis) / supply).toFixed(
         3
       )}%`}</td>
     </tr>

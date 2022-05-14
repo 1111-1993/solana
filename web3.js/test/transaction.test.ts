@@ -128,7 +128,7 @@ describe('Transaction', () => {
       SystemProgram.transfer({
         fromPubkey: accountFrom.publicKey,
         toPubkey: accountTo.publicKey,
-        lamports: 10,
+        weis: 10,
       }),
     );
 
@@ -143,7 +143,7 @@ describe('Transaction', () => {
     const transfer = SystemProgram.transfer({
       fromPubkey: account1.publicKey,
       toPubkey: account2.publicKey,
-      lamports: 123,
+      weis: 123,
     });
 
     const transaction = new Transaction({recentBlockhash}).add(transfer);
@@ -252,12 +252,12 @@ describe('Transaction', () => {
     const transfer1 = SystemProgram.transfer({
       fromPubkey: account1.publicKey,
       toPubkey: account2.publicKey,
-      lamports: 123,
+      weis: 123,
     });
     const transfer2 = SystemProgram.transfer({
       fromPubkey: account2.publicKey,
       toPubkey: account1.publicKey,
-      lamports: 123,
+      weis: 123,
     });
 
     const orgTransaction = new Transaction({recentBlockhash}).add(
@@ -281,12 +281,12 @@ describe('Transaction', () => {
     const transfer1 = SystemProgram.transfer({
       fromPubkey: account1.publicKey,
       toPubkey: account2.publicKey,
-      lamports: 123,
+      weis: 123,
     });
     const transfer2 = SystemProgram.transfer({
       fromPubkey: account1.publicKey,
       toPubkey: account2.publicKey,
-      lamports: 123,
+      weis: 123,
     });
 
     const orgTransaction = new Transaction({recentBlockhash}).add(
@@ -314,7 +314,7 @@ describe('Transaction', () => {
       SystemProgram.transfer({
         fromPubkey: account1.publicKey,
         toPubkey: account2.publicKey,
-        lamports: 123,
+        weis: 123,
       }),
     );
     transferTransaction.sign(account1);
@@ -357,7 +357,7 @@ describe('Transaction', () => {
     const transfer = SystemProgram.transfer({
       fromPubkey: sender.publicKey,
       toPubkey: recipient,
-      lamports: 49,
+      weis: 49,
     });
     const expectedTransaction = new Transaction({
       recentBlockhash,
@@ -420,7 +420,7 @@ describe('Transaction', () => {
     const transfer = SystemProgram.transfer({
       fromPubkey: sender.publicKey,
       toPubkey: recipient,
-      lamports: 49,
+      weis: 49,
     });
     const expectedTransaction = new Transaction({recentBlockhash}).add(
       transfer,

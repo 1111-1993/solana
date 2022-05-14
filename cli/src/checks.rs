@@ -5,7 +5,7 @@ use {
         rpc_client::RpcClient,
     },
     solana_sdk::{
-        commitment_config::CommitmentConfig, message::Message, native_token::lamports_to_gth,
+        commitment_config::CommitmentConfig, message::Message, native_token::weis_to_gth,
         pubkey::Pubkey,
     },
 };
@@ -78,13 +78,13 @@ pub fn check_account_for_spend_multiple_fees_with_commitment(
     {
         if balance > 0 {
             return Err(CliError::InsufficientFundsForSpendAndFee(
-                lamports_to_gth(balance),
-                lamports_to_gth(fee),
+                weis_to_gth(balance),
+                weis_to_gth(fee),
                 *account_pubkey,
             ));
         } else {
             return Err(CliError::InsufficientFundsForFee(
-                lamports_to_gth(fee),
+                weis_to_gth(fee),
                 *account_pubkey,
             ));
         }
@@ -123,10 +123,10 @@ pub fn check_account_for_balance_with_commitment(
     balance: u64,
     commitment: CommitmentConfig,
 ) -> ClientResult<bool> {
-    let lamports = rpc_client
+    let weis = rpc_client
         .get_balance_with_commitment(account_pubkey, commitment)?
         .value;
-    if lamports != 0 && lamports >= balance {
+    if weis != 0 && weis >= balance {
         return Ok(true);
     }
     Ok(false)

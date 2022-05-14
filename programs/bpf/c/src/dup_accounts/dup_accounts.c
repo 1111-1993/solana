@@ -31,20 +31,20 @@ extern uint64_t entrypoint(const uint8_t *input) {
     accounts[3].data[0] += 2;
     break;
   case (4):
-    gth_log("modify first account lamports");
-    *accounts[1].lamports -= 1;
-    *accounts[2].lamports += 1;
+    gth_log("modify first account weis");
+    *accounts[1].weis -= 1;
+    *accounts[2].weis += 1;
     break;
   case (5):
-    gth_log("modify first account lamports");
-    *accounts[1].lamports -= 2;
-    *accounts[3].lamports += 2;
+    gth_log("modify first account weis");
+    *accounts[1].weis -= 2;
+    *accounts[3].weis += 2;
     break;
   case (6):
-    gth_log("modify both account lamports");
-    *accounts[1].lamports -= 3;
-    *accounts[2].lamports += 1;
-    *accounts[3].lamports += 2;
+    gth_log("modify both account weis");
+    *accounts[1].weis -= 3;
+    *accounts[2].weis += 1;
+    *accounts[3].weis += 2;
     break;
   case (7):
     gth_log("check account (0,1,2,3) privs");

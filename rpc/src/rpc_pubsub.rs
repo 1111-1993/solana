@@ -904,7 +904,7 @@ mod tests {
                    "context": { "slot": 1 },
                    "value": {
                        "owner": stake_program_id.to_string(),
-                       "lamports": 51,
+                       "weis": 51,
                        "data": [base64::encode(expected_data), encoding],
                        "executable": false,
                        "rentEpoch": 0,
@@ -1022,7 +1022,7 @@ mod tests {
                    "context": { "slot": 1 },
                    "value": {
                        "owner": system_program::id().to_string(),
-                       "lamports": 100,
+                       "weis": 100,
                        "data": expected_data,
                        "executable": false,
                        "rentEpoch": 0,
@@ -1200,7 +1200,7 @@ mod tests {
                    "context": { "slot": 1 },
                    "value": {
                        "owner": system_program::id().to_string(),
-                       "lamports": 100,
+                       "weis": 100,
                        "data": "",
                        "executable": false,
                        "rentEpoch": 0,

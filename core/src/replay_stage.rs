@@ -3868,9 +3868,9 @@ pub mod tests {
         }
 
         let leader_pubkey = solana_sdk::pubkey::new_rand();
-        let leader_lamports = 3;
+        let leader_weis = 3;
         let genesis_config_info =
-            create_genesis_config_with_leader(50, &leader_pubkey, leader_lamports);
+            create_genesis_config_with_leader(50, &leader_pubkey, leader_weis);
         let mut genesis_config = genesis_config_info.genesis_config;
         let leader_voting_pubkey = genesis_config_info.voting_keypair.pubkey();
         genesis_config.epoch_schedule.warmup = false;
@@ -3927,7 +3927,7 @@ pub mod tests {
             ReplayStage::update_commitment_cache(
                 arc_bank.clone(),
                 0,
-                leader_lamports,
+                leader_weis,
                 &lockouts_sender,
             );
             arc_bank.freeze();
@@ -3948,7 +3948,7 @@ pub mod tests {
         }
 
         let mut expected0 = BlockCommitment::default();
-        expected0.increase_confirmation_stake(3, leader_lamports);
+        expected0.increase_confirmation_stake(3, leader_weis);
         assert_eq!(
             block_commitment_cache
                 .read()
@@ -3958,7 +3958,7 @@ pub mod tests {
             &expected0,
         );
         let mut expected1 = BlockCommitment::default();
-        expected1.increase_confirmation_stake(2, leader_lamports);
+        expected1.increase_confirmation_stake(2, leader_weis);
         assert_eq!(
             block_commitment_cache
                 .read()
@@ -3968,7 +3968,7 @@ pub mod tests {
             &expected1
         );
         let mut expected2 = BlockCommitment::default();
-        expected2.increase_confirmation_stake(1, leader_lamports);
+        expected2.increase_confirmation_stake(1, leader_weis);
         assert_eq!(
             block_commitment_cache
                 .read()
@@ -3985,8 +3985,8 @@ pub mod tests {
             mut genesis_config,
             mint_keypair,
             ..
-        } = create_genesis_config(solana_sdk::native_token::gth_to_lamports(1000.0));
-        genesis_config.rent.lamports_per_byte_year = 50;
+        } = create_genesis_config(solana_sdk::native_token::gth_to_weis(1000.0));
+        genesis_config.rent.weis_per_byte_year = 50;
         genesis_config.rent.exemption_threshold = 2.0;
         let (ledger_path, _) = create_new_tmp_ledger!(&genesis_config);
         {

@@ -76,11 +76,11 @@ impl BenchTpsClient for ThinClient {
     fn request_airdrop_with_blockhash(
         &self,
         pubkey: &Pubkey,
-        lamports: u64,
+        weis: u64,
         recent_blockhash: &Hash,
     ) -> Result<Signature> {
         self.rpc_client()
-            .request_airdrop_with_blockhash(pubkey, lamports, recent_blockhash)
+            .request_airdrop_with_blockhash(pubkey, weis, recent_blockhash)
             .map_err(|err| err.into())
     }
 }

@@ -357,7 +357,7 @@ impl BanksClient {
         })
     }
 
-    /// Return the balance in lamports of an account at the given address at the slot
+    /// Return the balance in weis of an account at the given address at the slot
     /// corresponding to the given commitment level.
     pub fn get_balance_with_commitment(
         &mut self,
@@ -365,10 +365,10 @@ impl BanksClient {
         commitment: CommitmentLevel,
     ) -> impl Future<Output = Result<u64, BanksClientError>> + '_ {
         self.get_account_with_commitment_and_context(context::current(), address, commitment)
-            .map(|result| Ok(result?.map(|x| x.lamports).unwrap_or(0)))
+            .map(|result| Ok(result?.map(|x| x.weis).unwrap_or(0)))
     }
 
-    /// Return the balance in lamports of an account at the given address at the time
+    /// Return the balance in weis of an account at the given address at the time
     /// of the most recent root slot.
     pub fn get_balance(
         &mut self,

@@ -157,8 +157,8 @@ pub fn gth_log_params(accounts: &[AccountInfo], data: &[u8]) {
         gth_log_64(0, 0, 0, 0, account.is_signer as u64);
         msg!("- Key");
         account.key.log();
-        msg!("- Lamports");
-        gth_log_64(0, 0, 0, 0, account.lamports());
+        msg!("- Weis");
+        gth_log_64(0, 0, 0, 0, account.weis());
         msg!("- Account data length");
         gth_log_64(0, 0, 0, 0, account.data_len() as u64);
         msg!("- Owner");

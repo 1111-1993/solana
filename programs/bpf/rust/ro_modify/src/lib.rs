@@ -27,7 +27,7 @@ struct GthAccountMeta {
 #[repr(C)]
 struct GthAccountInfo {
     key_addr: u64,
-    lamports_addr: u64,
+    weis_addr: u64,
     data_len: u64,
     data_addr: u64,
     owner_addr: u64,
@@ -70,7 +70,7 @@ const READONLY_ACCOUNTS: &[GthAccountInfo] = &[
         executable: true,
         key_addr: 0x400000010,
         owner_addr: 0x400000030,
-        lamports_addr: 0x400000050,
+        weis_addr: 0x400000050,
         rent_epoch: 0,
         data_addr: 0x400000060,
         data_len: 14,
@@ -81,7 +81,7 @@ const READONLY_ACCOUNTS: &[GthAccountInfo] = &[
         executable: false,
         key_addr: 0x400002880,
         owner_addr: 0x4000028A0,
-        lamports_addr: 0x4000028c0,
+        weis_addr: 0x4000028c0,
         rent_epoch: 0,
         data_addr: 0x4000028d0,
         data_len: 0,
@@ -104,8 +104,8 @@ fn check_preconditions(
             static_info.owner_addr
         );
         check!(
-            unsafe { *in_info.lamports.as_ptr() as *const u64 as u64 },
-            static_info.lamports_addr
+            unsafe { *in_info.weis.as_ptr() as *const u64 as u64 },
+            static_info.weis_addr
         );
         check!(
             in_info.try_borrow_data()?.as_ptr() as u64,

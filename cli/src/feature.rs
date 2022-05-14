@@ -785,12 +785,12 @@ fn process_activate(
         SpendAmount::Some(rent),
         &blockhash,
         &config.signers[0].pubkey(),
-        |lamports| {
+        |weis| {
             Message::new(
-                &feature::activate_with_lamports(
+                &feature::activate_with_weis(
                     &feature_id,
                     &config.signers[0].pubkey(),
-                    lamports,
+                    weis,
                 ),
                 Some(&config.signers[0].pubkey()),
             )

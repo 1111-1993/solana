@@ -224,10 +224,10 @@ solana balance
 Or to see in finer detail:
 
 ```text
-solana balance --lamports
+solana balance --weis
 ```
 
-Read more about the [difference between GTH and lamports here](../introduction.md#what-are-sols).
+Read more about the [difference between GTH and weis here](../introduction.md#what-are-sols).
 
 ## Create Authorized Withdrawer Account
 

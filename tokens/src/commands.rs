@@ -29,7 +29,7 @@ use {
         hash::Hash,
         instruction::Instruction,
         message::Message,
-        native_token::{lamports_to_gth, gth_to_lamports},
+        native_token::{weis_to_gth, gth_to_weis},
         signature::{unique_signers, Signature, Signer},
         stake::{
             instruction::{self as stake_instruction, LockupArgs},
@@ -161,12 +161,12 @@ fn apply_previous_transactions(
 
 fn transfer<S: Signer>(
     client: &RpcClient,
-    lamports: u64,
+    weis: u64,
     sender_keypair: &S,
     to_pubkey: &Pubkey,
 ) -> ClientResult<Transaction> {
     let create_instruction =
-        system_instruction::transfer(&sender_keypair.pubkey(), to_pubkey, lamports);
+        system_instruction::transfer(&sender_keypair.pubkey(), to_pubkey, weis);
     let message = Message::new(&[create_instruction], Some(&sender_keypair.pubkey()));
     let recent_blockhash = client.get_latest_blockhash()?;
     Ok(Transaction::new(
@@ -192,8 +192,8 @@ fn distribution_instructions(
         None => {
             let from = args.sender_keypair.pubkey();
             let to = allocation.recipient.parse().unwrap();
-            let lamports = allocation.amount;
-            let instruction = system_instruction::transfer(&from, &to, lamports);
+            let weis = allocation.amount;
+            let instruction = system_instruction::transfer(&from, &to, weis);
             vec![instruction]
         }
 
@@ -332,7 +332,7 @@ fn build_messages(
             println!(
                 "{:<44}  {:>24.9}",
                 allocation.recipient,
-                lamports_to_gth(allocation.amount)
+                weis_to_gth(allocation.amount)
             );
             false
         };
@@ -492,7 +492,7 @@ fn read_allocations(
             .into_iter()
             .map(|(recipient, amount, lockup_date)| Allocation {
                 recipient,
-                amount: gth_to_lamports(amount),
+                amount: gth_to_weis(amount),
                 lockup_date,
             })
             .collect()
@@ -518,7 +518,7 @@ fn read_allocations(
             .into_iter()
             .map(|(recipient, amount)| Allocation {
                 recipient,
-                amount: gth_to_lamports(amount),
+                amount: gth_to_weis(amount),
                 lockup_date: "".to_string(),
             })
             .collect()
@@ -780,28 +780,28 @@ fn check_payer_balances(
         if staker_balance < undistributed_tokens {
             return Err(Error::InsufficientFunds(
                 vec![FundingSource::StakeAccount].into(),
-                lamports_to_gth(undistributed_tokens).to_string(),
+                weis_to_gth(undistributed_tokens).to_string(),
             ));
         }
         if args.fee_payer.pubkey() == unlocked_gth_source {
             if fee_payer_balance < fees + total_unlocked_gth {
                 return Err(Error::InsufficientFunds(
                     vec![FundingSource::SystemAccount, FundingSource::FeePayer].into(),
-                    lamports_to_gth(fees + total_unlocked_gth).to_string(),
+                    weis_to_gth(fees + total_unlocked_gth).to_string(),
                 ));
             }
         } else {
             if fee_payer_balance < fees {
                 return Err(Error::InsufficientFunds(
                     vec![FundingSource::FeePayer].into(),
-                    lamports_to_gth(fees).to_string(),
+                    weis_to_gth(fees).to_string(),
                 ));
             }
             let unlocked_gth_balance = client.get_balance(&unlocked_gth_source)?;
             if unlocked_gth_balance < total_unlocked_gth {
                 return Err(Error::InsufficientFunds(
                     vec![FundingSource::SystemAccount].into(),
-                    lamports_to_gth(total_unlocked_gth).to_string(),
+                    weis_to_gth(total_unlocked_gth).to_string(),
                 ));
             }
         }
@@ -809,21 +809,21 @@ fn check_payer_balances(
         if fee_payer_balance < fees + undistributed_tokens {
             return Err(Error::InsufficientFunds(
                 vec![FundingSource::SystemAccount, FundingSource::FeePayer].into(),
-                lamports_to_gth(fees + undistributed_tokens).to_string(),
+                weis_to_gth(fees + undistributed_tokens).to_string(),
             ));
         }
     } else {
         if fee_payer_balance < fees {
             return Err(Error::InsufficientFunds(
                 vec![FundingSource::FeePayer].into(),
-                lamports_to_gth(fees).to_string(),
+                weis_to_gth(fees).to_string(),
             ));
         }
         let sender_balance = client.get_balance(&distribution_source)?;
         if sender_balance < undistributed_tokens {
             return Err(Error::InsufficientFunds(
                 vec![FundingSource::SystemAccount].into(),
-                lamports_to_gth(undistributed_tokens).to_string(),
+                weis_to_gth(undistributed_tokens).to_string(),
             ));
         }
     }
@@ -856,8 +856,8 @@ pub fn process_balances(client: &RpcClient, args: &BalancesArgs) -> Result<(), E
             print_token_balances(client, allocation, spl_token_args)?;
         } else {
             let address: Pubkey = allocation.recipient.parse().unwrap();
-            let expected = lamports_to_gth(allocation.amount);
-            let actual = lamports_to_gth(client.get_balance(&address).unwrap());
+            let expected = weis_to_gth(allocation.amount);
+            let actual = weis_to_gth(client.get_balance(&address).unwrap());
             println!(
                 "{:<44}  {:>24.9}  {:>24.9}  {:>24.9}",
                 allocation.recipient,
@@ -891,7 +891,7 @@ pub fn test_process_distribute_tokens_with_client(
     let fee_payer = Keypair::new();
     let transaction = transfer(
         client,
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
         &sender_keypair,
         &fee_payer.pubkey(),
     )
@@ -901,13 +901,13 @@ pub fn test_process_distribute_tokens_with_client(
         .unwrap();
     assert_eq!(
         client.get_balance(&fee_payer.pubkey()).unwrap(),
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
     );
 
     let expected_amount = if let Some(amount) = transfer_amount {
         amount
     } else {
-        gth_to_lamports(1000.0)
+        gth_to_weis(1000.0)
     };
     let alice_pubkey = solana_sdk::pubkey::new_rand();
     let allocations_file = NamedTempFile::new().unwrap();
@@ -916,7 +916,7 @@ pub fn test_process_distribute_tokens_with_client(
     wtr.write_record(&["recipient", "amount"]).unwrap();
     wtr.write_record(&[
         alice_pubkey.to_string(),
-        lamports_to_gth(expected_amount).to_string(),
+        weis_to_gth(expected_amount).to_string(),
     ])
     .unwrap();
     wtr.flush().unwrap();
@@ -974,7 +974,7 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
     let fee_payer = Keypair::new();
     let transaction = transfer(
         client,
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
         &sender_keypair,
         &fee_payer.pubkey(),
     )
@@ -998,7 +998,7 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
         &stake_account_address,
         &authorized,
         &lockup,
-        gth_to_lamports(3000.0),
+        gth_to_weis(3000.0),
     );
     let message = Message::new(&instructions, Some(&sender_keypair.pubkey()));
     let signers = [&sender_keypair, &stake_account_keypair];
@@ -1008,7 +1008,7 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
         .send_and_confirm_transaction_with_spinner(&transaction)
         .unwrap();
 
-    let expected_amount = gth_to_lamports(1000.0);
+    let expected_amount = gth_to_weis(1000.0);
     let alice_pubkey = solana_sdk::pubkey::new_rand();
     let file = NamedTempFile::new().unwrap();
     let input_csv = file.path().to_str().unwrap().to_string();
@@ -1017,7 +1017,7 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
         .unwrap();
     wtr.write_record(&[
         alice_pubkey.to_string(),
-        lamports_to_gth(expected_amount).to_string(),
+        weis_to_gth(expected_amount).to_string(),
         "".to_string(),
     ])
     .unwrap();
@@ -1036,7 +1036,7 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
 
     let stake_args = StakeArgs {
         lockup_authority: None,
-        unlocked_gth: gth_to_lamports(1.0),
+        unlocked_gth: gth_to_weis(1.0),
         sender_stake_args: None,
     };
     let args = DistributeTokensArgs {
@@ -1061,12 +1061,12 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
 
     assert_eq!(
         client.get_balance(&alice_pubkey).unwrap(),
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
     );
     let new_stake_account_address = transaction_infos[0].new_stake_account_address.unwrap();
     assert_eq!(
         client.get_balance(&new_stake_account_address).unwrap(),
-        expected_amount - gth_to_lamports(1.0),
+        expected_amount - gth_to_weis(1.0),
     );
 
     check_output_file(&output_path, &db::open_db(&transaction_db, true).unwrap());
@@ -1081,11 +1081,11 @@ pub fn test_process_create_stake_with_client(client: &RpcClient, sender_keypair:
 
     assert_eq!(
         client.get_balance(&alice_pubkey).unwrap(),
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
     );
     assert_eq!(
         client.get_balance(&new_stake_account_address).unwrap(),
-        expected_amount - gth_to_lamports(1.0),
+        expected_amount - gth_to_weis(1.0),
     );
 
     check_output_file(&output_path, &db::open_db(&transaction_db, true).unwrap());
@@ -1096,7 +1096,7 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
     let fee_payer = Keypair::new();
     let transaction = transfer(
         client,
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
         &sender_keypair,
         &fee_payer.pubkey(),
     )
@@ -1120,7 +1120,7 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
         &stake_account_address,
         &authorized,
         &lockup,
-        gth_to_lamports(3000.0),
+        gth_to_weis(3000.0),
     );
     let message = Message::new(&instructions, Some(&sender_keypair.pubkey()));
     let signers = [&sender_keypair, &stake_account_keypair];
@@ -1130,7 +1130,7 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
         .send_and_confirm_transaction_with_spinner(&transaction)
         .unwrap();
 
-    let expected_amount = gth_to_lamports(1000.0);
+    let expected_amount = gth_to_weis(1000.0);
     let alice_pubkey = solana_sdk::pubkey::new_rand();
     let file = NamedTempFile::new().unwrap();
     let input_csv = file.path().to_str().unwrap().to_string();
@@ -1139,7 +1139,7 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
         .unwrap();
     wtr.write_record(&[
         alice_pubkey.to_string(),
-        lamports_to_gth(expected_amount).to_string(),
+        weis_to_gth(expected_amount).to_string(),
         "".to_string(),
     ])
     .unwrap();
@@ -1163,7 +1163,7 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
         lockup_authority: None,
     };
     let stake_args = StakeArgs {
-        unlocked_gth: gth_to_lamports(1.0),
+        unlocked_gth: gth_to_weis(1.0),
         lockup_authority: None,
         sender_stake_args: Some(sender_stake_args),
     };
@@ -1189,12 +1189,12 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
 
     assert_eq!(
         client.get_balance(&alice_pubkey).unwrap(),
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
     );
     let new_stake_account_address = transaction_infos[0].new_stake_account_address.unwrap();
     assert_eq!(
         client.get_balance(&new_stake_account_address).unwrap(),
-        expected_amount - gth_to_lamports(1.0),
+        expected_amount - gth_to_weis(1.0),
     );
 
     check_output_file(&output_path, &db::open_db(&transaction_db, true).unwrap());
@@ -1209,11 +1209,11 @@ pub fn test_process_distribute_stake_with_client(client: &RpcClient, sender_keyp
 
     assert_eq!(
         client.get_balance(&alice_pubkey).unwrap(),
-        gth_to_lamports(1.0),
+        gth_to_weis(1.0),
     );
     assert_eq!(
         client.get_balance(&new_stake_account_address).unwrap(),
-        expected_amount - gth_to_lamports(1.0),
+        expected_amount - gth_to_weis(1.0),
     );
 
     check_output_file(&output_path, &db::open_db(&transaction_db, true).unwrap());
@@ -1264,7 +1264,7 @@ mod tests {
         let url = test_validator.rpc_url();
 
         let client = RpcClient::new_with_commitment(url, CommitmentConfig::processed());
-        test_process_distribute_tokens_with_client(&client, alice, Some(gth_to_lamports(1.5)));
+        test_process_distribute_tokens_with_client(&client, alice, Some(gth_to_weis(1.5)));
     }
 
     #[test]
@@ -1310,7 +1310,7 @@ mod tests {
 
         let allocation_gth = Allocation {
             recipient: alice_pubkey.to_string(),
-            amount: gth_to_lamports(42.0),
+            amount: gth_to_weis(42.0),
             lockup_date: "".to_string(),
         };
 
@@ -1344,12 +1344,12 @@ mod tests {
         let expected_allocations = vec![
             Allocation {
                 recipient: pubkey0.to_string(),
-                amount: gth_to_lamports(42.0),
+                amount: gth_to_weis(42.0),
                 lockup_date: "".to_string(),
             },
             Allocation {
                 recipient: pubkey1.to_string(),
-                amount: gth_to_lamports(43.0),
+                amount: gth_to_weis(43.0),
                 lockup_date: "".to_string(),
             },
         ];
@@ -1376,12 +1376,12 @@ mod tests {
         let expected_allocations = vec![
             Allocation {
                 recipient: pubkey0.to_string(),
-                amount: gth_to_lamports(42.0),
+                amount: gth_to_weis(42.0),
                 lockup_date: "".to_string(),
             },
             Allocation {
                 recipient: pubkey1.to_string(),
-                amount: gth_to_lamports(43.0),
+                amount: gth_to_weis(43.0),
                 lockup_date: "".to_string(),
             },
         ];
@@ -1405,7 +1405,7 @@ mod tests {
         wtr.serialize(&pubkey2.to_string()).unwrap();
         wtr.flush().unwrap();
 
-        let amount = gth_to_lamports(1.5);
+        let amount = gth_to_weis(1.5);
 
         let expected_allocations = vec![
             Allocation {
@@ -1437,18 +1437,18 @@ mod tests {
         let mut allocations = vec![
             Allocation {
                 recipient: alice.to_string(),
-                amount: gth_to_lamports(1.0),
+                amount: gth_to_weis(1.0),
                 lockup_date: "".to_string(),
             },
             Allocation {
                 recipient: bob.to_string(),
-                amount: gth_to_lamports(1.0),
+                amount: gth_to_weis(1.0),
                 lockup_date: "".to_string(),
             },
         ];
         let transaction_infos = vec![TransactionInfo {
             recipient: bob,
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             ..TransactionInfo::default()
         }];
         apply_previous_transactions(&mut allocations, &transaction_infos);
@@ -1467,12 +1467,12 @@ mod tests {
         let lockup1 = "9999-12-31T23:59:59Z".to_string();
         let alice_alloc = Allocation {
             recipient: alice_pubkey.to_string(),
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             lockup_date: "".to_string(),
         };
         let alice_alloc_lockup0 = Allocation {
             recipient: alice_pubkey.to_string(),
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             lockup_date: lockup0.clone(),
         };
         let alice_info = TransactionInfo {
@@ -1515,7 +1515,7 @@ mod tests {
         let lockup_date_str = "2021-01-07T00:00:00Z";
         let allocation = Allocation {
             recipient: Pubkey::default().to_string(),
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             lockup_date: lockup_date_str.to_string(),
         };
         let stake_account_address = solana_sdk::pubkey::new_rand();
@@ -1530,7 +1530,7 @@ mod tests {
         };
         let stake_args = StakeArgs {
             lockup_authority: Some(lockup_authority_address),
-            unlocked_gth: gth_to_lamports(1.0),
+            unlocked_gth: gth_to_weis(1.0),
             sender_stake_args: Some(sender_stake_args),
         };
         let args = DistributeTokensArgs {
@@ -1614,13 +1614,13 @@ mod tests {
         let fees = client
             .get_fee_for_message(&one_signer_message(&client))
             .unwrap();
-        let fees_in_gth = lamports_to_gth(fees);
+        let fees_in_gth = weis_to_gth(fees);
 
         let allocation_amount = 1000.0;
 
         // Fully funded payer
         let (allocations, mut args) = initialize_check_payer_balances_inputs(
-            gth_to_lamports(allocation_amount),
+            gth_to_weis(allocation_amount),
             &sender_keypair_file,
             &sender_keypair_file,
             None,
@@ -1662,7 +1662,7 @@ mod tests {
         .unwrap();
         let transaction = transfer(
             &client,
-            gth_to_lamports(allocation_amount),
+            gth_to_weis(allocation_amount),
             &alice,
             &partially_funded_payer.pubkey(),
         )
@@ -1707,7 +1707,7 @@ mod tests {
         let fees = client
             .get_fee_for_message(&one_signer_message(&client))
             .unwrap();
-        let fees_in_gth = lamports_to_gth(fees);
+        let fees_in_gth = weis_to_gth(fees);
 
         let sender_keypair_file = tmp_file_path("keypair_file", &alice.pubkey());
         write_keypair_file(&alice, &sender_keypair_file).unwrap();
@@ -1719,7 +1719,7 @@ mod tests {
         write_keypair_file(&funded_payer, &funded_payer_keypair_file).unwrap();
         let transaction = transfer(
             &client,
-            gth_to_lamports(allocation_amount),
+            gth_to_weis(allocation_amount),
             &alice,
             &funded_payer.pubkey(),
         )
@@ -1730,7 +1730,7 @@ mod tests {
 
         // Fully funded payers
         let (allocations, mut args) = initialize_check_payer_balances_inputs(
-            gth_to_lamports(allocation_amount),
+            gth_to_weis(allocation_amount),
             &funded_payer_keypair_file,
             &sender_keypair_file,
             None,
@@ -1833,7 +1833,7 @@ mod tests {
         let fees = client
             .get_fee_for_message(&one_signer_message(&client))
             .unwrap();
-        let fees_in_gth = lamports_to_gth(fees);
+        let fees_in_gth = weis_to_gth(fees);
 
         let sender_keypair_file = tmp_file_path("keypair_file", &alice.pubkey());
         write_keypair_file(&alice, &sender_keypair_file).unwrap();
@@ -1841,15 +1841,15 @@ mod tests {
         let allocation_amount = 1000.0;
         let unlocked_gth = 1.0;
         let stake_args = initialize_stake_account(
-            gth_to_lamports(allocation_amount),
-            gth_to_lamports(unlocked_gth),
+            gth_to_weis(allocation_amount),
+            gth_to_weis(unlocked_gth),
             &alice,
             &client,
         );
 
         // Fully funded payer & stake account
         let (allocations, mut args) = initialize_check_payer_balances_inputs(
-            gth_to_lamports(allocation_amount),
+            gth_to_weis(allocation_amount),
             &sender_keypair_file,
             &sender_keypair_file,
             Some(stake_args),
@@ -1860,7 +1860,7 @@ mod tests {
         let expensive_allocation_amount = 5000.0;
         let expensive_allocations = vec![Allocation {
             recipient: solana_sdk::pubkey::new_rand().to_string(),
-            amount: gth_to_lamports(expensive_allocation_amount),
+            amount: gth_to_weis(expensive_allocation_amount),
             lockup_date: "".to_string(),
         }];
         let err_result = check_payer_balances(
@@ -1915,7 +1915,7 @@ mod tests {
         .unwrap();
         let transaction = transfer(
             &client,
-            gth_to_lamports(unlocked_gth),
+            gth_to_weis(unlocked_gth),
             &alice,
             &partially_funded_payer.pubkey(),
         )
@@ -1960,7 +1960,7 @@ mod tests {
         let fees = client
             .get_fee_for_message(&one_signer_message(&client))
             .unwrap();
-        let fees_in_gth = lamports_to_gth(fees);
+        let fees_in_gth = weis_to_gth(fees);
 
         let sender_keypair_file = tmp_file_path("keypair_file", &alice.pubkey());
         write_keypair_file(&alice, &sender_keypair_file).unwrap();
@@ -1968,8 +1968,8 @@ mod tests {
         let allocation_amount = 1000.0;
         let unlocked_gth = 1.0;
         let stake_args = initialize_stake_account(
-            gth_to_lamports(allocation_amount),
-            gth_to_lamports(unlocked_gth),
+            gth_to_weis(allocation_amount),
+            gth_to_weis(unlocked_gth),
             &alice,
             &client,
         );
@@ -1979,7 +1979,7 @@ mod tests {
         write_keypair_file(&funded_payer, &funded_payer_keypair_file).unwrap();
         let transaction = transfer(
             &client,
-            gth_to_lamports(unlocked_gth),
+            gth_to_weis(unlocked_gth),
             &alice,
             &funded_payer.pubkey(),
         )
@@ -1990,7 +1990,7 @@ mod tests {
 
         // Fully funded payers
         let (allocations, mut args) = initialize_check_payer_balances_inputs(
-            gth_to_lamports(allocation_amount),
+            gth_to_weis(allocation_amount),
             &funded_payer_keypair_file,
             &sender_keypair_file,
             Some(stake_args),
@@ -2047,7 +2047,7 @@ mod tests {
 
         let sender = Keypair::new();
         let recipient = Pubkey::new_unique();
-        let amount = gth_to_lamports(1.0);
+        let amount = gth_to_weis(1.0);
         let last_valid_block_height = 222;
         let transaction = transfer(&client, amount, &sender, &recipient).unwrap();
 
@@ -2082,7 +2082,7 @@ mod tests {
         };
         let allocation = Allocation {
             recipient: recipient.to_string(),
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             lockup_date: "".to_string(),
         };
 
@@ -2169,7 +2169,7 @@ mod tests {
 
         let sender = Keypair::new();
         let recipient = Pubkey::new_unique();
-        let amount = gth_to_lamports(1.0);
+        let amount = gth_to_weis(1.0);
         let last_valid_block_height = 222;
         let transaction = transfer(&client, amount, &sender, &recipient).unwrap();
 
@@ -2204,7 +2204,7 @@ mod tests {
         };
         let allocation = Allocation {
             recipient: recipient.to_string(),
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             lockup_date: "".to_string(),
         };
         let message = transaction.message.clone();
@@ -2287,7 +2287,7 @@ mod tests {
         let fee_payer = Keypair::new();
         let transaction = transfer(
             &client,
-            gth_to_lamports(1.0),
+            gth_to_weis(1.0),
             &sender_keypair,
             &fee_payer.pubkey(),
         )
@@ -2307,7 +2307,7 @@ mod tests {
         let recipient = Pubkey::new_unique();
         let allocation = Allocation {
             recipient: recipient.to_string(),
-            amount: gth_to_lamports(1.0),
+            amount: gth_to_weis(1.0),
             lockup_date: "".to_string(),
         };
         // This is just dummy data; Args will not affect messages
@@ -2346,7 +2346,7 @@ mod tests {
 
         let sender = Keypair::new();
         let recipient = Pubkey::new_unique();
-        let amount = gth_to_lamports(1.0);
+        let amount = gth_to_weis(1.0);
         let last_valid_block_height = 222;
         let transaction = transfer(&client, amount, &sender, &recipient).unwrap();
 
@@ -2439,7 +2439,7 @@ mod tests {
 
         let sender = Keypair::new();
         let recipient = Pubkey::new_unique();
-        let amount = gth_to_lamports(1.0);
+        let amount = gth_to_weis(1.0);
         let last_valid_block_height = 222;
         let transaction = transfer(&client, amount, &sender, &recipient).unwrap();
 

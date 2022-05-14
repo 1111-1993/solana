@@ -21,13 +21,13 @@ use {
 fn do_nested_invokes(num_nested_invokes: u64, accounts: &[AccountInfo]) -> ProgramResult {
     assert!(accounts[ARGUMENT_INDEX].is_signer);
 
-    let pre_argument_lamports = accounts[ARGUMENT_INDEX].lamports();
-    let pre_invoke_argument_lamports = accounts[INVOKED_ARGUMENT_INDEX].lamports();
+    let pre_argument_weis = accounts[ARGUMENT_INDEX].weis();
+    let pre_invoke_argument_weis = accounts[INVOKED_ARGUMENT_INDEX].weis();
     {
-        let mut lamports = (*accounts[ARGUMENT_INDEX].lamports).borrow_mut();
-        **lamports = (*lamports).saturating_sub(5);
-        let mut lamports = (*accounts[INVOKED_ARGUMENT_INDEX].lamports).borrow_mut();
-        **lamports = (*lamports).saturating_add(5);
+        let mut weis = (*accounts[ARGUMENT_INDEX].weis).borrow_mut();
+        **weis = (*weis).saturating_sub(5);
+        let mut weis = (*accounts[INVOKED_ARGUMENT_INDEX].weis).borrow_mut();
+        **weis = (*weis).saturating_add(5);
     }
 
     msg!("First invoke");
@@ -45,14 +45,14 @@ fn do_nested_invokes(num_nested_invokes: u64, accounts: &[AccountInfo]) -> Progr
     invoke(&instruction, accounts)?;
 
     assert_eq!(
-        accounts[ARGUMENT_INDEX].lamports(),
-        pre_argument_lamports
+        accounts[ARGUMENT_INDEX].weis(),
+        pre_argument_weis
             .saturating_sub(5)
             .saturating_add(2_u64.saturating_mul(num_nested_invokes))
     );
     assert_eq!(
-        accounts[INVOKED_ARGUMENT_INDEX].lamports(),
-        pre_invoke_argument_lamports
+        accounts[INVOKED_ARGUMENT_INDEX].weis(),
+        pre_invoke_argument_weis
             .saturating_add(5)
             .saturating_sub(2_u64.saturating_mul(num_nested_invokes))
     );
@@ -75,8 +75,8 @@ fn process_instruction(
         TEST_SUCCESS => {
             msg!("Call system program create account");
             {
-                let from_lamports = accounts[FROM_INDEX].lamports();
-                let to_lamports = accounts[DERIVED_KEY1_INDEX].lamports();
+                let from_weis = accounts[FROM_INDEX].weis();
+                let to_weis = accounts[DERIVED_KEY1_INDEX].weis();
                 assert_eq!(accounts[DERIVED_KEY1_INDEX].data_len(), 0);
                 assert!(solana_program::system_program::check_id(
                     accounts[DERIVED_KEY1_INDEX].owner
@@ -96,12 +96,12 @@ fn process_instruction(
                 )?;
 
                 assert_eq!(
-                    accounts[FROM_INDEX].lamports(),
-                    from_lamports.saturating_sub(42)
+                    accounts[FROM_INDEX].weis(),
+                    from_weis.saturating_sub(42)
                 );
                 assert_eq!(
-                    accounts[DERIVED_KEY1_INDEX].lamports(),
-                    to_lamports.saturating_add(42)
+                    accounts[DERIVED_KEY1_INDEX].weis(),
+                    to_weis.saturating_add(42)
                 );
                 assert_eq!(program_id, accounts[DERIVED_KEY1_INDEX].owner);
                 assert_eq!(
@@ -119,8 +119,8 @@ fn process_instruction(
 
             msg!("Call system program transfer");
             {
-                let from_lamports = accounts[FROM_INDEX].lamports();
-                let to_lamports = accounts[DERIVED_KEY1_INDEX].lamports();
+                let from_weis = accounts[FROM_INDEX].weis();
+                let to_weis = accounts[DERIVED_KEY1_INDEX].weis();
                 let instruction = system_instruction::transfer(
                     accounts[FROM_INDEX].key,
                     accounts[DERIVED_KEY1_INDEX].key,
@@ -128,12 +128,12 @@ fn process_instruction(
                 );
                 invoke(&instruction, accounts)?;
                 assert_eq!(
-                    accounts[FROM_INDEX].lamports(),
-                    from_lamports.saturating_sub(1)
+                    accounts[FROM_INDEX].weis(),
+                    from_weis.saturating_sub(1)
                 );
                 assert_eq!(
-                    accounts[DERIVED_KEY1_INDEX].lamports(),
-                    to_lamports.saturating_add(1)
+                    accounts[DERIVED_KEY1_INDEX].weis(),
+                    to_weis.saturating_add(1)
                 );
             }
 
@@ -187,8 +187,8 @@ fn process_instruction(
                 invoke(&instruction, accounts)?;
 
                 {
-                    // writable but lamports borrow_mut'd
-                    let _ref_mut = accounts[writable].try_borrow_mut_lamports()?;
+                    // writable but weis borrow_mut'd
+                    let _ref_mut = accounts[writable].try_borrow_mut_weis()?;
                     assert_eq!(
                         invoke(&instruction, accounts),
                         Err(ProgramError::AccountBorrowFailed)
@@ -203,8 +203,8 @@ fn process_instruction(
                     );
                 }
                 {
-                    // writable but lamports borrow'd
-                    let _ref_mut = accounts[writable].try_borrow_lamports()?;
+                    // writable but weis borrow'd
+                    let _ref_mut = accounts[writable].try_borrow_weis()?;
                     assert_eq!(
                         invoke(&instruction, accounts),
                         Err(ProgramError::AccountBorrowFailed)
@@ -219,8 +219,8 @@ fn process_instruction(
                     );
                 }
                 {
-                    // readable but lamports borrow_mut'd
-                    let _ref_mut = accounts[readable].try_borrow_mut_lamports()?;
+                    // readable but weis borrow_mut'd
+                    let _ref_mut = accounts[readable].try_borrow_mut_weis()?;
                     assert_eq!(
                         invoke(&instruction, accounts),
                         Err(ProgramError::AccountBorrowFailed)
@@ -235,8 +235,8 @@ fn process_instruction(
                     );
                 }
                 {
-                    // readable but lamports borrow'd
-                    let _ref_mut = accounts[readable].try_borrow_lamports()?;
+                    // readable but weis borrow'd
+                    let _ref_mut = accounts[readable].try_borrow_weis()?;
                     invoke(&instruction, accounts)?;
                 }
                 {
@@ -363,8 +363,8 @@ fn process_instruction(
 
             msg!("Create account and init data");
             {
-                let from_lamports = accounts[FROM_INDEX].lamports();
-                let to_lamports = accounts[DERIVED_KEY2_INDEX].lamports();
+                let from_weis = accounts[FROM_INDEX].weis();
+                let to_weis = accounts[DERIVED_KEY2_INDEX].weis();
 
                 let instruction = create_instruction(
                     *accounts[INVOKED_PROGRAM_INDEX].key,
@@ -378,12 +378,12 @@ fn process_instruction(
                 invoke(&instruction, accounts)?;
 
                 assert_eq!(
-                    accounts[FROM_INDEX].lamports(),
-                    from_lamports.saturating_sub(1)
+                    accounts[FROM_INDEX].weis(),
+                    from_weis.saturating_sub(1)
                 );
                 assert_eq!(
-                    accounts[DERIVED_KEY2_INDEX].lamports(),
-                    to_lamports.saturating_add(1)
+                    accounts[DERIVED_KEY2_INDEX].weis(),
+                    to_weis.saturating_add(1)
                 );
                 let data = accounts[DERIVED_KEY2_INDEX].try_borrow_mut_data()?;
                 assert_eq!(data[0], 0x0e);
@@ -519,26 +519,26 @@ fn process_instruction(
             let ptr = accounts[FROM_INDEX].data.borrow().as_ptr() as u64 as *mut _;
             let len = accounts[FROM_INDEX].data_len();
             let data = unsafe { std::slice::from_raw_parts_mut(ptr, len) };
-            let mut lamports = accounts[FROM_INDEX].lamports();
+            let mut weis = accounts[FROM_INDEX].weis();
             let from_info =
-                AccountInfo::new(&pubkey, false, true, &mut lamports, data, &owner, false, 0);
+                AccountInfo::new(&pubkey, false, true, &mut weis, data, &owner, false, 0);
 
             let pubkey = *accounts[DERIVED_KEY1_INDEX].key;
             let owner = *accounts[DERIVED_KEY1_INDEX].owner;
             // Point to top edge of heap, attempt to allocate into unprivileged memory
             let data = unsafe { std::slice::from_raw_parts_mut(0x300007ff8 as *mut _, 0) };
-            let mut lamports = accounts[DERIVED_KEY1_INDEX].lamports();
+            let mut weis = accounts[DERIVED_KEY1_INDEX].weis();
             let derived_info =
-                AccountInfo::new(&pubkey, false, true, &mut lamports, data, &owner, false, 0);
+                AccountInfo::new(&pubkey, false, true, &mut weis, data, &owner, false, 0);
 
             let pubkey = *accounts[SYSTEM_PROGRAM_INDEX].key;
             let owner = *accounts[SYSTEM_PROGRAM_INDEX].owner;
             let ptr = accounts[SYSTEM_PROGRAM_INDEX].data.borrow().as_ptr() as u64 as *mut _;
             let len = accounts[SYSTEM_PROGRAM_INDEX].data_len();
             let data = unsafe { std::slice::from_raw_parts_mut(ptr, len) };
-            let mut lamports = accounts[SYSTEM_PROGRAM_INDEX].lamports();
+            let mut weis = accounts[SYSTEM_PROGRAM_INDEX].weis();
             let system_info =
-                AccountInfo::new(&pubkey, false, false, &mut lamports, data, &owner, true, 0);
+                AccountInfo::new(&pubkey, false, false, &mut weis, data, &owner, true, 0);
 
             let instruction = system_instruction::create_account(
                 accounts[FROM_INDEX].key,
@@ -628,20 +628,20 @@ fn process_instruction(
         TEST_NESTED_INVOKE_TOO_DEEP => {
             let _ = do_nested_invokes(5, accounts);
         }
-        TEST_EXECUTABLE_LAMPORTS => {
-            msg!("Test executable lamports");
+        TEST_EXECUTABLE_WEIS => {
+            msg!("Test executable weis");
             let mut accounts = accounts.to_vec();
 
-            // set account to executable and subtract lamports
+            // set account to executable and subtract weis
             accounts[ARGUMENT_INDEX].executable = true;
             {
-                let mut lamports = (*accounts[ARGUMENT_INDEX].lamports).borrow_mut();
-                **lamports = (*lamports).saturating_sub(1);
+                let mut weis = (*accounts[ARGUMENT_INDEX].weis).borrow_mut();
+                **weis = (*weis).saturating_sub(1);
             }
-            // add lamports to dest account
+            // add weis to dest account
             {
-                let mut lamports = (*accounts[DERIVED_KEY1_INDEX].lamports).borrow_mut();
-                **lamports = (*lamports).saturating_add(1);
+                let mut weis = (*accounts[DERIVED_KEY1_INDEX].weis).borrow_mut();
+                **weis = (*weis).saturating_add(1);
             }
 
             let instruction = create_instruction(
@@ -650,14 +650,14 @@ fn process_instruction(
                     (accounts[ARGUMENT_INDEX].key, true, false),
                     (accounts[DERIVED_KEY1_INDEX].key, true, false),
                 ],
-                vec![ADD_LAMPORTS, 0, 0, 0],
+                vec![ADD_WEIS, 0, 0, 0],
             );
             let _ = invoke(&instruction, &accounts);
 
             // reset executable account
             {
-                let mut lamports = (*accounts[ARGUMENT_INDEX].lamports).borrow_mut();
-                **lamports = (*lamports).saturating_add(1);
+                let mut weis = (*accounts[ARGUMENT_INDEX].weis).borrow_mut();
+                **weis = (*weis).saturating_add(1);
             }
         }
         TEST_CALL_PRECOMPILE => {
@@ -666,11 +666,11 @@ fn process_instruction(
                 Instruction::new_with_bytes(*accounts[ED25519_PROGRAM_INDEX].key, &[], vec![]);
             invoke(&instruction, accounts)?;
         }
-        ADD_LAMPORTS => {
+        ADD_WEIS => {
             // make sure the total balance is fine
             {
-                let mut lamports = (*accounts[0].lamports).borrow_mut();
-                **lamports = (*lamports).saturating_add(1);
+                let mut weis = (*accounts[0].weis).borrow_mut();
+                **weis = (*weis).saturating_add(1);
             }
         }
         TEST_RETURN_DATA_TOO_LARGE => {

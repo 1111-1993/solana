@@ -12,15 +12,15 @@ pub struct Data {
 }
 
 impl Data {
-    pub fn new(authority: Pubkey, blockhash: Hash, lamports_per_signature: u64) -> Self {
+    pub fn new(authority: Pubkey, blockhash: Hash, weis_per_signature: u64) -> Self {
         Data {
             authority,
             blockhash,
-            fee_calculator: FeeCalculator::new(lamports_per_signature),
+            fee_calculator: FeeCalculator::new(weis_per_signature),
         }
     }
-    pub fn get_lamports_per_signature(&self) -> u64 {
-        self.fee_calculator.lamports_per_signature
+    pub fn get_weis_per_signature(&self) -> u64 {
+        self.fee_calculator.weis_per_signature
     }
 }
 
@@ -40,9 +40,9 @@ impl State {
     pub fn new_initialized(
         authority: &Pubkey,
         blockhash: &Hash,
-        lamports_per_signature: u64,
+        weis_per_signature: u64,
     ) -> Self {
-        Self::Initialized(Data::new(*authority, *blockhash, lamports_per_signature))
+        Self::Initialized(Data::new(*authority, *blockhash, weis_per_signature))
     }
     pub fn size() -> usize {
         let data = Versions::new_current(State::Initialized(Data::default()));

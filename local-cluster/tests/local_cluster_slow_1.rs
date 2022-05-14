@@ -838,7 +838,7 @@ fn test_switch_threshold_uses_gossip_votes() {
 fn test_listener_startup() {
     let mut config = ClusterConfig {
         node_stakes: vec![100; 1],
-        cluster_lamports: 1_000,
+        cluster_weis: 1_000,
         num_listeners: 3,
         validator_configs: make_identical_validator_configs(
             &ValidatorConfig::default_for_test(),

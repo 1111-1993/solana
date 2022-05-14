@@ -48,10 +48,10 @@ impl BlockhashQueue {
         self.last_hash.expect("no hash has been set")
     }
 
-    pub fn get_lamports_per_signature(&self, hash: &Hash) -> Option<u64> {
+    pub fn get_weis_per_signature(&self, hash: &Hash) -> Option<u64> {
         self.ages
             .get(hash)
-            .map(|hash_age| hash_age.fee_calculator.lamports_per_signature)
+            .map(|hash_age| hash_age.fee_calculator.weis_per_signature)
     }
 
     /// Check if the age of the hash is within the max_age
@@ -74,11 +74,11 @@ impl BlockhashQueue {
         self.ages.get(hash).is_some()
     }
 
-    pub fn genesis_hash(&mut self, hash: &Hash, lamports_per_signature: u64) {
+    pub fn genesis_hash(&mut self, hash: &Hash, weis_per_signature: u64) {
         self.ages.insert(
             *hash,
             HashAge {
-                fee_calculator: FeeCalculator::new(lamports_per_signature),
+                fee_calculator: FeeCalculator::new(weis_per_signature),
                 hash_height: 0,
                 timestamp: timestamp(),
             },
@@ -91,7 +91,7 @@ impl BlockhashQueue {
         hash_height - age.hash_height <= max_age as u64
     }
 
-    pub fn register_hash(&mut self, hash: &Hash, lamports_per_signature: u64) {
+    pub fn register_hash(&mut self, hash: &Hash, weis_per_signature: u64) {
         self.hash_height += 1;
         let hash_height = self.hash_height;
 
@@ -105,7 +105,7 @@ impl BlockhashQueue {
         self.ages.insert(
             *hash,
             HashAge {
-                fee_calculator: FeeCalculator::new(lamports_per_signature),
+                fee_calculator: FeeCalculator::new(weis_per_signature),
                 hash_height,
                 timestamp: timestamp(),
             },
@@ -131,7 +131,7 @@ impl BlockhashQueue {
     #[allow(deprecated)]
     pub fn get_recent_blockhashes(&self) -> impl Iterator<Item = recent_blockhashes::IterItem> {
         (self.ages).iter().map(|(k, v)| {
-            recent_blockhashes::IterItem(v.hash_height, k, v.fee_calculator.lamports_per_signature)
+            recent_blockhashes::IterItem(v.hash_height, k, v.fee_calculator.weis_per_signature)
         })
     }
 
@@ -202,7 +202,7 @@ mod tests {
         let recent_blockhashes = blockhash_queue.get_recent_blockhashes();
         // Verify that the returned hashes are most recent
         #[allow(deprecated)]
-        for IterItem(_slot, hash, _lamports_per_signature) in recent_blockhashes {
+        for IterItem(_slot, hash, _weis_per_signature) in recent_blockhashes {
             assert_eq!(
                 Some(true),
                 blockhash_queue.check_hash_age(hash, MAX_RECENT_BLOCKHASHES)

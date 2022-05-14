@@ -18,7 +18,7 @@ programs, as well include instructions from on-chain programs.
 ## System Program
 
 Create new accounts, allocate account data, assign accounts to owning programs,
-transfer lamports from System Program owned accounts and pay transaction fees.
+transfer weis from System Program owned accounts and pay transaction fees.
 
 - Program id: `11111111111111111111111111111111`
 - Instructions: [SystemInstruction](https://docs.rs/solana-program/VERSION_FOR_DOCS_RS/solana_program/system_instruction/enum.SystemInstruction.html)

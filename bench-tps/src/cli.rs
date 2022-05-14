@@ -10,7 +10,7 @@ use {
     std::{net::SocketAddr, process::exit, time::Duration},
 };
 
-const NUM_LAMPORTS_PER_ACCOUNT_DEFAULT: u64 = solana_sdk::native_token::LAMPORTS_PER_GTH;
+const NUM_WEIS_PER_ACCOUNT_DEFAULT: u64 = solana_sdk::native_token::WEIS_PER_GTH;
 
 pub enum ExternalClientType {
     // Submits transactions to an Rpc node using an RpcClient
@@ -45,9 +45,9 @@ pub struct Config {
     pub client_ids_and_stake_file: String,
     pub write_to_client_file: bool,
     pub read_from_client_file: bool,
-    pub target_lamports_per_signature: u64,
+    pub target_weis_per_signature: u64,
     pub multi_client: bool,
-    pub num_lamports_per_account: u64,
+    pub num_weis_per_account: u64,
     pub target_slots_per_epoch: u64,
     pub target_node: Option<Pubkey>,
     pub external_client_type: ExternalClientType,
@@ -71,9 +71,9 @@ impl Default for Config {
             client_ids_and_stake_file: String::new(),
             write_to_client_file: false,
             read_from_client_file: false,
-            target_lamports_per_signature: FeeRateGovernor::default().target_lamports_per_signature,
+            target_weis_per_signature: FeeRateGovernor::default().target_weis_per_signature,
             multi_client: true,
-            num_lamports_per_account: NUM_LAMPORTS_PER_ACCOUNT_DEFAULT,
+            num_weis_per_account: NUM_WEIS_PER_ACCOUNT_DEFAULT,
             target_slots_per_epoch: 0,
             target_node: None,
             external_client_type: ExternalClientType::default(),
@@ -225,22 +225,22 @@ pub fn build_args<'a, 'b>(version: &'b str) -> App<'a, 'b> {
                 .help("Read client keys and stakes from the YAML file"),
         )
         .arg(
-            Arg::with_name("target_lamports_per_signature")
-                .long("target-lamports-per-signature")
-                .value_name("LAMPORTS")
+            Arg::with_name("target_weis_per_signature")
+                .long("target-weis-per-signature")
+                .value_name("WEIS")
                 .takes_value(true)
                 .help(
-                    "The cost in lamports that the cluster will charge for signature \
+                    "The cost in weis that the cluster will charge for signature \
                      verification when the cluster is operating at target-signatures-per-slot",
                 ),
         )
         .arg(
-            Arg::with_name("num_lamports_per_account")
-                .long("num-lamports-per-account")
-                .value_name("LAMPORTS")
+            Arg::with_name("num_weis_per_account")
+                .long("num-weis-per-account")
+                .value_name("WEIS")
                 .takes_value(true)
                 .help(
-                    "Number of lamports per account.",
+                    "Number of weis per account.",
                 ),
         )
         .arg(
@@ -376,8 +376,8 @@ pub fn extract_args(matches: &ArgMatches) -> Config {
         args.client_ids_and_stake_file = s.to_string();
     }
 
-    if let Some(v) = matches.value_of("target_lamports_per_signature") {
-        args.target_lamports_per_signature = v.to_string().parse().expect("can't parse lamports");
+    if let Some(v) = matches.value_of("target_weis_per_signature") {
+        args.target_weis_per_signature = v.to_string().parse().expect("can't parse weis");
     }
 
     args.multi_client = !matches.is_present("no-multi-client");
@@ -385,8 +385,8 @@ pub fn extract_args(matches: &ArgMatches) -> Config {
         .value_of("target_node")
         .map(|target_str| target_str.parse().unwrap());
 
-    if let Some(v) = matches.value_of("num_lamports_per_account") {
-        args.num_lamports_per_account = v.to_string().parse().expect("can't parse lamports");
+    if let Some(v) = matches.value_of("num_weis_per_account") {
+        args.num_weis_per_account = v.to_string().parse().expect("can't parse weis");
     }
 
     if let Some(t) = matches.value_of("target_slots_per_epoch") {

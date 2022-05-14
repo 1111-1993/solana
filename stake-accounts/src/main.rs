@@ -14,7 +14,7 @@ use {
     solana_client::{client_error::ClientError, rpc_client::RpcClient},
     solana_sdk::{
         message::Message,
-        native_token::lamports_to_gth,
+        native_token::weis_to_gth,
         pubkey::Pubkey,
         signature::{unique_signers, Signature, Signer},
         signers::Signers,
@@ -73,7 +73,7 @@ fn process_new_stake_account(
         &args.fee_payer.pubkey(),
         &args.funding_keypair.pubkey(),
         &args.base_keypair.pubkey(),
-        args.lamports,
+        args.weis,
         &args.stake_authority,
         &args.withdraw_authority,
         &Pubkey::default(),
@@ -261,8 +261,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 args.num_accounts,
             );
             let balances = get_balances(&client, addresses)?;
-            let lamports: u64 = balances.into_iter().map(|(_, bal)| bal).sum();
-            let gth = lamports_to_gth(lamports);
+            let weis: u64 = balances.into_iter().map(|(_, bal)| bal).sum();
+            let gth = weis_to_gth(weis);
             println!("{} GTH", gth);
         }
         Command::Authorize(args) => {

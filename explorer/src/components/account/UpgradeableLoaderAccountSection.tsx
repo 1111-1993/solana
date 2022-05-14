@@ -107,7 +107,7 @@ export function UpgradeableProgramSection({
         <tr>
           <td>Balance (GTH)</td>
           <td className="text-lg-end text-uppercase">
-            <GthBalance lamports={account.lamports || 0} />
+            <GthBalance weis={account.weis || 0} />
           </td>
         </tr>
         <tr>
@@ -206,7 +206,7 @@ export function UpgradeableProgramDataSection({
         <tr>
           <td>Balance (GTH)</td>
           <td className="text-lg-end text-uppercase">
-            <GthBalance lamports={account.lamports || 0} />
+            <GthBalance weis={account.weis || 0} />
           </td>
         </tr>
         {account.details?.space !== undefined && (
@@ -280,7 +280,7 @@ export function UpgradeableProgramBufferSection({
         <tr>
           <td>Balance (GTH)</td>
           <td className="text-lg-end text-uppercase">
-            <GthBalance lamports={account.lamports || 0} />
+            <GthBalance weis={account.weis || 0} />
           </td>
         </tr>
         {account.details?.space !== undefined && (

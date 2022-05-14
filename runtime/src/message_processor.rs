@@ -62,7 +62,7 @@ impl MessageProcessor {
         timings: &mut ExecuteTimings,
         sysvar_cache: &SysvarCache,
         blockhash: Hash,
-        lamports_per_signature: u64,
+        weis_per_signature: u64,
         current_accounts_data_len: u64,
         accumulated_consumed_units: &mut u64,
     ) -> Result<ProcessedMessageInfo, TransactionError> {
@@ -76,7 +76,7 @@ impl MessageProcessor {
             executors,
             feature_set,
             blockhash,
-            lamports_per_signature,
+            weis_per_signature,
             current_accounts_data_len,
         );
 
@@ -187,7 +187,7 @@ mod tests {
         #[derive(Serialize, Deserialize)]
         enum MockSystemInstruction {
             Correct,
-            TransferLamports { lamports: u64 },
+            TransferWeis { weis: u64 },
             ChangeData { data: u8 },
         }
 
@@ -201,13 +201,13 @@ mod tests {
             if let Ok(instruction) = bincode::deserialize(data) {
                 match instruction {
                     MockSystemInstruction::Correct => Ok(()),
-                    MockSystemInstruction::TransferLamports { lamports } => {
+                    MockSystemInstruction::TransferWeis { weis } => {
                         instruction_context
                             .try_borrow_instruction_account(transaction_context, 0)?
-                            .checked_sub_lamports(lamports)?;
+                            .checked_sub_weis(weis)?;
                         instruction_context
                             .try_borrow_instruction_account(transaction_context, 1)?
-                            .checked_add_lamports(lamports)?;
+                            .checked_add_weis(weis)?;
                         Ok(())
                     }
                     MockSystemInstruction::ChangeData { data } => {
@@ -293,7 +293,7 @@ mod tests {
                 .get_account_at_index(0)
                 .unwrap()
                 .borrow()
-                .lamports(),
+                .weis(),
             100
         );
         assert_eq!(
@@ -301,7 +301,7 @@ mod tests {
                 .get_account_at_index(1)
                 .unwrap()
                 .borrow()
-                .lamports(),
+                .weis(),
             0
         );
 
@@ -314,7 +314,7 @@ mod tests {
             AccountKeys::new(&account_keys, None).compile_instructions(&[
                 Instruction::new_with_bincode(
                     mock_system_program_id,
-                    &MockSystemInstruction::TransferLamports { lamports: 50 },
+                    &MockSystemInstruction::TransferWeis { weis: 50 },
                     account_metas.clone(),
                 ),
             ]),
@@ -340,7 +340,7 @@ mod tests {
             result,
             Err(TransactionError::InstructionError(
                 0,
-                InstructionError::ReadonlyLamportChange
+                InstructionError::ReadonlyWeiChange
             ))
         );
 
@@ -390,7 +390,7 @@ mod tests {
         enum MockSystemInstruction {
             BorrowFail,
             MultiBorrowMut,
-            DoWork { lamports: u64, data: u8 },
+            DoWork { weis: u64, data: u8 },
         }
 
         fn mock_system_process_instruction(
@@ -409,34 +409,34 @@ mod tests {
                             .try_borrow_instruction_account(transaction_context, 0)?;
                         let dup_account = instruction_context
                             .try_borrow_instruction_account(transaction_context, 2)?;
-                        if from_account.get_lamports() != dup_account.get_lamports() {
+                        if from_account.get_weis() != dup_account.get_weis() {
                             return Err(InstructionError::InvalidArgument);
                         }
                         Ok(())
                     }
                     MockSystemInstruction::MultiBorrowMut => {
-                        let lamports_a = instruction_context
+                        let weis_a = instruction_context
                             .try_borrow_instruction_account(transaction_context, 0)?
-                            .get_lamports();
-                        let lamports_b = instruction_context
+                            .get_weis();
+                        let weis_b = instruction_context
                             .try_borrow_instruction_account(transaction_context, 2)?
-                            .get_lamports();
-                        if lamports_a != lamports_b {
+                            .get_weis();
+                        if weis_a != weis_b {
                             return Err(InstructionError::InvalidArgument);
                         }
                         Ok(())
                     }
-                    MockSystemInstruction::DoWork { lamports, data } => {
+                    MockSystemInstruction::DoWork { weis, data } => {
                         let mut dup_account = instruction_context
                             .try_borrow_instruction_account(transaction_context, 2)?;
-                        dup_account.checked_sub_lamports(lamports)?;
-                        to_account.checked_add_lamports(lamports)?;
+                        dup_account.checked_sub_weis(weis)?;
+                        to_account.checked_add_weis(weis)?;
                         dup_account.set_data(&[data]);
                         drop(dup_account);
                         let mut from_account = instruction_context
                             .try_borrow_instruction_account(transaction_context, 0)?;
-                        from_account.checked_sub_lamports(lamports)?;
-                        to_account.checked_add_lamports(lamports)?;
+                        from_account.checked_sub_weis(weis)?;
+                        to_account.checked_add_weis(weis)?;
                         Ok(())
                     }
                 }
@@ -552,7 +552,7 @@ mod tests {
             &[Instruction::new_with_bincode(
                 mock_program_id,
                 &MockSystemInstruction::DoWork {
-                    lamports: 10,
+                    weis: 10,
                     data: 42,
                 },
                 account_metas,
@@ -582,7 +582,7 @@ mod tests {
                 .get_account_at_index(0)
                 .unwrap()
                 .borrow()
-                .lamports(),
+                .weis(),
             80
         );
         assert_eq!(
@@ -590,7 +590,7 @@ mod tests {
                 .get_account_at_index(1)
                 .unwrap()
                 .borrow()
-                .lamports(),
+                .weis(),
             20
         );
         assert_eq!(

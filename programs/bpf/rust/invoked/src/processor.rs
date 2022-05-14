@@ -44,7 +44,7 @@ fn process_instruction(
             assert_eq!(&instruction_data[1..], &[1, 2, 3, 4, 5]);
             assert_eq!(accounts.len(), 4);
 
-            assert_eq!(accounts[ARGUMENT_INDEX].lamports(), 42);
+            assert_eq!(accounts[ARGUMENT_INDEX].weis(), 42);
             assert_eq!(accounts[ARGUMENT_INDEX].data_len(), 100);
             assert!(accounts[ARGUMENT_INDEX].is_signer);
             assert!(accounts[ARGUMENT_INDEX].is_writable);
@@ -61,7 +61,7 @@ fn process_instruction(
                 accounts[INVOKED_ARGUMENT_INDEX].owner,
                 accounts[INVOKED_PROGRAM_INDEX].key
             );
-            assert_eq!(accounts[INVOKED_ARGUMENT_INDEX].lamports(), 10);
+            assert_eq!(accounts[INVOKED_ARGUMENT_INDEX].weis(), 10);
             assert_eq!(accounts[INVOKED_ARGUMENT_INDEX].data_len(), 10);
             assert!(accounts[INVOKED_ARGUMENT_INDEX].is_signer);
             assert!(accounts[INVOKED_ARGUMENT_INDEX].is_writable);
@@ -84,8 +84,8 @@ fn process_instruction(
                 accounts[INVOKED_PROGRAM_DUP_INDEX].owner
             );
             assert_eq!(
-                accounts[INVOKED_PROGRAM_INDEX].lamports,
-                accounts[INVOKED_PROGRAM_DUP_INDEX].lamports
+                accounts[INVOKED_PROGRAM_INDEX].weis,
+                accounts[INVOKED_PROGRAM_DUP_INDEX].weis
             );
             assert_eq!(
                 accounts[INVOKED_PROGRAM_INDEX].is_signer,
@@ -212,8 +212,8 @@ fn process_instruction(
             assert!(accounts[INVOKED_ARGUMENT_INDEX].is_signer);
             assert!(instruction_data.len() > 1);
 
-            **accounts[INVOKED_ARGUMENT_INDEX].lamports.borrow_mut() -= 1;
-            **accounts[ARGUMENT_INDEX].lamports.borrow_mut() += 1;
+            **accounts[INVOKED_ARGUMENT_INDEX].weis.borrow_mut() -= 1;
+            **accounts[ARGUMENT_INDEX].weis.borrow_mut() += 1;
             let remaining_invokes = instruction_data[1];
             if remaining_invokes > 1 {
                 msg!("Invoke again");
@@ -251,8 +251,8 @@ fn process_instruction(
                 const FROM_INDEX: usize = 0;
                 const DERIVED_KEY2_INDEX: usize = 1;
 
-                let from_lamports = accounts[FROM_INDEX].lamports();
-                let to_lamports = accounts[DERIVED_KEY2_INDEX].lamports();
+                let from_weis = accounts[FROM_INDEX].weis();
+                let to_weis = accounts[DERIVED_KEY2_INDEX].weis();
                 assert_eq!(accounts[DERIVED_KEY2_INDEX].data_len(), 0);
                 assert!(solana_program::system_program::check_id(
                     accounts[DERIVED_KEY2_INDEX].owner
@@ -272,8 +272,8 @@ fn process_instruction(
                     &[&[b"Lil'", b"Bits", &[bump_seed2]]],
                 )?;
 
-                assert_eq!(accounts[FROM_INDEX].lamports(), from_lamports - 1);
-                assert_eq!(accounts[DERIVED_KEY2_INDEX].lamports(), to_lamports + 1);
+                assert_eq!(accounts[FROM_INDEX].weis(), from_weis - 1);
+                assert_eq!(accounts[DERIVED_KEY2_INDEX].weis(), to_weis + 1);
                 assert_eq!(program_id, accounts[DERIVED_KEY2_INDEX].owner);
                 assert_eq!(
                     accounts[DERIVED_KEY2_INDEX].data_len(),

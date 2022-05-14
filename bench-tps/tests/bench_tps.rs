@@ -39,7 +39,7 @@ fn test_bench_tps_local_cluster(config: Config) {
     let cluster = LocalCluster::new(
         &mut ClusterConfig {
             node_stakes: vec![999_990; NUM_NODES],
-            cluster_lamports: 200_000_000,
+            cluster_weis: 200_000_000,
             validator_configs: make_identical_validator_configs(
                 &ValidatorConfig {
                     rpc_config: JsonRpcConfig {
@@ -63,14 +63,14 @@ fn test_bench_tps_local_cluster(config: Config) {
         cluster.entry_point_info.tpu,
     )));
 
-    let lamports_per_account = 100;
+    let weis_per_account = 100;
 
     let keypair_count = config.tx_count * config.keypair_multiplier;
     let keypairs = generate_and_fund_keypairs(
         client.clone(),
         &config.id,
         keypair_count,
-        lamports_per_account,
+        weis_per_account,
     )
     .unwrap();
 
@@ -100,14 +100,14 @@ fn test_bench_tps_test_validator(config: Config) {
     let client =
         Arc::new(TpuClient::new(rpc_client, &websocket_url, TpuClientConfig::default()).unwrap());
 
-    let lamports_per_account = 100;
+    let weis_per_account = 100;
 
     let keypair_count = config.tx_count * config.keypair_multiplier;
     let keypairs = generate_and_fund_keypairs(
         client.clone(),
         &config.id,
         keypair_count,
-        lamports_per_account,
+        weis_per_account,
     )
     .unwrap();
 

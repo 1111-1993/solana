@@ -117,7 +117,7 @@ A transaction in Solana-Web3.js is created using the [`Transaction`](javascript-
 Take the example of a transfer transaction:
 
 ```javascript
-const {Keypair, Transaction, SystemProgram, LAMPORTS_PER_GTH} = require("@solana/web3.js");
+const {Keypair, Transaction, SystemProgram, WEIS_PER_GTH} = require("@solana/web3.js");
 
 let fromKeypair = Keypair.generate();
 let toKeypair = Keypair.generate();
@@ -127,12 +127,12 @@ transaction.add(
   SystemProgram.transfer({
     fromPubkey: fromKeypair.publicKey,
     toPubkey: toKeypair.publicKey,
-    lamports: LAMPORTS_PER_GTH
+    weis: WEIS_PER_GTH
   })
 );
 ```
 
-The above code achieves creating a transaction ready to be signed and broadcasted to the network. The `SystemProgram.transfer` instruction was added to the transaction, containing the amount of lamports to send, and the `to` and `from` public keys.
+The above code achieves creating a transaction ready to be signed and broadcasted to the network. The `SystemProgram.transfer` instruction was added to the transaction, containing the amount of weis to send, and the `to` and `from` public keys.
 
 All that is left is to sign the transaction with keypair and send it over the network. You can accomplish sending a transaction by using `sendAndConfirmTransaction` if you wish to alert the user or do something after a transaction is finished, or use `sendTransaction` if you don't need to wait for the transaction to be confirmed.
 
@@ -179,7 +179,7 @@ let connection = new web3.Connection(web3.clusterApiUrl('testnet'));
 
 let airdropSignature = await connection.requestAirdrop(
   payer.publicKey,
-  web3.LAMPORTS_PER_GTH,
+  web3.WEIS_PER_GTH,
 );
 
 await connection.confirmTransaction(airdropSignature);
@@ -301,7 +301,7 @@ let connection = new web3.Connection(web3.clusterApiUrl('testnet'));
 
 let airdropSignature = await connection.requestAirdrop(
   payer.publicKey,
-  web3.LAMPORTS_PER_GTH,
+  web3.WEIS_PER_GTH,
 );
 
 await connection.confirmTransaction(airdropSignature);

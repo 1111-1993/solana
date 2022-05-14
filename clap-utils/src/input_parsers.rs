@@ -10,7 +10,7 @@ use {
         clock::UnixTimestamp,
         commitment_config::CommitmentConfig,
         genesis_config::ClusterType,
-        native_token::gth_to_lamports,
+        native_token::gth_to_weis,
         pubkey::Pubkey,
         signature::{read_keypair_file, Keypair, Signature, Signer},
     },
@@ -180,8 +180,8 @@ pub fn resolve_signer(
     )
 }
 
-pub fn lamports_of_gth(matches: &ArgMatches<'_>, name: &str) -> Option<u64> {
-    value_of(matches, name).map(gth_to_lamports)
+pub fn weis_of_gth(matches: &ArgMatches<'_>, name: &str) -> Option<u64> {
+    value_of(matches, name).map(gth_to_weis)
 }
 
 pub fn cluster_type_of(matches: &ArgMatches<'_>, name: &str) -> Option<ClusterType> {
@@ -354,20 +354,20 @@ mod tests {
     }
 
     #[test]
-    fn test_lamports_of_gth() {
+    fn test_weis_of_gth() {
         let matches = app()
             .clone()
             .get_matches_from(vec!["test", "--single", "50"]);
-        assert_eq!(lamports_of_gth(&matches, "single"), Some(50_000_000_000));
-        assert_eq!(lamports_of_gth(&matches, "multiple"), None);
+        assert_eq!(weis_of_gth(&matches, "single"), Some(50_000_000_000));
+        assert_eq!(weis_of_gth(&matches, "multiple"), None);
         let matches = app()
             .clone()
             .get_matches_from(vec!["test", "--single", "1.5"]);
-        assert_eq!(lamports_of_gth(&matches, "single"), Some(1_500_000_000));
-        assert_eq!(lamports_of_gth(&matches, "multiple"), None);
+        assert_eq!(weis_of_gth(&matches, "single"), Some(1_500_000_000));
+        assert_eq!(weis_of_gth(&matches, "multiple"), None);
         let matches = app()
             .clone()
             .get_matches_from(vec!["test", "--single", "0.03"]);
-        assert_eq!(lamports_of_gth(&matches, "single"), Some(30_000_000));
+        assert_eq!(weis_of_gth(&matches, "single"), Some(30_000_000));
     }
 }

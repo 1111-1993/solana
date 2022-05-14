@@ -7,7 +7,7 @@ import {
   usePerformanceInfo,
   useStatsProvider,
 } from "providers/stats/solanaClusterStats";
-import { abbreviatedNumber, lamportsToGth, slotsToHumanString } from "utils";
+import { abbreviatedNumber, weisToGth, slotsToHumanString } from "utils";
 import { ClusterStatus, useCluster } from "providers/cluster";
 import { TpsCard } from "components/TpsCard";
 import { displayTimestampWithoutDate } from "utils/date";
@@ -115,8 +115,8 @@ function StakingComponent() {
           <div className="card-body">
             <h4>Circulating Supply</h4>
             <h1>
-              <em>{displayLamports(supply.circulating)}</em> /{" "}
-              <small>{displayLamports(supply.total)}</small>
+              <em>{displayWeis(supply.circulating)}</em> /{" "}
+              <small>{displayWeis(supply.total)}</small>
             </h1>
             <h5>
               <em>{circulatingPercentage}%</em> is circulating
@@ -130,8 +130,8 @@ function StakingComponent() {
             <h4>Active Stake</h4>
             {activeStake && (
               <h1>
-                <em>{displayLamports(activeStake)}</em> /{" "}
-                <small>{displayLamports(supply.total)}</small>
+                <em>{displayWeis(activeStake)}</em> /{" "}
+                <small>{displayWeis(supply.total)}</small>
               </h1>
             )}
             {delinquentStakePercentage && (
@@ -199,8 +199,8 @@ function StakingComponent() {
   );
 }
 
-function displayLamports(value: number) {
-  return abbreviatedNumber(lamportsToGth(value));
+function displayWeis(value: number) {
+  return abbreviatedNumber(weisToGth(value));
 }
 
 function StatsCardBody() {

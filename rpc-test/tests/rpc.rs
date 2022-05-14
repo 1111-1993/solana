@@ -395,7 +395,7 @@ fn test_rpc_subscriptions() {
         let timeout = deadline.saturating_duration_since(Instant::now());
         match account_receiver.recv_timeout(timeout) {
             Ok(result) => {
-                assert_eq!(result.value.lamports, Rent::default().minimum_balance(0));
+                assert_eq!(result.value.weis, Rent::default().minimum_balance(0));
                 account_notifications -= 1;
             }
             Err(_err) => {
@@ -453,9 +453,9 @@ fn deserialize_rpc_error() -> ClientResult<()> {
     let rpc_client = RpcClient::new(validator.rpc_url());
 
     let bob = Keypair::new();
-    let lamports = 50;
+    let weis = 50;
     let blockhash = rpc_client.get_latest_blockhash()?;
-    let mut tx = system_transaction::transfer(&alice, &bob.pubkey(), lamports, blockhash);
+    let mut tx = system_transaction::transfer(&alice, &bob.pubkey(), weis, blockhash);
 
     // This will cause an error
     tx.signatures.clear();

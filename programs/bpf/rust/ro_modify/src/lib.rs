@@ -40,7 +40,7 @@ struct GthAccountInfo {
 /// Rust representation of C's GthSignerSeed
 #[derive(Debug)]
 #[repr(C)]
-struct SolSignerSeedC {
+struct GthSignerSeedC {
     addr: u64,
     len: u64,
 }
@@ -48,7 +48,7 @@ struct SolSignerSeedC {
 /// Rust representation of C's GthSignerSeeds
 #[derive(Debug)]
 #[repr(C)]
-struct SolSignerSeedsC {
+struct GthSignerSeedsC {
     addr: u64,
     len: u64,
 }
@@ -58,7 +58,7 @@ extern "C" {
         instruction_addr: *const GthInstruction,
         account_infos_addr: *const GthAccountInfo,
         account_infos_len: u64,
-        signers_seeds_addr: *const SolSignerSeedsC,
+        signers_seeds_addr: *const GthSignerSeedsC,
         signers_seeds_len: u64,
     ) -> u64;
 }
@@ -146,7 +146,7 @@ fn process_instruction(
                         &instruction as *const _,
                         READONLY_ACCOUNTS.as_ptr(),
                         READONLY_ACCOUNTS.len() as u64,
-                        std::ptr::null::<SolSignerSeedsC>(),
+                        std::ptr::null::<GthSignerSeedsC>(),
                         0,
                     )
                 );
@@ -181,7 +181,7 @@ fn process_instruction(
                         &instruction as *const _,
                         new_accounts.as_ptr(),
                         new_accounts.len() as u64,
-                        std::ptr::null::<SolSignerSeedsC>(),
+                        std::ptr::null::<GthSignerSeedsC>(),
                         0,
                     )
                 );

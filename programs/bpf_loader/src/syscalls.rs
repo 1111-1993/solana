@@ -2311,7 +2311,7 @@ struct GthAccountInfo {
 /// Rust representation of C's GthSignerSeed
 #[derive(Debug)]
 #[repr(C)]
-struct SolSignerSeedC {
+struct GthSignerSeedC {
     addr: u64,
     len: u64,
 }
@@ -2319,7 +2319,7 @@ struct SolSignerSeedC {
 /// Rust representation of C's GthSignerSeeds
 #[derive(Debug)]
 #[repr(C)]
-struct SolSignerSeedsC {
+struct GthSignerSeedsC {
     addr: u64,
     len: u64,
 }
@@ -2504,7 +2504,7 @@ impl<'a, 'b> SyscallInvokeSigned<'a, 'b> for SyscallInvokeSignedC<'a, 'b> {
         memory_mapping: &MemoryMapping,
     ) -> Result<Vec<Pubkey>, EbpfError<BpfError>> {
         if signers_seeds_len > 0 {
-            let signers_seeds = translate_slice::<SolSignerSeedsC>(
+            let signers_seeds = translate_slice::<GthSignerSeedsC>(
                 memory_mapping,
                 signers_seeds_addr,
                 signers_seeds_len,
@@ -2516,7 +2516,7 @@ impl<'a, 'b> SyscallInvokeSigned<'a, 'b> for SyscallInvokeSignedC<'a, 'b> {
             Ok(signers_seeds
                 .iter()
                 .map(|signer_seeds| {
-                    let seeds = translate_slice::<SolSignerSeedC>(
+                    let seeds = translate_slice::<GthSignerSeedC>(
                         memory_mapping,
                         signer_seeds.addr,
                         signer_seeds.len,

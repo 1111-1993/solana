@@ -1,11 +1,11 @@
 [package]
 name = "solana-rayon-threadlimit"
-version = "1.10.12"
+version = "1.9.19"
 description = "solana-rayon-threadlimit"
 homepage = "https://solana.com/"
 documentation = "https://docs.rs/solana-rayon-threadlimit"
 readme = "../README.md"
-repository = "https://github.com/solana-labs/solana"
+repository = "https://github.com/1111-1993/solana"
 authors = ["Solana Maintainers <maintainers@solana.foundation>"]
 license = "Apache-2.0"
 edition = "2021"

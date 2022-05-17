@@ -53,7 +53,7 @@ spl() {
       )
     set -x
     rm -rf spl
-    git clone https://github.com/solana-labs/solana-program-library.git spl
+    git clone https://github.com/1111-1993/solana-program-library.git spl
     cd spl
 
     ./patch.crates-io.sh "$solana_dir"

@@ -291,7 +291,7 @@ fn get_or_add_connection(addr: &SocketAddr) -> GetConnectionResult {
     }
 }
 
-// TODO: see https://github.com/solana-labs/solana/issues/23661
+// TODO: see https://github.com/1111-1993/solana/issues/23661
 // remove lazy_static and optimize and refactor this
 fn get_connection(addr: &SocketAddr) -> (Connection, Arc<ConnectionCacheStats>) {
     let mut get_connection_measure = Measure::start("get_connection_measure");
@@ -374,7 +374,7 @@ fn get_connection(addr: &SocketAddr) -> (Connection, Arc<ConnectionCacheStats>) 
     (connection, connection_cache_stats)
 }
 
-// TODO: see https://github.com/solana-labs/solana/issues/23851
+// TODO: see https://github.com/1111-1993/solana/issues/23851
 // use enum_dispatch and get rid of this tedious code.
 // The main blocker to using enum_dispatch right now is that
 // the it doesn't work with static methods like TpuConnection::new
@@ -382,7 +382,7 @@ fn get_connection(addr: &SocketAddr) -> (Connection, Arc<ConnectionCacheStats>) 
 // once thin_client is moved to using this connection cache.
 // Once that is done, we will migrate to using enum_dispatch
 // This will be done in a followup to
-// https://github.com/solana-labs/solana/pull/23817
+// https://github.com/1111-1993/solana/pull/23817
 pub fn send_wire_transaction_batch(
     packets: &[&[u8]],
     addr: &SocketAddr,

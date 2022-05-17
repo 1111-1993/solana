@@ -99,7 +99,7 @@ done
 
 # Start a validator for each version and look for it
 #
-# Once https://github.com/solana-labs/solana/issues/7738 is resolved, remove
+# Once https://github.com/1111-1993/solana/issues/7738 is resolved, remove
 # `--no-snapshot-fetch` when starting the validators
 #
 nodeCount=1

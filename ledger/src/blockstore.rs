@@ -3872,7 +3872,7 @@ fn find_slot_meta_in_cached_state<'a>(
 /// [`cf::Orphans`].
 ///
 /// For more information about the chaining, check the previous discussion here:
-/// https://github.com/solana-labs/solana/pull/2253
+/// https://github.com/1111-1993/solana/pull/2253
 ///
 /// Arguments:
 /// - `db`: the blockstore db that stores both shreds and their metadata.

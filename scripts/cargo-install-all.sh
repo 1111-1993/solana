@@ -114,7 +114,7 @@ else
   fi
 
   #XXX: Ensure `solana-genesis` is built LAST!
-  # See https://github.com/solana-labs/solana/issues/5826
+  # See https://github.com/1111-1993/solana/issues/5826
   BINS+=(solana-genesis)
 fi
 

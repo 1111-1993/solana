@@ -27,7 +27,7 @@ if [[ $VERSION != "$(cat target/perf-libs/.version 2> /dev/null)" ]]; then
       cp ~/.cache/solana-perf-$PERF_LIBS_VERSION.tgz solana-perf.tgz
     else
       curl -L --retry 5 --retry-delay 2 --retry-connrefused -o solana-perf.tgz \
-        https://github.com/solana-labs/solana-perf-libs/releases/download/$PERF_LIBS_VERSION/solana-perf.tgz
+        https://github.com/1111-1993/solana-perf-libs/releases/download/$PERF_LIBS_VERSION/solana-perf.tgz
     fi
     tar zxvf solana-perf.tgz
 

@@ -1,9 +1,9 @@
 [package]
 name = "solana-vote-program"
-version = "1.10.12"
+version = "1.9.19"
 description = "Solana Vote program"
 authors = ["Solana Maintainers <maintainers@solana.foundation>"]
-repository = "https://github.com/solana-labs/solana"
+repository = "https://github.com/1111-1993/solana"
 license = "Apache-2.0"
 homepage = "https://solana.com/"
 documentation = "https://docs.rs/solana-vote-program"
@@ -16,15 +16,15 @@ num-derive = "0.3"
 num-traits = "0.2"
 serde = "1.0.136"
 serde_derive = "1.0.103"
-solana-frozen-abi = { path = "../../frozen-abi", version = "=1.10.12" }
-solana-frozen-abi-macro = { path = "../../frozen-abi/macro", version = "=1.10.12" }
-solana-metrics = { path = "../../metrics", version = "=1.10.12" }
-solana-program-runtime = { path = "../../program-runtime", version = "=1.10.12" }
-solana-sdk = { path = "../../sdk", version = "=1.10.12" }
+solana-frozen-abi = { path = "../../frozen-abi", version = "=1.9.19" }
+solana-frozen-abi-macro = { path = "../../frozen-abi/macro", version = "=1.9.19" }
+solana-metrics = { path = "../../metrics", version = "=1.9.19" }
+solana-program-runtime = { path = "../../program-runtime", version = "=1.9.19" }
+solana-sdk = { path = "../../sdk", version = "=1.9.19" }
 thiserror = "1.0"
 
 [dev-dependencies]
-solana-logger = { path = "../../logger", version = "=1.10.12" }
+solana-logger = { path = "../../logger", version = "=1.9.19" }
 
 [build-dependencies]
 rustc_version = "0.4"

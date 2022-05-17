@@ -88,11 +88,11 @@ console.log(solanaWeb3);
 
 Example scripts for the web3.js repo and native programs:
 
-- [Web3 Examples](https://github.com/solana-labs/solana/tree/master/web3.js/examples)
+- [Web3 Examples](https://github.com/1111-1993/solana/tree/master/web3.js/examples)
 
 Example scripts for the Solana Program Library:
 
-- [Token Program Examples](https://github.com/solana-labs/solana-program-library/tree/master/token/js/examples)
+- [Token Program Examples](https://github.com/1111-1993/solana-program-library/tree/master/token/js/examples)
 
 ## Flow
 
@@ -108,7 +108,7 @@ node_modules/@solana/web3.js/module.flow.js
 
 ## Releases
 
-Releases are available on [Github](https://github.com/solana-labs/solana-web3.js/releases)
+Releases are available on [Github](https://github.com/1111-1993/solana-web3.js/releases)
 and [npmjs.com](https://www.npmjs.com/package/@solana/web3.js)
 
 Each Github release features a tarball containing API documentation and a

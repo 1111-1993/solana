@@ -30,7 +30,7 @@ $ curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.0.0/install/
 With a well-known release URL, a pre-built binary can be obtained for supported platforms:
 
 ```bash
-$ curl -o solana-install-init https://github.com/solana-labs/solana/releases/download/v1.0.0/solana-install-init-x86_64-apple-darwin
+$ curl -o solana-install-init https://github.com/1111-1993/solana/releases/download/v1.0.0/solana-install-init-x86_64-apple-darwin
 $ chmod +x ./solana-install-init
 $ ./solana-install-init --help
 ```
@@ -40,7 +40,7 @@ $ ./solana-install-init --help
 If a pre-built binary is not available for a given platform, building the installer from source is always an option:
 
 ```bash
-$ git clone https://github.com/solana-labs/solana.git
+$ git clone https://github.com/1111-1993/solana.git
 $ cd solana/install
 $ cargo run -- --help
 ```

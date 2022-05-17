@@ -6,8 +6,8 @@ homepage = "https://solana.com/"
 license = "Apache-2.0"
 name = "proto"
 publish = false
-repository = "https://github.com/solana-labs/solana"
-version = "1.10.12"
+repository = "https://github.com/1111-1993/solana"
+version = "1.9.19"
 
 [workspace]
 

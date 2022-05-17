@@ -261,7 +261,7 @@ impl JsonRpcRequestProcessor {
             // BlockCommitmentCache should hold an `Arc<Bank>` everywhere it currently holds
             // a slot.
             //
-            // For more information, see https://github.com/solana-labs/solana/issues/11078
+            // For more information, see https://github.com/1111-1993/solana/issues/11078
             warn!(
                 "Bank with {:?} not found at slot: {:?}",
                 commitment.commitment, slot
@@ -1478,7 +1478,7 @@ impl JsonRpcRequestProcessor {
     ) -> Vec<Signature> {
         if self.config.enable_rpc_transaction_history {
             // TODO: Add bigtable_ledger_storage support as a part of
-            // https://github.com/solana-labs/solana/pull/10928
+            // https://github.com/1111-1993/solana/pull/10928
             let end_slot = min(
                 end_slot,
                 self.block_commitment_cache
@@ -2930,7 +2930,7 @@ pub mod rpc_accounts {
         ) -> Result<RpcStakeActivation>;
 
         // SPL Token-specific RPC endpoints
-        // See https://github.com/solana-labs/solana-program-library/releases/tag/token-v2.0.0 for
+        // See https://github.com/1111-1993/solana-program-library/releases/tag/token-v2.0.0 for
         // program details
 
         #[rpc(meta, name = "getTokenAccountBalance")]

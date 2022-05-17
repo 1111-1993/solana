@@ -69,7 +69,7 @@ parent. If an invoked program consumes the budget or exceeds a bound, the entire
 invocation chain and the parent are halted.
 
 The current [compute
-budget](https://github.com/solana-labs/solana/blob/db32549c00a1b5370fcaf128981ad3323bbd9570/program-runtime/src/compute_budget.rs)
+budget](https://github.com/1111-1993/solana/blob/db32549c00a1b5370fcaf128981ad3323bbd9570/program-runtime/src/compute_budget.rs)
 can be found in the Solana Program Runtime.
 
 For example, if the current budget is:
@@ -123,7 +123,7 @@ _Note: At the time of writing, transaction fees are still charged by the number 
 signatures but will eventually be calculated from requested compute unit cap._
 
 Most transactions won't use the default number of compute units so they can include a
-[``ComputeBudgetInstruction`](https://github.com/solana-labs/solana/blob/db32549c00a1b5370fcaf128981ad3323bbd9570/sdk/src/compute_budget.rs#L39)
+[``ComputeBudgetInstruction`](https://github.com/1111-1993/solana/blob/db32549c00a1b5370fcaf128981ad3323bbd9570/sdk/src/compute_budget.rs#L39)
 to lower the compute unit cap. **Important: Lower compute caps will be charged lower fees.**
 
 Compute Budget instructions don't require any accounts and must lie in the first

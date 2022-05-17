@@ -41,7 +41,7 @@ $ sudo apt-get install libssl-dev libudev-dev pkg-config zlib1g-dev llvm clang m
 ## **2. Download the source code.**
 
 ```bash
-$ git clone https://github.com/solana-labs/solana.git
+$ git clone https://github.com/1111-1993/solana.git
 $ cd solana
 ```
 

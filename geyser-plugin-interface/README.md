@@ -16,7 +16,7 @@ The plugin should produce a `cdylib` dynamic library, which must expose a `C`
 function `_create_plugin()` that instantiates the implementation of the
 interface.
 
-The https://github.com/solana-labs/solana-accountsdb-plugin-postgres repository
+The https://github.com/1111-1993/solana-accountsdb-plugin-postgres repository
 provides an example of how to create a plugin which saves the accounts data into
 an external PostgreSQL databases.
 

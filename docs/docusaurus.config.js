@@ -87,7 +87,7 @@ module.exports = {
           position: "right",
         },
         {
-          href: "https://github.com/solana-labs/solana",
+          href: "https://github.com/1111-1993/solana",
           label: "GitHub",
           position: "right",
         },
@@ -133,7 +133,7 @@ module.exports = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/solana-labs/solana",
+              href: "https://github.com/1111-1993/solana",
             },
           ],
         },

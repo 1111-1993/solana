@@ -33,7 +33,7 @@
 //! Idiomatic examples of `solana-program` usage can be found in
 //! [the Solana Program Library][spl].
 //!
-//! [spl]: https://github.com/solana-labs/solana-program-library
+//! [spl]: https://github.com/1111-1993/solana-program-library
 //!
 //! # Defining a solana program
 //!

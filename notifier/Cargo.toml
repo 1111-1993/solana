@@ -1,6 +1,6 @@
 [package]
 name = "solana-notifier"
-version = "1.10.15"
+version = "1.9.19"
 description = "Solana Notifier"
 authors = ["Solana Maintainers <maintainers@solana.foundation>"]
 repository = "https://github.com/1111-1993/solana"

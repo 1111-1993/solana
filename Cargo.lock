@@ -1253,7 +1253,16 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4eeac5c5edb79e4e39fe8439ef35207780a11f69c52cbe424ce3dfad4cb78de6"
 dependencies = [
- "enum-iterator-derive",
+ "enum-iterator-derive 0.7.0",
+]
+
+[[package]]
+name = "enum-iterator"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a7cbade83f72b1330fa58dc6203176f374e61eb3682055b6d3df05f56723f85"
+dependencies = [
+ "enum-iterator-derive 1.0.0",
 ]
 
 [[package]]
@@ -1261,6 +1270,17 @@ name = "enum-iterator-derive"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c134c37760b27a871ba422106eedbb8247da973a09e82558bf26d619c882b159"
+dependencies = [
+ "proc-macro2 1.0.39",
+ "quote 1.0.18",
+ "syn 1.0.96",
+]
+
+[[package]]
+name = "enum-iterator-derive"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a375a452d20c4dbbaa397e84cdfaa2712b4b3d22bf49426e9c8725d10fef005"
 dependencies = [
  "proc-macro2 1.0.39",
  "quote 1.0.18",
@@ -5441,7 +5461,7 @@ version = "1.10.15"
 dependencies = [
  "base64 0.13.0",
  "bincode",
- "enum-iterator",
+ "enum-iterator 0.7.0",
  "itertools",
  "libc",
  "libloading",
@@ -5873,7 +5893,7 @@ dependencies = [
  "backoff",
  "bincode",
  "bzip2",
- "enum-iterator",
+ "enum-iterator 1.1.1",
  "flate2",
  "goauth",
  "log",
@@ -5898,7 +5918,7 @@ version = "1.10.15"
 dependencies = [
  "bincode",
  "bs58",
- "enum-iterator",
+ "enum-iterator 1.1.1",
  "prost",
  "serde",
  "solana-account-decoder",
